@@ -1,0 +1,17 @@
+version: '3.9'
+name: tp1
+services:
+    rabbitmq:
+      image: rabbitmq:3.8.16-management
+      ports:
+        - "5672:5672" # puerto de RabbitMQ
+        - "15672:15672" # puerto del panel de control de RabbitMQ
+      volumes:
+        - rabbitmq_data:/var/lib/rabbitmq # persistencia de datos
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
