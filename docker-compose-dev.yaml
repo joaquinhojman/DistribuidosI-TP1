@@ -16,6 +16,19 @@ services:
           timeout: 5s
           retries: 10
 
+    fileReader:
+      container_name: fileReader
+      image: fileReader:latest
+      #entrypoint: python3 /main.py
+      environment:
+        - CLI_LOG_LEVEL=DEBUG
+      networks:
+        - testing_net
+      ##depends_on:
+      ##  - server
+      ##volumes:
+      ##  - ./file_reader/config.ini:/config.ini
+
 networks:
   testing_net:
     ipam:
