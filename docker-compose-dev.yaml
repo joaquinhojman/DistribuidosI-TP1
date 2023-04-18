@@ -2,12 +2,19 @@ version: '3.9'
 name: tp1
 services:
     rabbitmq:
-      image: rabbitmq:3.8.16-management
+      build:
+        context: ./rabbitmq
+        dockerfile: rabbitmq.dockerfile
       ports:
         - "5672:5672" # puerto de RabbitMQ
         - "15672:15672" # puerto del panel de control de RabbitMQ
       volumes:
         - rabbitmq_data:/var/lib/rabbitmq # persistencia de datos
+      healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:15672"]
+          interval: 10s
+          timeout: 5s
+          retries: 10
 
 networks:
   testing_net:
