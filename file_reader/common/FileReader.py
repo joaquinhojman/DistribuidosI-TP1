@@ -39,9 +39,10 @@ class FileReader:
         city_name = os.path.splitext(file_path)[0].split('/')[0]
 
         self._f = open(self._bets_file, 'r')
+        row_header = self._f.readline().split(',')
         eof = False
         while not eof:
-            data, eof = self._get_data(data_type, city_name)
+            data, eof = self._get_data(row_header, data_type, city_name)
             self._protocol.send(data)
             ack = self._protocol.receive_ack()
             if not ack:
@@ -54,16 +55,17 @@ class FileReader:
             if not ack:
                 raise OSError("Socket connection broken during send eof")
 
-    def _get_data(self, data_type, city_name):
-        data = []
+    def _get_data(self, row_header: list, data_type: str, city_name: str):
+        data = ""
         eof = False
         for _i in range(self._rows_per_batch):
             line = self._f.readline()
             if not line: #End of file?
                 eof = True
                 break
-            line = self._agencia + "," + line.rstrip()
-            data.append(line)
+            json = self._make_json(city_name, row_header, line.split(','))
+            data += json + ","
+        data = data[:-1] # remove last comma
         
         if eof == False: # could happen that next line is end of file
             x = self._f.tell()
@@ -72,7 +74,15 @@ class FileReader:
             if not line:
                 eof = True
 
-        return data_type + ";0" + ";" + ";".join(data), eof
+        return data_type + ";0" + ";" + data, eof
+
+    def _make_json(self, city_name, row_header, line_data):
+        row = "{"
+        row += f'"city":"{city_name}",'
+        for i in range(len(row_header)):
+            row += f'"{row_header[i]}":"{line_data[i]}",'
+        row = row[:-1] + "}"
+        return row
 
     def _get_eof_packet(self, data_type):
         return data_type + ";1"
