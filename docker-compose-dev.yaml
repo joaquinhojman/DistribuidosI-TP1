@@ -2,25 +2,27 @@ version: '3.9'
 name: tp0
 
 services:
-    #rabbitmq:
-    #  build:
-    #    context: ./rabbitmq
-    #    dockerfile: rabbitmq.dockerfile
-    #  ports:
-    #    - "5672:5672" # puerto de RabbitMQ
-    #    - "15672:15672" # puerto del panel de control de RabbitMQ
-    #  volumes:
-    #    - rabbitmq_data:/var/lib/rabbitmq # persistencia de datos
-    #  healthcheck:
-    #      test: ["CMD", "curl", "-f", "http://localhost:15672"]
-    #      interval: 10s
-    #      timeout: 5s
-    #      retries: 10
+    rabbitmq:
+      build:
+        context: ./rabbitmq
+        dockerfile: rabbitmq.dockerfile
+      ports:
+        - "5672:5672" # puerto de RabbitMQ
+        - "15672:15672" # puerto del panel de control de RabbitMQ
+      healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:15672"]
+          interval: 10s
+          timeout: 5s
+          retries: 10
 
     entry_point:
       container_name: entry_point
       image: entry_point:latest
       entrypoint: python3 /main.py
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
       environment:
         - PYTHONUNBUFFERED=1
         - LOGGING_LEVEL=DEBUG
