@@ -45,20 +45,26 @@ class FileReader:
         self._protocol = Protocol(self._socket)
 
     def _send_data(self, file_path, send_topic=False, send_eof=False):
-        data_type = os.path.splitext(file_path)[0].split('/')[2]
-        city_name = os.path.splitext(file_path)[0].split('/')[1]
+        try:
+            logging.info(f'action: send data | data: {file_path} | result: in_progress')
+            data_type = os.path.splitext(file_path)[0].split('/')[2]
+            city_name = os.path.splitext(file_path)[0].split('/')[1]
 
-        if (send_topic): self._send_topic(data_type)
+            if (send_topic): self._send_topic(data_type)
 
-        self._f = open(file_path, 'r')
-        row_header = self._f.readline().split(',')
-        eof = False
-        while not eof:
-            data, eof = self._get_data(row_header, data_type, city_name)
-            self._send(data)
-        self._f.close()
+            self._f = open(file_path, 'r')
+            row_header = self._f.readline().split(',')
+            eof = False
+            while not eof:
+                data, eof = self._get_data(row_header, data_type, city_name)
+                self._send(data)
+            self._f.close()
 
-        if (send_eof): self._send_eof(data_type)
+            if (send_eof): self._send_eof(data_type)
+            logging.info(f'action: send data | data: {file_path} | result: success')
+        except Exception as e:
+            logging.error(f'action: send data | data: {file_path} | result: failed | error: {e}')
+            raise e
 
     def _send_topic(self, data_type):
         self._send(self._get_topic_packet(data_type))

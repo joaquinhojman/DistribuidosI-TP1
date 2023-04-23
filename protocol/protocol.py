@@ -56,7 +56,7 @@ class Protocol:
             expected_bytes_to_send -= sent
 
         addr = self._socket.getpeername()
-        logging.info(f'action: send | result: success | ip: {addr[0]} | msg: {data}')
+        #logging.info(f'action: send | result: success | ip: {addr[0]} | msg: {data}')
 
     def _send_packet_len(self, data_len: int):
         data_len_bytes = data_len.to_bytes(self._cant_bytes_for_len, byteorder='big')
@@ -106,7 +106,7 @@ class Protocol:
             data_bytes += received        
         data = data_bytes.decode('utf-8')
         addr = self._socket.getpeername()
-        logging.info(f'action: receive | result: success | ip: {addr[0]} | msg: {data}')
+        #logging.info(f'action: receive | result: success | ip: {addr[0]} | msg: {data}')
         return data
 
     def _receive_packet_len(self):

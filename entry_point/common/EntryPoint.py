@@ -7,8 +7,8 @@ from protocol.protocol import Protocol
 from common.Data import Data
 
 WEATHER = "weather"
-STATIONS = "station"
-TRIPS = "trip"
+STATIONS = "stations"
+TRIPS = "trips"
 
 class EntryPoint:
     def __init__(self, port, listen_backlog):
@@ -91,7 +91,8 @@ class EntryPoint:
                 data_recv = self._protocol.receive()
                 data = Data(data_recv)
                 if data.topic != topic: return None
-                if data.eof == True: 
+                if data.eof == True:
+                    logging.error(f'action: receive_data | eof received | topic: {topic}')
                     break
                 
                 #self._send_data_to_queue(topic, data.data)
@@ -100,6 +101,7 @@ class EntryPoint:
 
             self._send_eofs(topic)
             #expects solvers confirmation to send eof ack
+            self._protocol.send_ack(True)
         except Exception as e:
             try:
                 self._protocol.send_ack(False)

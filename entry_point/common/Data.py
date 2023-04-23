@@ -5,5 +5,5 @@ class Data:
         self.topic = info[0]
         self.eof = True if info[1] == "1" else False
         self.data = None
-        if (self.eof):
+        if (self.eof == False):
             self.data = info[2]
