@@ -4,11 +4,11 @@ import logging
 #import pika
 
 from protocol.protocol import Protocol
-from Data import Data
+from common.Data import Data
 
-WEATHER = "weathers"
-STATIONS = "stations"
-TRIPS = "trips"
+WEATHER = "weather"
+STATIONS = "station"
+TRIPS = "trip"
 
 class EntryPoint:
     def __init__(self, port, listen_backlog):
@@ -61,9 +61,7 @@ class EntryPoint:
     def _accept_new_connection(self, server_socket: socket):
         logging.info(f'action: accept_connections | result: in_progress')
         try:
-            server_socket.settimeout(self._timeout)
             c, addr = server_socket.accept()
-            server_socket.settimeout(None)
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
             return c
         except OSError as e:
@@ -84,8 +82,8 @@ class EntryPoint:
     def _receive_data(self, topic):
         logging.info(f'action: receive_data | topic: {topic} | result: in_progress')
         _topic = self._receive_topic()
-        if _topic is None or _topic is not topic:
-            logging.error(f'action: receive_topic | result: fail | topic: {_topic}')
+        if _topic is None or _topic != topic:
+            logging.error(f'action: receive_topic | result: fail | topic: {_topic} | expected: {topic}')
             return False
 
         try: 
@@ -122,6 +120,7 @@ class EntryPoint:
             self._protocol.send_ack(True)
             return topic
         except Exception as e:
+            logging.error(f'action: receive_topic | result: fail | error: {e}')
             return None
 
     def _send_data_to_queue(self, queue, data):

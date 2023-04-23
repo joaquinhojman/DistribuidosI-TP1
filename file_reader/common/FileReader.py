@@ -6,14 +6,14 @@ from protocol.protocol import Protocol
 
 class FileReader:
     def __init__(self, port, ip, rows_per_batch):
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect((self._ip, self._port))
-        self._protocol = Protocol(self._socket)
-
-        self._f = None
-
+        self._ip = ip
+        self._port = port
         self._rows_per_batch = rows_per_batch
-        
+    
+        self._server = None
+        self._protocol = None
+        self._f = None
+    
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress')
         self._close_connection()
@@ -22,25 +22,35 @@ class FileReader:
         logging.info(f'action: Handle SIGTERM | result: success')
 
     def run(self):
-        self._send_data("montreal/weather.csv", send_topic=True)
-        self._send_data("toronto/weather.csv")
-        self._send_data("washington/weather.csv", send_eof=True)
-        self._send_data("montreal/stations.csv", send_topic=True)
-        self._send_data("toronto/stations.csv")
-        self._send_data("washington/stations.csv", send_eof=True)
-        self._send_data("montreal/trips.csv", send_topic=True)
-        self._send_data("toronto/trips.csv")
-        self._send_data("washington/trips.csv", send_eof=True)
+        self._make_connection()
+
+        self._send_data("data/montreal/weather.csv", send_topic=True)
+        self._send_data("data/toronto/weather.csv")
+        self._send_data("data/washington/weather.csv", send_eof=True)
+        self._send_data("data/montreal/stations.csv", send_topic=True)
+        self._send_data("data/toronto/stations.csv")
+        self._send_data("data/washington/stations.csv", send_eof=True)
+        self._send_data("data/montreal/trips.csv", send_topic=True)
+        self._send_data("data/toronto/trips.csv")
+        self._send_data("data/washington/trips.csv", send_eof=True)
+
         self._receive_results()
+
         self._close_connection()
 
+    def _make_connection(self):
+        logging.info(f'action: make_connection | result: in_progress | ip: {self._ip} | port: {self._port}')
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.connect((self._ip, self._port))
+        self._protocol = Protocol(self._socket)
+
     def _send_data(self, file_path, send_topic=False, send_eof=False):
-        data_type = os.path.splitext(file_path)[0].split('/')[1]
-        city_name = os.path.splitext(file_path)[0].split('/')[0]
+        data_type = os.path.splitext(file_path)[0].split('/')[2]
+        city_name = os.path.splitext(file_path)[0].split('/')[1]
 
         if (send_topic): self._send_topic(data_type)
 
-        self._f = open(self._bets_file, 'r')
+        self._f = open(file_path, 'r')
         row_header = self._f.readline().split(',')
         eof = False
         while not eof:

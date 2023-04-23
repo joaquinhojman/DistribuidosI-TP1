@@ -81,7 +81,7 @@ class Protocol:
         addr = self._socket.getpeername()
         logging.info(f'action: send_ack | result: success | ip: {addr[0]} | msg: {ack}')
 
-    def receive(self, data):
+    def receive(self):
         packet_len = self._receive_packet_len()
 
         expected_bytes = 0
