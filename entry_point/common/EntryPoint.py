@@ -1,6 +1,7 @@
 
 import socket
 import logging
+#import pika
 
 from protocol.protocol import Protocol
 from Data import Data
@@ -19,6 +20,21 @@ class EntryPoint:
         self._sigterm_received = False
         self._client_socket = None
         self._protocol = None
+        self._channel = None
+
+        #self._create_RabbitMQ_Connection()
+
+    def _create_RabbitMQ_Connection(self):
+        # Create RabbitMQ communication channel
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rabbitmq'))
+        channel = connection.channel()
+
+        channel.queue_declare(queue=WEATHER, durable=True)
+        channel.queue_declare(queue=STATIONS, durable=True)
+        channel.queue_declare(queue=TRIPS, durable=True)
+
+        self._channel = channel
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress')
@@ -80,10 +96,11 @@ class EntryPoint:
                 if data.eof == True: 
                     break
                 
-                #send data to topic queue
+                #self._send_data_to_queue(topic, data.data)
                 
                 self._protocol.send_ack(True)
 
+            self._send_eofs(topic)
             #expects solvers confirmation to send eof ack
         except Exception as e:
             try:
@@ -96,9 +113,6 @@ class EntryPoint:
         logging.info(f'action: receive_data | topic: {topic} | result: success')
         return True
 
-    def _send_results(self):
-        pass
-
     def _receive_topic(self):
         logging.info(f'action: receive_topic | result: in_progress')
         try:
@@ -109,3 +123,18 @@ class EntryPoint:
             return topic
         except Exception as e:
             return None
+
+    def _send_data_to_queue(self, queue, data):
+        self._channel.basic_publish(
+            exchange='',
+            routing_key=queue,
+            body=data,
+            properties=pika.BasicProperties(
+            delivery_mode = 2, # make message persistent
+        ))
+    
+    def _send_eofs(self, topic):
+        pass
+
+    def _send_results(self):
+        pass

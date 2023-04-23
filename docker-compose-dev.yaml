@@ -1,33 +1,48 @@
 version: '3.9'
-name: tp1
+name: tp0
+
 services:
-    rabbitmq:
-      build:
-        context: ./rabbitmq
-        dockerfile: rabbitmq.dockerfile
-      ports:
-        - "5672:5672" # puerto de RabbitMQ
-        - "15672:15672" # puerto del panel de control de RabbitMQ
+    #rabbitmq:
+    #  build:
+    #    context: ./rabbitmq
+    #    dockerfile: rabbitmq.dockerfile
+    #  ports:
+    #    - "5672:5672" # puerto de RabbitMQ
+    #    - "15672:15672" # puerto del panel de control de RabbitMQ
+    #  volumes:
+    #    - rabbitmq_data:/var/lib/rabbitmq # persistencia de datos
+    #  healthcheck:
+    #      test: ["CMD", "curl", "-f", "http://localhost:15672"]
+    #      interval: 10s
+    #      timeout: 5s
+    #      retries: 10
+
+    entry_point:
+      container_name: entry_point
+      image: entry_point:latest
+      entrypoint: python3 /main.py
+      environment:
+        - PYTHONUNBUFFERED=1
+        - LOGGING_LEVEL=DEBUG
+      networks:
+        - testing_net
       volumes:
-        - rabbitmq_data:/var/lib/rabbitmq # persistencia de datos
-      healthcheck:
-          test: ["CMD", "curl", "-f", "http://localhost:15672"]
-          interval: 10s
-          timeout: 5s
-          retries: 10
+        - ./entry_point/config.ini:/config.ini
+        - ./protocol/protocol.ini:/protocol.ini
 
     fileReader:
       container_name: fileReader
-      image: fileReader:latest
-      #entrypoint: python3 /main.py
+      image: file_reader:latest
+      entrypoint: python3 /main.py
       environment:
         - CLI_LOG_LEVEL=DEBUG
       networks:
         - testing_net
-      ##depends_on:
-      ##  - server
-      ##volumes:
-      ##  - ./file_reader/config.ini:/config.ini
+      depends_on:
+        - entry_point
+      volumes:
+        - ./file_reader/config.ini:/config.ini
+        - ./protocol/protocol.ini:/protocol.ini
 
 networks:
   testing_net:
