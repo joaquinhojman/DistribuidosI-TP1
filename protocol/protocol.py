@@ -107,6 +107,7 @@ class Protocol:
         data = data_bytes.decode('utf-8')
         addr = self._socket.getpeername()
         logging.info(f'action: receive | result: success | ip: {addr[0]} | msg: {data}')
+        return data
 
     def _receive_packet_len(self):
         received = 0

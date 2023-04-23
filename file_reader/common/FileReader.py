@@ -94,6 +94,8 @@ class FileReader:
     def _send(self, data):
         self._protocol.send(data)
         ack = self._protocol.receive_ack()
+        if ack == False:
+            raise Exception("received ack was False")
         if not ack:
             raise OSError("Socket connection broken during send data")
     
