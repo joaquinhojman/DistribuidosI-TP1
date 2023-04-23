@@ -43,6 +43,7 @@ services:
       volumes:
         - ./file_reader/config.ini:/config.ini
         - ./protocol/protocol.ini:/protocol.ini
+        - ./.data/:./
 
 networks:
   testing_net:
