@@ -18,7 +18,7 @@ build: deps
 docker-image:
 	docker build -f ./entry_point/Dockerfile -t "entry_point:latest" .
 	docker build -f ./file_reader/Dockerfile -t "file_reader:latest" .
-	docker build -f ./broker/Dockerfile -t "broker:latest" .
+	docker build -f ./broker/broker.dockerfile -t "broker:latest" .
 	# Execute this command from time to time to clean up intermediate stages generated 
 	# during client build (your hard drive will like this :) ). Don't left uncommented if you 
 	# want to avoid rebuilding client image every time the docker-compose-up command 

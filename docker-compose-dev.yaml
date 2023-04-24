@@ -19,6 +19,7 @@ services:
       container_name: entry_point
       image: entry_point:latest
       entrypoint: python3 /main.py
+      restart: on-failure
       depends_on:
         - rabbitmq
       links: 
@@ -49,9 +50,8 @@ services:
  
     broker_weather1: &broker
       container_name: broker_weather1
-      build:
-        context: ./Broker
-        dockerfile: broker.dockerfile
+      image: broker:latest
+      entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
         - rabbitmq

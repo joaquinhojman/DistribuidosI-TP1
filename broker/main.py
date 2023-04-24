@@ -2,7 +2,7 @@ import logging
 from configparser import ConfigParser
 import os
 import signal
-from broker.common import Broker
+from common.Broker import Broker
 
 def initialize_config():
     config = ConfigParser(os.environ)

@@ -1,7 +1,8 @@
 
 import socket
 import logging
-#import pika
+from time import sleep
+import pika
 
 from protocol.protocol import Protocol
 from common.Data import Data
@@ -22,19 +23,25 @@ class EntryPoint:
         self._protocol = None
         self._channel = None
 
-        #self._create_RabbitMQ_Connection()
+        self._create_RabbitMQ_Connection()
 
     def _create_RabbitMQ_Connection(self):
-        # Create RabbitMQ communication channel
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
-        channel = connection.channel()
+        logging.info(f'action: create rabbitmq connections | result: in_progress')
+        while self._channel is None:
+            try: 
+                # Create RabbitMQ communication channel
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq'))
+                channel = connection.channel()
 
-        channel.queue_declare(queue=WEATHER, durable=True)
-        channel.queue_declare(queue=STATIONS, durable=True)
-        channel.queue_declare(queue=TRIPS, durable=True)
+                channel.queue_declare(queue=WEATHER, durable=True)
+                channel.queue_declare(queue=STATIONS, durable=True)
+                channel.queue_declare(queue=TRIPS, durable=True)
 
-        self._channel = channel
+                self._channel = channel
+            except Exception as e:
+                sleep(5)
+        logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress')
@@ -95,7 +102,7 @@ class EntryPoint:
                     logging.error(f'action: receive_data | eof received | topic: {topic}')
                     break
                 
-                #self._send_data_to_queue(topic, data.data)
+                self._send_data_to_queue(topic, data.data)
                 
                 self._protocol.send_ack(True)
 

@@ -1,5 +1,6 @@
 import logging
 import os
+from time import sleep
 import pika
 
 class Broker:
@@ -10,29 +11,36 @@ class Broker:
         self._stations = stations
         self._trips = trips
 
-        self._channel = self._initialize_rabbitmq()
+        self._channel = None
+        self._initialize_rabbitmq()
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
         logging.info(f'action: Handle SIGTERM | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def _initialize_rabbitmq(self):
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rabbitmq'))
-        channel = connection.channel()
+        logging.info(f'action: initialize_rabbitmq | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
+        while self._channel is None:
+            try:
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host='rabbitmq'))
+                channel = connection.channel()
 
-        channel.queue_declare(queue=self._broker_type, durable=True)
-        return channel
+                channel.queue_declare(queue=self._broker_type, durable=True)
+                self._channel = channel
+            except Exception as e:
+                sleep(5)
+        logging.info(f'action: initialize_rabbitmq | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def run(self):
         logging.info(f'action: run | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
         self._channel.basic_qos(prefetch_count=1)
         
-        if self._broker_type is self._weather:
+        if self._broker_type == self._weather:
             self._run_weather_broker()
-        elif self._broker_type is self._stations:
+        elif self._broker_type == self._stations:
             self._run_stations_broker()
-        elif self._broker_type is self._trips:
+        elif self._broker_type == self._trips:
             self._run_trips_broker()
         else:
             logging.error(f'action: run | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')
@@ -41,12 +49,15 @@ class Broker:
         self._channel.start_consuming()
 
     def _run_weather_broker(self):
+        logging.info(f'action: run_weather_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_weather)
 
     def _run_stations_broker(self):
+        logging.info(f'action: run_stations_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_stations)
 
     def _run_trips_broker(self):
+        logging.info(f'action: run_trips_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_trips)
 
     def _callback_weather(self, ch, method, properties, body):
