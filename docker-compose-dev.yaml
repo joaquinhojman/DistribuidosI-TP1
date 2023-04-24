@@ -6,6 +6,8 @@ services:
       build:
         context: ./rabbitmq
         dockerfile: rabbitmq.dockerfile
+      networks:
+        - testing_net
       ports:
         - "5672:5672" # puerto de RabbitMQ
         - "15672:15672" # puerto del panel de control de RabbitMQ
@@ -60,6 +62,8 @@ services:
       environment:
         - BROKER_ID=1
         - BROKER_TYPE=weather
+      networks:
+        - testing_net
     
     broker_stations1:
       <<: *broker
