@@ -46,6 +46,34 @@ services:
         - ./file_reader/config.ini:/config.ini
         - ./protocol/protocol.ini:/protocol.ini
         - ./.data/:/data/
+ 
+    broker_weather1: &broker
+      container_name: broker_weather1
+      build:
+        context: ./Broker
+        dockerfile: broker.dockerfile
+      restart: on-failure
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
+      environment:
+        - BROKER_ID=1
+        - BROKER_TYPE=weather
+    
+    broker_stations1:
+      <<: *broker
+      container_name: broker_stations1
+      environment:
+        - BROKER_ID=1
+        - BROKER_TYPE=stations
+
+    broker_trips1:
+      <<: *broker
+      container_name: broker_trips1
+      environment:
+        - BROKER_ID=1
+        - BROKER_TYPE=trips
 
 networks:
   testing_net:
