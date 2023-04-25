@@ -3,6 +3,8 @@ import os
 from time import sleep
 import pika
 
+from filter.common.types import Se3, Te2, We1
+
 class Filter:
     def __init__(self, filter_type, filter_number, we1, te2, se3):
         self._filter_type = filter_type
@@ -33,4 +35,59 @@ class Filter:
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):
-        pass
+        logging.info(f'action: run | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._channel.basic_qos(prefetch_count=1)
+        
+        if self._filter_type == self._we1:
+            self._run_we1_filter()
+        elif self._filter_type == self._te2:
+            self._run_te2_filter()
+        elif self._filter_type == self._se3:
+            self._run_se3_filter()
+        else:
+            logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: Invalid filter type')
+            raise Exception("Invalid filter type")
+        
+        self._channel.start_consuming()
+
+    def _run_we1_filter(self):
+        logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._channel.queue_declare(queue="EJ1SOLVER", durable=True)
+        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_we1)
+
+    def _run_te2_filter(self):
+        logging.info(f'action: _run_te2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._channel.queue_declare(queue="EJ2SOLVER", durable=True)
+        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te2)
+
+    def _run_se3_filter(self):
+        logging.info(f'action: _run_se3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._channel.queue_declare(queue="EJ3SOLVER", durable=True)
+        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se3)
+
+    def _callback_we1(self, ch, method, properties, body):
+        we1 = We1(body)
+        if we1.is_valid():
+            self._send_data_to_queue("EJ1SOLVER", we1.get_json())
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _callback_te2(self, ch, method, properties, body):
+        te2 = Te2(body)
+        if te2.is_valid():
+            self._send_data_to_queue("EJ2SOLVER", te2.get_json())
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _callback_se3(self, ch, method, properties, body):
+        se3 = Se3(body)
+        if se3.is_valid():
+            self._send_data_to_queue("EJ3SOLVER", se3.get_json())
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _send_data_to_queue(self, queue, data):
+        self._channel.basic_publish(
+            exchange='',
+            routing_key=queue,
+            body=data,
+            properties=pika.BasicProperties(
+            delivery_mode = 2, # make message persistent
+        ))
