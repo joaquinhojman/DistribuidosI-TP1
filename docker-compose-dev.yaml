@@ -99,6 +99,35 @@ services:
       environment:
         - BROKER_ID=2
         - BROKER_TYPE=trips
+    
+    filter_weather1: &filter
+      container_name: filter_weather1
+      image: filter:latest
+      entrypoint: python3 /main.py
+      restart: on-failure
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
+      environment:
+        - FILTER_ID=1
+        - FILTER_TYPE=we1
+      networks:
+        - testing_net
+
+    filter_stations1:
+      <<: *filter
+      container_name: filter_stations1
+      environment:
+        - FILER_ID=1
+        - FILER_TYPE=se3
+
+    filter_trips1:
+      <<: *filter
+      container_name: filter_trips1
+      environment:
+        - FILTER_ID=1
+        - FILTER_TYPE=te2
 
 networks:
   testing_net:

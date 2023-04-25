@@ -52,20 +52,20 @@ class Broker:
 
     def _run_weather_broker(self):
         logging.info(f'action: run_weather_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.queue_declare(queue="WE1QUEUE", durable=True)
+        self._channel.queue_declare(queue="WE1FILTER", durable=True)
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_weather)
 
     def _run_stations_broker(self):
         logging.info(f'action: run_stations_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.queue_declare(queue="EJ2QUEUE", durable=True)
-        self._channel.queue_declare(queue="SE3QUEUE", durable=True)
+        self._channel.queue_declare(queue="EJ2SOLVER", durable=True)
+        self._channel.queue_declare(queue="SE3FILTER", durable=True)
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_stations)
 
     def _run_trips_broker(self):
         logging.info(f'action: run_trips_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.queue_declare(queue="EJ1QUEUE", durable=True)
-        self._channel.queue_declare(queue="TE2QUEUE", durable=True)
-        self._channel.queue_declare(queue="EJ3QUEUE", durable=True)
+        self._channel.queue_declare(queue="EJ1SOLVER", durable=True)
+        self._channel.queue_declare(queue="TE2FILTER", durable=True)
+        self._channel.queue_declare(queue="EJ3SOLVER", durable=True)
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_trips)
 
     def _callback_weather(self, ch, method, properties, body):
@@ -74,7 +74,7 @@ class Broker:
         for w in weathers:
             weather = Weather(w)
             weather_for_ej1filter = weather.get_weather_for_ej1filter()
-            self._send_data_to_queue("WE1QUEUE", weather_for_ej1filter)
+            self._send_data_to_queue("WE1FILTER", weather_for_ej1filter)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_stations(self, ch, method, properties, body):
@@ -83,9 +83,9 @@ class Broker:
         for s in stations:
             station = Station(s)
             station_for_ej2solver = station.get_weather_for_ej2solver()
-            self._send_data_to_queue("EJ2QUEUE", station_for_ej2solver)
+            self._send_data_to_queue("EJ2SOLVER", station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
-            self._send_data_to_queue("SE3QUEUE", station_for_ej3filter)
+            self._send_data_to_queue("SE3FILTER", station_for_ej3filter)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_trips(self, ch, method, properties, body):
@@ -94,11 +94,11 @@ class Broker:
         for t in trips:
             trip = Trip(t)
             trip_for_ej1solver = trip.get_trip_for_ej1solver()
-            self._send_data_to_queue("EJ1QUEUE", trip_for_ej1solver)
+            self._send_data_to_queue("EJ1SOLVER", trip_for_ej1solver)
             trip_for_ej2filter = trip.get_trip_for_ej2filter()
-            self._send_data_to_queue("TE2QUEUE", trip_for_ej2filter)
+            self._send_data_to_queue("TE2FILTER", trip_for_ej2filter)
             trip_for_ej3solver = trip.get_trip_for_ej3solver()
-            self._send_data_to_queue("EJ3QUEUE", trip_for_ej3solver)
+            self._send_data_to_queue("EJ3SOLVER", trip_for_ej3solver)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _send_data_to_queue(self, queue, data):
