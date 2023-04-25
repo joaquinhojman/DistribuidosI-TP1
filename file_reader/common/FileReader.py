@@ -53,7 +53,7 @@ class FileReader:
             if (send_topic): self._send_topic(data_type)
 
             self._f = open(file_path, 'r')
-            row_header = self._f.readline().split(',')
+            row_header = self._f.readline().strip().split(',')
             eof = False
             while not eof:
                 data, eof = self._get_data(row_header, data_type, city_name)
@@ -76,7 +76,7 @@ class FileReader:
         data = ""
         eof = False
         for _i in range(self._rows_per_batch):
-            line = self._f.readline()
+            line = self._f.readline().strip()
             if not line: #End of file?
                 eof = True
                 break

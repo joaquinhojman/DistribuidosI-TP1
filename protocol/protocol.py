@@ -79,7 +79,7 @@ class Protocol:
             else:
                 raise OSError("Socket connection broken during send ack")
         addr = self._socket.getpeername()
-        logging.info(f'action: send_ack | result: success | ip: {addr[0]} | msg: {ack}')
+        #logging.info(f'action: send_ack | result: success | ip: {addr[0]} | msg: {ack}')
 
     def receive(self):
         packet_len = self._receive_packet_len()
@@ -135,5 +135,5 @@ class Protocol:
         ack = True if int.from_bytes(ack_bytes, byteorder='big') == self._success_ack else False
 
         addr = self._socket.getpeername()
-        logging.info(f'action: receive_ack | result: success | ip: {addr[0]} | msg: {ack}')
+        #logging.info(f'action: receive_ack | result: success | ip: {addr[0]} | msg: {ack}')
         return ack

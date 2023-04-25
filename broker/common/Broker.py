@@ -3,6 +3,8 @@ import os
 from time import sleep
 import pika
 
+from common.types import Station, Trip, Weather
+
 class Broker:
     def __init__(self, broker_type, broker_number, weather, stations, trips):
         self._broker_type = broker_type
@@ -62,12 +64,27 @@ class Broker:
 
     def _callback_weather(self, ch, method, properties, body):
         logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
+        weathers = body.split(',')
+        for w in weathers:
+            weather = Weather(w)
+            weather_for_ej1filter = weather.get_weather_for_ej1filter()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_stations(self, ch, method, properties, body):
         logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
+        stations = body.split(',')
+        for s in stations:
+            station = Station(s)
+            station_for_ej2solver = station.get_weather_for_ej2solver()
+            station_for_ej3filter = station.get_station_for_ej3filter()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_trips(self, ch, method, properties, body):
         logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
+        trips = body.split(',')
+        for t in trips:
+            trip = Trip(t)
+            trip_for_ej1solver = trip.get_trip_for_ej1solver()
+            trip_for_ej2filter = trip.get_trip_for_ej2filter()
+            trip_for_ej3solver = trip.get_trip_for_ej3solver()
         ch.basic_ack(delivery_tag=method.delivery_tag)
