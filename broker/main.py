@@ -32,7 +32,7 @@ def main():
     broker_number = os.getenv('BROKER_ID', "")
 
     initialize_log(logging_level)
-    logging.debug(f"action: config | result: success | broker: {broker} | broker_number: {broker_number} | logging_level: {logging_level}")
+    logging.info(f"action: config | result: success | broker: {broker} | broker_number: {broker_number} | logging_level: {logging_level}")
 
     broker = Broker(broker, broker_number, weather, stations, trips)
     signal.signal(signal.SIGTERM, broker._sigterm_handler)

@@ -115,18 +115,39 @@ services:
       networks:
         - testing_net
 
+    filter_weather2:
+      <<: *filter
+      container_name: filter_weather2
+      environment:
+        - FILTER_ID=2
+        - FILTER_TYPE=we1
+
     filter_stations1:
       <<: *filter
       container_name: filter_stations1
       environment:
-        - FILER_ID=1
-        - FILER_TYPE=se3
+        - FILTER_ID=1
+        - FILTER_TYPE=se3
+
+    filter_stations2:
+      <<: *filter
+      container_name: filter_stations2
+      environment:
+        - FILTER_ID=2
+        - FILTER_TYPE=se3
 
     filter_trips1:
       <<: *filter
       container_name: filter_trips1
       environment:
         - FILTER_ID=1
+        - FILTER_TYPE=te2
+
+    filter_trips2:
+      <<: *filter
+      container_name: filter_trips2
+      environment:
+        - FILTER_ID=2
         - FILTER_TYPE=te2
 
 networks:

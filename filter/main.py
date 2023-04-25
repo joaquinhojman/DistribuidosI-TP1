@@ -32,7 +32,7 @@ def main():
     filter_number = os.getenv('FILTER_ID', "")
 
     initialize_log(logging_level)
-    logging.debug(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
+    logging.info(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
 
     filter = Filter(filter, filter_number, we1, te2, se3)
     signal.signal(signal.SIGTERM, filter._sigterm_handler)

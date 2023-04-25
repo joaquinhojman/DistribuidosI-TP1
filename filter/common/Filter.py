@@ -3,7 +3,7 @@ import os
 from time import sleep
 import pika
 
-from filter.common.types import Se3, Te2, We1
+from common.types import Se3, Te2, We1
 
 class Filter:
     def __init__(self, filter_type, filter_number, we1, te2, se3):
@@ -66,19 +66,20 @@ class Filter:
         self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se3)
 
     def _callback_we1(self, ch, method, properties, body):
-        we1 = We1(body)
+        we1 = We1(str(body))
         if we1.is_valid():
+            logging.info(f'action: _callback_we1 | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number} | data: {we1.get_json()}')
             self._send_data_to_queue("EJ1SOLVER", we1.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_te2(self, ch, method, properties, body):
-        te2 = Te2(body)
+        te2 = Te2(str(body))
         if te2.is_valid():
             self._send_data_to_queue("EJ2SOLVER", te2.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_se3(self, ch, method, properties, body):
-        se3 = Se3(body)
+        se3 = Se3(str(body))
         if se3.is_valid():
             self._send_data_to_queue("EJ3SOLVER", se3.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
