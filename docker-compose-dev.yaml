@@ -175,6 +175,18 @@ services:
       environment:
         - EJSOLVER=ej3solver
 
+    EofListener:
+      container_name: EofListener
+      image: eof_listener:latest
+      entrypoint: python3 /main.py
+      restart: on-failure
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
+      networks:
+        - testing_net
+
 networks:
   testing_net:
     ipam:

@@ -21,6 +21,7 @@ docker-image:
 	docker build -f ./broker/broker.dockerfile -t "broker:latest" .
 	docker build -f ./filter/filter.dockerfile -t "filter:latest" .
 	docker build -f ./ej_solver/ej_solver.dockerfile -t "ej_solver:latest" .
+	docker build -f ./eof_listener/Dockerfile -t "eof_listener:latest" .
 	# Execute this command from time to time to clean up intermediate stages generated 
 	# during client build (your hard drive will like this :) ). Don't left uncommented if you 
 	# want to avoid rebuilding client image every time the docker-compose-up command 

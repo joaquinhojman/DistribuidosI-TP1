@@ -25,6 +25,7 @@ class Ej1Solver:
                 channel = connection.channel()
 
                 channel.queue_declare(queue=self._EjSolver, durable=True)
+                channel.queue_declare(queue="results", durable=True)
                 self._channel = channel
             except Exception as e:
                 sleep(5)

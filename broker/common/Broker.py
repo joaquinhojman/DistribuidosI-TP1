@@ -29,6 +29,8 @@ class Broker:
                 channel = connection.channel()
 
                 channel.queue_declare(queue=self._broker_type, durable=True)
+                channel.queue_declare(queue="eoflistener", durable=True)
+
                 self._channel = channel
             except Exception as e:
                 sleep(5)
