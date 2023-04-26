@@ -57,15 +57,15 @@ class Broker:
 
     def _run_stations_broker(self):
         logging.info(f'action: run_stations_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.queue_declare(queue="EJ2SOLVER", durable=True)
+        self._channel.queue_declare(queue="ej2solver", durable=True)
         self._channel.queue_declare(queue="SE3FILTER", durable=True)
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_stations)
 
     def _run_trips_broker(self):
         logging.info(f'action: run_trips_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.queue_declare(queue="EJ1SOLVER", durable=True)
+        self._channel.queue_declare(queue="ej1solver", durable=True)
         self._channel.queue_declare(queue="TE2FILTER", durable=True)
-        self._channel.queue_declare(queue="EJ3SOLVER", durable=True)
+        self._channel.queue_declare(queue="ej3solver", durable=True)
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_trips)
 
     def _callback_weather(self, ch, method, properties, body):
@@ -85,7 +85,7 @@ class Broker:
         for s in stations:
             station = Station(s)
             station_for_ej2solver = station.get_weather_for_ej2solver()
-            self._send_data_to_queue("EJ2SOLVER", station_for_ej2solver)
+            self._send_data_to_queue("ej2solver", station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
             self._send_data_to_queue("se3", station_for_ej3filter)
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -97,11 +97,11 @@ class Broker:
         for t in trips:
             trip = Trip(t)
             trip_for_ej1solver = trip.get_trip_for_ej1solver()
-            self._send_data_to_queue("EJ1SOLVER", trip_for_ej1solver)
+            self._send_data_to_queue("ej1solver", trip_for_ej1solver)
             trip_for_ej2filter = trip.get_trip_for_ej2filter()
             self._send_data_to_queue("te2", trip_for_ej2filter)
             trip_for_ej3solver = trip.get_trip_for_ej3solver()
-            self._send_data_to_queue("EJ3SOLVER", trip_for_ej3solver)
+            self._send_data_to_queue("ej3solver", trip_for_ej3solver)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _send_data_to_queue(self, queue, data):

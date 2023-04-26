@@ -2,7 +2,7 @@ import logging
 from configparser import ConfigParser
 import os
 import signal
-from common.Filter import Filter
+from common.EjSolver import EjSolver
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -12,9 +12,9 @@ def initialize_config():
     config_params = {}
     try:
         config_params["logging_level"] = os.getenv('LOGGING_LEVEL', config["DEFAULT"]["LOGGING_LEVEL"])
-        config_params["we1"] = os.getenv('WE1', config["DEFAULT"]["WE1"])
-        config_params["te2"] = os.getenv('TE2', config["DEFAULT"]["TE2"])
-        config_params["se3"] = os.getenv('SE3', config["DEFAULT"]["SE3"])
+        config_params["ej1solver"] = os.getenv('EJ1SOLVER', config["DEFAULT"]["EJ1SOLVER"])
+        config_params["ej2solver"] = os.getenv('EJ2SOLVER', config["DEFAULT"]["EJ2SOLVER"])
+        config_params["ej3solver"] = os.getenv('EJ3SOLVER', config["DEFAULT"]["EJ3SOLVER"])
     except KeyError as e:
         raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
     except ValueError as e:
@@ -25,18 +25,18 @@ def initialize_config():
 def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
-    we1 = config_params["we1"]
-    te2 = config_params["te2"]
-    se3 = config_params["se3"]
-    filter = os.getenv('FILTER_TYPE', "")
-    filter_number = os.getenv('FILTER_ID', "")
+    ej1solver = config_params["ej1solver"]
+    ej2solver = config_params["ej2solver"]
+    ej3solver = config_params["ej3solver"]
+    ejsolver = os.getenv('EJSOLVER', "")
 
     initialize_log(logging_level)
-    logging.info(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
+    logging.info(f"action: config | result: success | ejsolver: {ejsolver} | logging_level: {logging_level}")
 
-    filter = Filter(filter, filter_number, we1, te2, se3)
-    signal.signal(signal.SIGTERM, filter._sigterm_handler)
-    filter.run()
+
+    ej_solver = EjSolver(filter, ejsolver, ej1solver, ej2solver, ej3solver)
+    signal.signal(signal.SIGTERM, ej_solver._sigterm_handler)
+    ej_solver.run()
 
 def initialize_log(logging_level):
     """

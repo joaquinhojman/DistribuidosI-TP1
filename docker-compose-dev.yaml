@@ -149,6 +149,32 @@ services:
         - FILTER_ID=2
         - FILTER_TYPE=te2
 
+    Ej1Solver: &EjSolver
+      container_name: Ej1Solver
+      image: ej_solver:latest
+      entrypoint: python3 /main.py
+      restart: on-failure
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
+      environment:
+        - EJSOLVER=ej1solver
+      networks:
+        - testing_net
+
+    Ej2Solver:
+      <<: *EjSolver
+      container_name: Ej2Solver
+      environment:
+        - EJSOLVER=ej2solver
+
+    Ej3Solver:
+      <<: *EjSolver
+      container_name: Ej3Solver
+      environment:
+        - EJSOLVER=ej3solver
+
 networks:
   testing_net:
     ipam:

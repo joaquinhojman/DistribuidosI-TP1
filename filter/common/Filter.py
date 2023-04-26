@@ -52,17 +52,17 @@ class Filter:
 
     def _run_we1_filter(self):
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue="EJ1SOLVER", durable=True)
+        self._channel.queue_declare(queue="ej1solver", durable=True)
         self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_we1)
 
     def _run_te2_filter(self):
         logging.info(f'action: _run_te2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue="EJ2SOLVER", durable=True)
+        self._channel.queue_declare(queue="ej2solver", durable=True)
         self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te2)
 
     def _run_se3_filter(self):
         logging.info(f'action: _run_se3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue="EJ3SOLVER", durable=True)
+        self._channel.queue_declare(queue="ej3solver", durable=True)
         self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se3)
 
     def _callback_we1(self, ch, method, properties, body):
@@ -70,21 +70,21 @@ class Filter:
         we1 = We1(str(body))
         if we1.is_valid():
             logging.info(f'action: _callback_we1 | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number} | data: {we1.get_json()}')
-            self._send_data_to_queue("EJ1SOLVER", we1.get_json())
+            self._send_data_to_queue("ej1solver", we1.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_te2(self, ch, method, properties, body):
         body = body.decode("utf-8")
         te2 = Te2(str(body))
         if te2.is_valid():
-            self._send_data_to_queue("EJ2SOLVER", te2.get_json())
+            self._send_data_to_queue("ej2solver", te2.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_se3(self, ch, method, properties, body):
         body = body.decode("utf-8")
         se3 = Se3(str(body))
         if se3.is_valid():
-            self._send_data_to_queue("EJ3SOLVER", se3.get_json())
+            self._send_data_to_queue("ej3solver", se3.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _send_data_to_queue(self, queue, data):
