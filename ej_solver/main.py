@@ -34,7 +34,7 @@ def main():
     logging.info(f"action: config | result: success | ejsolver: {ejsolver} | logging_level: {logging_level}")
 
 
-    ej_solver = EjSolver(filter, ejsolver, ej1solver, ej2solver, ej3solver)
+    ej_solver = EjSolver(ejsolver, ej1solver, ej2solver, ej3solver)
     signal.signal(signal.SIGTERM, ej_solver._sigterm_handler)
     ej_solver.run()
 

@@ -6,7 +6,7 @@ from common.Ej1Solver import Ej1Solver
 from common.Ej2Solver import Ej2Solver
 from common.Ej3Solver import Ej3Solver
 
-class Ej1Solver:
+class EjSolver:
     def __init__(self, EjSolver, ej1solver, ej2solver, ej3solver):
         self._EjSolver = EjSolver
         self._ej1solver = ej1solver

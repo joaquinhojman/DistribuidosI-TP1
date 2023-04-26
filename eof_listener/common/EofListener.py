@@ -46,5 +46,5 @@ class EofListener:
         self._channel.basic_consume(queue="eoflistener", on_message_callback=self._callback)
         self._channel.start_consuming()
 
-    def _callback(self):
+    def _callback(self, ch, method, properties, body):
         pass
