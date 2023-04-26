@@ -24,15 +24,25 @@ class FileReader:
     def run(self):
         self._make_connection()
 
-        self._send_data("data/montreal/weather.csv", send_topic=True)
-        self._send_data("data/toronto/weather.csv")
-        self._send_data("data/washington/weather.csv", send_eof=True)
-        self._send_data("data/montreal/stations.csv", send_topic=True)
-        self._send_data("data/toronto/stations.csv")
-        self._send_data("data/washington/stations.csv", send_eof=True)
-        self._send_data("data/montreal/trips.csv", send_topic=True)
-        self._send_data("data/toronto/trips.csv")
-        self._send_data("data/washington/trips.csv", send_eof=True)
+        self._send_data("data/test/weather.csv", send_topic=True)
+        self._send_data("data/test/weather.csv")
+        self._send_data("data/test/weather.csv", send_eof=True)
+        self._send_data("data/test/stations.csv", send_topic=True)
+        self._send_data("data/test/stations.csv")
+        self._send_data("data/test/stations.csv", send_eof=True)
+        self._send_data("data/test/trips.csv", send_topic=True)
+        self._send_data("data/test/trips.csv")
+        self._send_data("data/test/trips.csv", send_eof=True)
+        
+        #self._send_data("data/montreal/weather.csv", send_topic=True)
+        #self._send_data("data/toronto/weather.csv")
+        #self._send_data("data/washington/weather.csv", send_eof=True)
+        #self._send_data("data/montreal/stations.csv", send_topic=True)
+        #self._send_data("data/toronto/stations.csv")
+        #self._send_data("data/washington/stations.csv", send_eof=True)
+        #self._send_data("data/montreal/trips.csv", send_topic=True)
+        #self._send_data("data/toronto/trips.csv")
+        #self._send_data("data/washington/trips.csv", send_eof=True)
 
         self._receive_results()
 
@@ -81,7 +91,7 @@ class FileReader:
                 eof = True
                 break
             json = self._make_json(city_name, row_header, line.split(','))
-            data += json + ","
+            data += json + '\n'
         data = data[:-1] # remove last comma
         
         if eof == False: # could happen that next line is end of file

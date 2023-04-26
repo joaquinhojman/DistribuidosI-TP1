@@ -69,8 +69,9 @@ class Broker:
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_trips)
 
     def _callback_weather(self, ch, method, properties, body):
+        body = body.decode("utf-8")
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
-        weathers = str(body).split(',')
+        weathers = str(body).split('\n')
         for w in weathers:
             weather = Weather(w)
             weather_for_ej1filter = weather.get_weather_for_ej1filter()
@@ -78,8 +79,9 @@ class Broker:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_stations(self, ch, method, properties, body):
+        body = body.decode("utf-8")
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
-        stations = str(body).split(',')
+        stations = str(body).split('\n')
         for s in stations:
             station = Station(s)
             station_for_ej2solver = station.get_weather_for_ej2solver()
@@ -89,8 +91,9 @@ class Broker:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_trips(self, ch, method, properties, body):
+        body = body.decode("utf-8")
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
-        trips = str(body).split(',')
+        trips = str(body).split('\n')
         for t in trips:
             trip = Trip(t)
             trip_for_ej1solver = trip.get_trip_for_ej1solver()
