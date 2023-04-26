@@ -39,13 +39,13 @@ class Ej1Solver:
         self._channel.basic_qos(prefetch_count=1)
         
         if self._EjSolver == self._ej1solver:
-            ej1Solver = Ej1Solver(self._channel)
+            ej1Solver = Ej1Solver(self._EjSolver, self._channel)
             ej1Solver.run()
         elif self._EjSolver == self._ej2solver:
-            ej2Solver = Ej2Solver(self._channel)
+            ej2Solver = Ej2Solver(self._EjSolver, self._channel)
             ej2Solver.run()
         elif self._EjSolver == self._ej3solver:
-            ej3Solver = Ej3Solver(self._channel)
+            ej3Solver = Ej3Solver(self._EjSolver, self._channel)
             ej3Solver.run()
         else:
             logging.error(f'action: run | result: error | EjSolver: {self._EjSolver} | error: Invalid filter type')

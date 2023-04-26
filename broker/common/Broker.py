@@ -84,7 +84,7 @@ class Broker:
         stations = str(body).split('\n')
         for s in stations:
             station = Station(s)
-            station_for_ej2solver = station.get_weather_for_ej2solver()
+            station_for_ej2solver = station.get_station_for_ej2solver()
             self._send_data_to_queue("ej2solver", station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
             self._send_data_to_queue("se3", station_for_ej3filter)

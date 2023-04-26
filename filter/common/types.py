@@ -11,6 +11,7 @@ class We1:
 
     def get_json(self):
         return str({
+            "type" : "weather",
             "date": self.date,
             "prectot": self.prectot,
         })
@@ -26,6 +27,7 @@ class Te2:
 
     def get_json(self):
         return str({
+            "type" : "trip",
             "start_station_code": self.start_station_code,
             "start_date": self.start_date,
         })
@@ -44,6 +46,7 @@ class Se3:
 
     def get_json(self):
         return str({
+            "type" : "station",
             "city": self.city,
             "code": self.code,
         })
