@@ -75,7 +75,7 @@ class Broker:
         for w in weathers:
             weather = Weather(w)
             weather_for_ej1filter = weather.get_weather_for_ej1filter()
-            self._send_data_to_queue("WE1FILTER", weather_for_ej1filter)
+            self._send_data_to_queue("we1", weather_for_ej1filter)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_stations(self, ch, method, properties, body):
@@ -87,7 +87,7 @@ class Broker:
             station_for_ej2solver = station.get_weather_for_ej2solver()
             self._send_data_to_queue("EJ2SOLVER", station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
-            self._send_data_to_queue("SE3FILTER", station_for_ej3filter)
+            self._send_data_to_queue("se3", station_for_ej3filter)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_trips(self, ch, method, properties, body):
@@ -99,7 +99,7 @@ class Broker:
             trip_for_ej1solver = trip.get_trip_for_ej1solver()
             self._send_data_to_queue("EJ1SOLVER", trip_for_ej1solver)
             trip_for_ej2filter = trip.get_trip_for_ej2filter()
-            self._send_data_to_queue("TE2FILTER", trip_for_ej2filter)
+            self._send_data_to_queue("te2", trip_for_ej2filter)
             trip_for_ej3solver = trip.get_trip_for_ej3solver()
             self._send_data_to_queue("EJ3SOLVER", trip_for_ej3solver)
         ch.basic_ack(delivery_tag=method.delivery_tag)

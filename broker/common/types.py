@@ -27,7 +27,7 @@ class Weather:
         self.ws10m = data["ws10m"]
     
     def get_weather_for_ej1filter(self):
-        return str({
+        return json.dumps({
             "date": self.date,
             "prectot": self.prectot,
         })
@@ -43,13 +43,13 @@ class Station:
         self.yearid = data["yearid"]
 
     def get_weather_for_ej2solver(self):
-        return str({
+        return json.dumps({
             "code": self.code,
             "name": self.name,
         })
 
     def get_station_for_ej3filter(self):
-        return str({
+        return json.dumps({
             "city": self.city,
             "code": self.code,
             "name": self.name,
@@ -70,19 +70,19 @@ class Trip:
         self.yearid = data["yearid"]
 
     def get_trip_for_ej1solver(self):
-        return str({
+        return json.dumps({
             "start_date": self.start_date,
             "duration_sec": self.duration_sec,
         })
 
     def get_trip_for_ej2filter(self):
-        return str({
+        return json.dumps({
             "start_station_code": self.start_station_code,
             "start_date": self.start_date,
         })
 
     def get_trip_for_ej3solver(self):
-        return str({
+        return json.dumps({
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
         })
