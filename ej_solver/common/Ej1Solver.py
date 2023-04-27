@@ -24,13 +24,20 @@ class Ej1Solver:
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
 
+    def _get_results(self):
+        results = {}
+        for key, value in self._days_with_more_than_30mm_prectot.items():
+            results[key] = value.get_average_duration()
+        return json.dumps(results)
+
 class DayWithMoreThan30mmPrectot:
     def __init__(self):
         self._n_trips = 0
-        self._average_duration = 0.0
         self._total_duration = 0.0
 
     def add_trip(self, duration):
         self._n_trips += 1
         self._total_duration += duration
-        self._average_duration = self._total_duration / self._n_trips
+
+    def get_average_duration(self):
+        return self._total_duration / self._n_trips

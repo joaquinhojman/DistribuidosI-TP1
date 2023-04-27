@@ -29,7 +29,7 @@ class Te2:
         return json.dumps({
             "type" : "trip",
             "start_station_code": self.start_station_code,
-            "start_date": self.start_date,
+            "start_date_year": self.start_date[:4],
         })
 
 class Se3:
