@@ -10,10 +10,10 @@ class We1:
         return self.prectot >= 30.00
 
     def get_json(self):
-        return str({
+        return json.dumps({
             "type" : "weather",
             "date": self.date,
-            "prectot": self.prectot,
+            #"prectot": self.prectot,
         })
 
 class Te2:
@@ -26,7 +26,7 @@ class Te2:
         return self.start_date[:4] == "2016" or self.start_date[:4] == "2017"
 
     def get_json(self):
-        return str({
+        return json.dumps({
             "type" : "trip",
             "start_station_code": self.start_station_code,
             "start_date": self.start_date,
@@ -45,7 +45,7 @@ class Se3:
         return self.city == "Montreal"
 
     def get_json(self):
-        return str({
+        return json.dumps({
             "type" : "station",
             "city": self.city,
             "code": self.code,
