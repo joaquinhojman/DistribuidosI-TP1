@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import pika
 
 class Ej1Solver:
     def __init__(self, EjSolver, channel):

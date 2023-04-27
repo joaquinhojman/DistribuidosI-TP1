@@ -1,8 +1,6 @@
 import json
 import logging
 import os
-from time import sleep
-import pika
 
 class Ej2Solver:
     def __init__(self, EjSolver, channel):
@@ -30,10 +28,10 @@ class Ej2Solver:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
 
     def _get_results(self):
-        results = []
+        results = {[]}
         for _key, value in self._stations.items():
             if value.duplicate_trips():
-                results.append(value._name)
+                results[value._name] = (value._trips_on_2016, value._trips_on_2017)
         return str(results)
 
 class Station:
