@@ -3,15 +3,16 @@ import os
 from time import sleep
 import pika
 
-from common.types import Se3, Te2, We1
+from common.types import Se3, Te2, Te3, We1
 
 class Filter:
-    def __init__(self, filter_type, filter_number, we1, te2, se3):
+    def __init__(self, filter_type, filter_number, we1, te2, se3, te3):
         self._filter_type = filter_type
         self._filter_number = filter_number
         self._we1 = we1
         self._te2 = te2
         self._se3 = se3
+        self._te3 = te3
 
         self._channel = None
         self._initialize_rabbitmq()
@@ -44,6 +45,8 @@ class Filter:
             self._run_te2_filter()
         elif self._filter_type == self._se3:
             self._run_se3_filter()
+        elif self._filter_type == self._te3:
+            self._run_te3_filter()
         else:
             logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: Invalid filter type')
             raise Exception("Invalid filter type")
@@ -65,6 +68,12 @@ class Filter:
         self._channel.queue_declare(queue="ej3solver", durable=True)
         self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se3)
 
+    def _run_te3_filter(self):
+        logging.info(f'action: _run_te3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._channel.queue_declare(queue="ej3solver", durable=True)
+        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te3)
+
+
     def _callback_we1(self, ch, method, properties, body):
         body = body.decode("utf-8")
         we1 = We1(str(body))
@@ -85,6 +94,13 @@ class Filter:
         se3 = Se3(str(body))
         if se3.is_valid():
             self._send_data_to_queue("ej3solver", se3.get_json())
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _callback_te3(self, ch, method, properties, body):
+        body = body.decode("utf-8")
+        te3 = Te3(str(body))
+        if te3.is_valid():
+            self._send_data_to_queue("ej3solver", te3.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _send_data_to_queue(self, queue, data):

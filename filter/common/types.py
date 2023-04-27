@@ -52,3 +52,20 @@ class Se3:
             "latitude": self.latitude,
             "longitude": self.longitude,
         })
+
+class Te3:
+    def __init__(self, te3):
+        data = json.loads(te3)
+        self.city = data["city"]
+        self.start_station_code = data["start_station_code"]
+        self.end_station_code = data["end_station_code"]
+    
+    def is_valid(self):
+        return self.city == "Montreal"
+
+    def get_json(self):
+        return json.dumps({
+            "type" : "trip",
+            "start_station_code": self.start_station_code,
+            "end_station_code": self.end_station_code,
+        })

@@ -83,9 +83,10 @@ class Trip:
             "start_date": self.start_date,
         })
 
-    def get_trip_for_ej3solver(self):
+    def get_trip_for_ej3filter(self):
         return json.dumps({
             "type" : "trip",
+            "city": self.city,
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
         })

@@ -135,19 +135,33 @@ services:
         - FILTER_ID=2
         - FILTER_TYPE=se3
 
-    filter_trips1:
+    filter_trips_e2_1:
       <<: *filter
-      container_name: filter_trips1
+      container_name: filter_trips_e2_1
       environment:
         - FILTER_ID=1
         - FILTER_TYPE=te2
 
-    filter_trips2:
+    filter_trips_e2_2:
       <<: *filter
-      container_name: filter_trips2
+      container_name: filter_trips_e2_2
       environment:
         - FILTER_ID=2
         - FILTER_TYPE=te2
+
+    filter_trips_e3_1:
+      <<: *filter
+      container_name: filter_trips_e3_1
+      environment:
+        - FILTER_ID=1
+        - FILTER_TYPE=te3
+
+    filter_trips_e3_2:
+      <<: *filter
+      container_name: filter_trips_e3_2
+      environment:
+        - FILTER_ID=2
+        - FILTER_TYPE=te3
 
     Ej1Solver: &EjSolver
       container_name: Ej1Solver
@@ -175,17 +189,17 @@ services:
       environment:
         - EJSOLVER=ej3solver
 
-    EofListener:
-      container_name: EofListener
-      image: eof_listener:latest
-      entrypoint: python3 /main.py
-      restart: on-failure
-      depends_on:
-        - rabbitmq
-      links: 
-        - rabbitmq
-      networks:
-        - testing_net
+    #EofListener:
+    #  container_name: EofListener
+    #  image: eof_listener:latest
+    #  entrypoint: python3 /main.py
+    #  restart: on-failure
+    #  depends_on:
+    #    - rabbitmq
+    #  links: 
+    #    - rabbitmq
+    #  networks:
+    #    - testing_net
 
 networks:
   testing_net:
