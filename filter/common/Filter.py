@@ -78,7 +78,6 @@ class Filter:
         body = body.decode("utf-8")
         we1 = We1(str(body))
         if we1.is_valid():
-            logging.info(f'action: _callback_we1 | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number} | data: {we1.get_json()}')
             self._send_data_to_queue("ej1solver", we1.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 

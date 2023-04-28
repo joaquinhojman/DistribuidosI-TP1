@@ -45,7 +45,7 @@ class Station:
 
     def get_station_for_ej2solver(self):
         return json.dumps({
-            "type" : "station",
+            "type": "station",
             "city": self.city,
             "code": self.code,
             "name": self.name,
@@ -76,7 +76,7 @@ class Trip:
 
     def get_trip_for_ej1solver(self):
         return json.dumps({
-            "type" : "trip",
+            "type": "trip",
             "city": self.city,
             "start_date": self.start_date,
             "duration_sec": self.duration_sec,
@@ -91,7 +91,7 @@ class Trip:
 
     def get_trip_for_ej3filter(self):
         return json.dumps({
-            "type" : "trip",
+            "type": "trip",
             "city": self.city,
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,

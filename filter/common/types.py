@@ -12,7 +12,7 @@ class We1:
 
     def get_json(self):
         return json.dumps({
-            "type" : "weather",
+            "type": "weather",
             "city": self.city,
             "date": self.date,
         })
@@ -29,7 +29,7 @@ class Te2:
 
     def get_json(self):
         return json.dumps({
-            "type" : "trip",
+            "type": "trip",
             "city": self.city,
             "start_station_code": self.start_station_code,
             "yearid": self.yearid,
@@ -50,7 +50,7 @@ class Se3:
 
     def get_json(self):
         return json.dumps({
-            "type" : "station",
+            "type": "station",
             "code": self.code,
             "name": self.name,
             "latitude": self.latitude,
@@ -71,7 +71,7 @@ class Te3:
 
     def get_json(self):
         return json.dumps({
-            "type" : "trip",
+            "type": "trip",
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
             "yearid": self.yearid,
