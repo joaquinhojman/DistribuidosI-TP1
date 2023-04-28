@@ -3,6 +3,7 @@ import json
 class We1:
     def __init__(self, we1):
         data = json.loads(we1)
+        self.city = data["city"]
         self.date = data["date"]
         self.prectot = float(data["prectot"])
 
@@ -12,24 +13,26 @@ class We1:
     def get_json(self):
         return json.dumps({
             "type" : "weather",
+            "city": self.city,
             "date": self.date,
-            #"prectot": self.prectot,
         })
 
 class Te2:
     def __init__(self, te2):
         data = json.loads(te2)
+        self.city = data["city"]
         self.start_station_code = data["start_station_code"]
-        self.start_date = data["start_date"]
+        self.yearid = data["yearid"]
 
     def is_valid(self):
-        return self.start_date[:4] == "2016" or self.start_date[:4] == "2017"
+        return self.yearid == "2016" or self.yearid == "2017"
 
     def get_json(self):
         return json.dumps({
             "type" : "trip",
+            "city": self.city,
             "start_station_code": self.start_station_code,
-            "start_date_year": self.start_date[:4],
+            "yearid": self.yearid,
         })
 
 class Se3:
@@ -40,6 +43,7 @@ class Se3:
         self.name = data["name"]
         self.latitude = data["latitude"]
         self.longitude = data["longitude"]
+        self.yearid = data["yearid"]
     
     def is_valid(self):
         return self.city == "Montreal"
@@ -51,6 +55,7 @@ class Se3:
             "name": self.name,
             "latitude": self.latitude,
             "longitude": self.longitude,
+            "yearid": self.yearid,
         })
 
 class Te3:
@@ -59,6 +64,7 @@ class Te3:
         self.city = data["city"]
         self.start_station_code = data["start_station_code"]
         self.end_station_code = data["end_station_code"]
+        self.yearid = data["yearid"]
     
     def is_valid(self):
         return self.city == "Montreal"
@@ -68,4 +74,5 @@ class Te3:
             "type" : "trip",
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
+            "yearid": self.yearid,
         })

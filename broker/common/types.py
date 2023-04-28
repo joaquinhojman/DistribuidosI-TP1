@@ -28,6 +28,7 @@ class Weather:
     
     def get_weather_for_ej1filter(self):
         return json.dumps({
+            "city": self.city,
             "date": self.date,
             "prectot": self.prectot,
         })
@@ -45,8 +46,10 @@ class Station:
     def get_station_for_ej2solver(self):
         return json.dumps({
             "type" : "station",
+            "city": self.city,
             "code": self.code,
             "name": self.name,
+            "yearid": self.yearid,
         })
 
     def get_station_for_ej3filter(self):
@@ -56,6 +59,7 @@ class Station:
             "name": self.name,
             "latitude": self.latitude,
             "longitude": self.longitude,
+            "yearid": self.yearid,
         })
 
 class Trip:
@@ -73,14 +77,16 @@ class Trip:
     def get_trip_for_ej1solver(self):
         return json.dumps({
             "type" : "trip",
+            "city": self.city,
             "start_date": self.start_date,
             "duration_sec": self.duration_sec,
         })
 
     def get_trip_for_ej2filter(self):
         return json.dumps({
+            "city": self.city,
             "start_station_code": self.start_station_code,
-            "start_date": self.start_date,
+            "yearid": self.yearid,
         })
 
     def get_trip_for_ej3filter(self):
@@ -89,4 +95,5 @@ class Trip:
             "city": self.city,
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
+            "yearid": self.yearid,
         })

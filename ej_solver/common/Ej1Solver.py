@@ -16,10 +16,10 @@ class Ej1Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == "weather":
-            self._days_with_more_than_30mm_prectot["date"] = DayWithMoreThan30mmPrectot()
+            self._days_with_more_than_30mm_prectot[(data["city"], data["date"])] = DayWithMoreThan30mmPrectot()
         elif data["type"] == "trip":
-            if data["start_date"] in self._days_with_more_than_30mm_prectot:
-                self._days_with_more_than_30mm_prectot[data["start_date"]].add_trip(data["duration_sec"])
+            if (data["city"],data["start_date"]) in self._days_with_more_than_30mm_prectot:
+                self._days_with_more_than_30mm_prectot[(data["city"], data["start_date"])].add_trip(data["duration_sec"])
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
 

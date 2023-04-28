@@ -7,6 +7,7 @@ class Ej3Solver:
     def __init__(self, EjSolver, channel):
         self._EjSolver = EjSolver
         self._channel = channel
+        self._stations_name = {}
         self._montreal_stations = {}
 
     def run(self):
@@ -17,28 +18,28 @@ class Ej3Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == "station":
-            self._montreal_stations[data["code"]] = MontrealStation(data["name"], data["latitude"], data["longitude"])
+            self._stations_name[(data["code"], data["yearid"])] = data["name"]
+            self._montreal_stations[data["name"]] = MontrealStation(data["latitude"], data["longitude"])
         elif data["type"] == "trip":
-            latitude_origin = self._montreal_stations[data["start_station_code"]]._latitude
-            longitude_origin = self._montreal_stations[data["start_station_code"]]._longitude
-            origin = (latitude_origin, longitude_origin)
+            start_station_name = self._stations_name[(data["start_station_code"], data["yearid"])]
+            start_sation = self._montreal_stations[start_station_name]
+            origin = (start_sation._latitude, start_sation._longitude)
 
-            self._montreal_stations[data["end_station_code"]].add_trip(origin) 
-            pass
+            end_station_name = self._stations_name[(data["end_station_code"], data["yearid"])]
+            self._montreal_stations[end_station_name].add_trip(origin) 
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
     
     def _get_results(self):
         results = {}
-        for _key, value in self._montreal_stations.items():
+        for key, value in self._montreal_stations.items():
             avg_km = value.get_average_km()
             if avg_km > 6:
-                results[value._name] = avg_km
-        return str(results)
+                results[key] = avg_km
+        return json.dumps(results)
 
 class MontrealStation:
-    def __init__(self, name, latitude, longitude):
-        self._name = name
+    def __init__(self, latitude, longitude):
         self._latitude = float(latitude)
         self._longitude = float(longitude)
 
