@@ -30,13 +30,22 @@ class Ej3Solver:
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
     
+    def _send_results(self):
+        results = self._get_results()
+        json_results = json.dumps({
+            "EjSolver": self._EjSolver,
+            "results": str(results)
+        })
+        self._channel.basic_publish(exchange='', routing_key='results', body=json_results)
+        logging.info(f'action: _send_results | result: success | results: {results}')
+
     def _get_results(self):
         results = {}
         for key, value in self._montreal_stations.items():
             avg_km = value.get_average_km()
             if avg_km > 6:
                 results[key] = avg_km
-        return json.dumps(results)
+        return results
 
 class MontrealStation:
     def __init__(self, latitude, longitude):

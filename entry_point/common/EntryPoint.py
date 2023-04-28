@@ -147,3 +147,6 @@ class EntryPoint:
 
     def _send_results(self):
         pass
+
+    def _get_results(self):
+        pass

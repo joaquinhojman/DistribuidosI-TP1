@@ -23,11 +23,20 @@ class Ej1Solver:
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
 
+    def _send_results(self):
+        results = self._get_results()
+        json_results = json.dumps({
+            "EjSolver": self._EjSolver,
+            "results": str(results)
+        })
+        self._channel.basic_publish(exchange='', routing_key='results', body=json_results)
+        logging.info(f'action: _send_results | result: success | results: {results}')
+
     def _get_results(self):
         results = {}
         for key, value in self._days_with_more_than_30mm_prectot.items():
             results[key] = value.get_average_duration()
-        return json.dumps(results)
+        return results
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):

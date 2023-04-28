@@ -25,12 +25,21 @@ class Ej2Solver:
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
 
+    def _send_results(self):
+        results = self._get_results()
+        json_results = json.dumps({
+            "EjSolver": self._EjSolver,
+            "results": str(results)
+        })
+        self._channel.basic_publish(exchange='', routing_key='results', body=json_results)
+        logging.info(f'action: _send_results | result: success | results: {results}')
+
     def _get_results(self):
         results = {[]}
         for key, value in self._stations.items():
             if value.duplicate_trips():
                 results[key] = (value._trips_on_2016, value._trips_on_2017)
-        return json.dumps(results)
+        return results
 
 class Station:
     def __init__(self):
