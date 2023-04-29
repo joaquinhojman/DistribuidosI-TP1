@@ -7,6 +7,10 @@ class Ej3Solver:
     def __init__(self, EjSolver, channel):
         self._EjSolver = EjSolver
         self._channel = channel
+        
+        self._stations_eof_to_expect = int(os.getenv('SE3FCANT', ""))
+        self._trips_eof_to_expect = int(os.getenv('TE3FCANT', ""))
+
         self._stations_name = {}
         self._montreal_stations = {}
 
@@ -27,17 +31,37 @@ class Ej3Solver:
 
             end_station_name = self._stations_name[(data["end_station_code"], data["yearid"])]
             self._montreal_stations[end_station_name].add_trip(origin) 
+        elif data["type"] == "eof":
+            self._process_eof(data["eof"])
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
     
+    def _process_eof(self, eof):
+        if eof == "station":
+            self._stations_eof_to_expect -= 1
+            if self._stations_eof_to_expect == 0:
+                self._send_eof_confirm()
+        elif eof == "trip":
+            self._trips_eof_to_expect -= 1
+            if self._trips_eof_to_expect == 0:
+                self._send_results()
+        else:
+            logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
+    
+    def _send_eof_confirm(self, eof):
+        json_eof = json.dumps({
+            "EjSolver": self._EjSolver,
+            "eof": "station"
+        })
+        self._send(json_eof)
+
     def _send_results(self):
         results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
             "results": str(results)
         })
-        self._channel.basic_publish(exchange='', routing_key='results', body=json_results)
-        logging.info(f'action: _send_results | result: success | results: {results}')
+        self._send(json_results)
 
     def _get_results(self):
         results = {}
@@ -46,6 +70,10 @@ class Ej3Solver:
             if avg_km > 6:
                 results[key] = avg_km
         return results
+
+    def _send(self, data):
+        self._channel.basic_publish(exchange='', routing_key='results', body=data)
+        logging.info(f'action: _send | result: success | data: {data}')
 
 class MontrealStation:
     def __init__(self, latitude, longitude):

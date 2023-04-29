@@ -6,6 +6,10 @@ class Ej1Solver:
     def __init__(self, EjSolver, channel):
         self._EjSolver = EjSolver
         self._channel = channel
+        
+        self._weathers_eof_to_expect = int(os.getenv('WE1FCANT', ""))
+        self._trips_eof_to_expect = int(os.getenv('TBRKCANT', ""))
+
         self._days_with_more_than_30mm_prectot = {}
 
     def run(self):
@@ -20,23 +24,46 @@ class Ej1Solver:
         elif data["type"] == "trip":
             if (data["city"],data["start_date"]) in self._days_with_more_than_30mm_prectot:
                 self._days_with_more_than_30mm_prectot[(data["city"], data["start_date"])].add_trip(data["duration_sec"])
+        elif data["type"] == "eof":
+            self._process_eof(data["eof"])
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
 
+    def _process_eof(self, eof):
+        if eof == "weather":
+            self._weathers_eof_to_expect -= 1
+            if self._weathers_eof_to_expect == 0:
+                self._send_eof_confirm()
+        elif eof == "trip":
+            self._trips_eof_to_expect -= 1
+            if self._trips_eof_to_expect == 0:
+                self._send_results()
+        else:
+            logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
+
+    def _send_eof_confirm(self, eof):
+        json_eof = json.dumps({
+            "EjSolver": self._EjSolver,
+            "eof": "weather"
+        })
+        self._send(json_eof)
+
     def _send_results(self):
-        results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "results": str(results)
+            "results": str(self._get_results())
         })
-        self._channel.basic_publish(exchange='', routing_key='results', body=json_results)
-        logging.info(f'action: _send_results | result: success | results: {results}')
+        self._send(json_results)
 
     def _get_results(self):
         results = {}
         for key, value in self._days_with_more_than_30mm_prectot.items():
             results[key] = value.get_average_duration()
         return results
+    
+    def _send(self, data):
+        self._channel.basic_publish(exchange='', routing_key='results', body=data)
+        logging.info(f'action: _send | result: success | data: {data}')
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):
