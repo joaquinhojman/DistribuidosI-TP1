@@ -112,8 +112,7 @@ class Broker:
     def _check_eof(self, body):
         if body == "EOF":
             self._send_eof(self)
-            self._channel.stop_consuming()
-            exit(0)
+            self._exit()
     
     def _send_eof(self):
         if self._broker_type == "weather":
@@ -137,3 +136,7 @@ class Broker:
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
         ))
+
+    def _exit(self):
+        self._channel.stop_consuming()
+        exit(0)

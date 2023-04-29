@@ -110,8 +110,7 @@ class Filter:
         if (body[:3] == "EOF"):
             logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
             self._send_eof(body, queue)
-            self._channel.stop_consuming()
-            exit(0)
+            self._exit()
 
     def _send_eof(self, body, queue):
         eof = EOF(body.split(",")[1])
@@ -125,3 +124,7 @@ class Filter:
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
         ))
+
+    def _exit(self):
+        self._channel.stop_consuming()
+        exit(0)

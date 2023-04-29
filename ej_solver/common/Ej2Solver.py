@@ -40,6 +40,7 @@ class Ej2Solver:
             self._trips_eof_to_expect -= 1
             if self._trips_eof_to_expect == 0:
                 self._send_results()
+                self._exit()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
 
@@ -68,6 +69,10 @@ class Ej2Solver:
     def _send(self, data):
         self._channel.basic_publish(exchange='', routing_key='results', body=data)
         logging.info(f'action: _send | result: success | data: {data}')
+
+    def _exit(self):
+        self._channel.stop_consuming()
+        exit(0)
 
 class Station:
     def __init__(self):

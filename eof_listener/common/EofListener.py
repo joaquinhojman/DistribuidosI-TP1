@@ -81,10 +81,21 @@ class EofListener:
                 self._send(TE2, "EOF,"+body)
             for _ in range(self._cant_filters[TE3]):
                 self._send(TE3, "EOF,"+body)
+            self._exit()
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
             return
         logging.info(f'action: send eof | result: success | body: {body}')
 
     def _send(self, queue, data):
-        self._channel.basic_publish(exchange='', routing_key=queue, body=data)
+        self._channel.basic_publish(
+            exchange='',
+            routing_key=queue,
+            body=data,
+            properties=pika.BasicProperties(
+            delivery_mode = 2, # make message persistent
+        ))
+
+    def _exit(self):
+        self._channel.stop_consuming()
+        exit(0)
