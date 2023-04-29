@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pika
 
 class Ej2Solver:
     def __init__(self, EjSolver, channel):
@@ -67,7 +68,13 @@ class Ej2Solver:
         return results
     
     def _send(self, data):
-        self._channel.basic_publish(exchange='', routing_key='results', body=data)
+        self._channel.basic_publish(
+            exchange='',
+            routing_key='results',
+            body=data,
+            properties=pika.BasicProperties(
+            delivery_mode = 2, # make message persistent
+        ))
         logging.info(f'action: _send | result: success | data: {data}')
 
     def _exit(self):

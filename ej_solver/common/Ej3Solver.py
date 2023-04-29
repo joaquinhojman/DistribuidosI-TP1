@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from haversine import haversine
+import pika
 
 class Ej3Solver:
     def __init__(self, EjSolver, channel):
@@ -73,7 +74,13 @@ class Ej3Solver:
         return results
 
     def _send(self, data):
-        self._channel.basic_publish(exchange='', routing_key='results', body=data)
+        self._channel.basic_publish(
+            exchange='',
+            routing_key='results',
+            body=data,
+            properties=pika.BasicProperties(
+            delivery_mode = 2, # make message persistent
+        ))
         logging.info(f'action: _send | result: success | data: {data}')
 
     def _exit(self):
