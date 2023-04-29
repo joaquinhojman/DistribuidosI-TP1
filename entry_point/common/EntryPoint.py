@@ -180,6 +180,7 @@ class EntryPoint:
             self._reset_solvers_confirmated_dict()
             self._results = eof.results
             self._channel.stop_consuming()
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _send_results(self):
         self._protocol.send(self._results)

@@ -36,6 +36,7 @@ class Ej3Solver:
             self._process_eof(data["eof"])
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
+        ch.basic_ack(delivery_tag=method.delivery_tag)
     
     def _process_eof(self, eof):
         if eof == "station":

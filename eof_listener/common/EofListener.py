@@ -63,6 +63,7 @@ class EofListener:
 
     def _callback(self, ch, method, properties, body):
         self._proccess_eof(body.decode("utf-8"))
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _proccess_eof(self, body):
         self._remaining_brokers_eof[body] -= 1

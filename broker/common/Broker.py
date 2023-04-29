@@ -111,7 +111,7 @@ class Broker:
 
     def _check_eof(self, body):
         if body == "EOF":
-            self._send_eof(self)
+            self._send_eof()
             self._exit()
     
     def _send_eof(self):
