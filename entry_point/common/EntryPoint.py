@@ -12,6 +12,7 @@ from common.Data import Data
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
+RESULTS = "results"
 EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
@@ -60,7 +61,7 @@ class EntryPoint:
                 channel.queue_declare(queue=WEATHER, durable=True)
                 channel.queue_declare(queue=STATIONS, durable=True)
                 channel.queue_declare(queue=TRIPS, durable=True)
-                channel.queue_declare(queue="results", durable=True)
+                channel.queue_declare(queue=RESULTS, durable=True)
 
                 self._channel = channel
             except Exception as e:

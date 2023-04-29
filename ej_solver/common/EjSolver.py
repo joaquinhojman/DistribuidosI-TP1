@@ -6,6 +6,8 @@ from common.Ej1Solver import Ej1Solver
 from common.Ej2Solver import Ej2Solver
 from common.Ej3Solver import Ej3Solver
 
+RESULTS = "results"
+
 class EjSolver:
     def __init__(self, EjSolver, ej1solver, ej2solver, ej3solver):
         self._EjSolver = EjSolver
@@ -25,7 +27,7 @@ class EjSolver:
                 channel = connection.channel()
 
                 channel.queue_declare(queue=self._EjSolver, durable=True)
-                channel.queue_declare(queue="results", durable=True)
+                channel.queue_declare(queue=RESULTS, durable=True)
                 self._channel = channel
             except Exception as e:
                 sleep(15)

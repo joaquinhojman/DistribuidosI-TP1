@@ -1,5 +1,9 @@
 import json
 
+WEATHER = "weather"
+STATIONS = "stations"
+TRIPS = "trips"
+
 class We1:
     def __init__(self, we1):
         data = json.loads(we1)
@@ -12,7 +16,7 @@ class We1:
 
     def get_json(self):
         return json.dumps({
-            "type": "weather",
+            "type": WEATHER,
             "city": self.city,
             "date": self.date,
         })
@@ -29,7 +33,7 @@ class Te2:
 
     def get_json(self):
         return json.dumps({
-            "type": "trips",
+            "type": TRIPS,
             "city": self.city,
             "start_station_code": self.start_station_code,
             "yearid": self.yearid,
@@ -50,7 +54,7 @@ class Se3:
 
     def get_json(self):
         return json.dumps({
-            "type": "stations",
+            "type": STATIONS,
             "code": self.code,
             "name": self.name,
             "latitude": self.latitude,
@@ -71,7 +75,7 @@ class Te3:
 
     def get_json(self):
         return json.dumps({
-            "type": "trips",
+            "type": TRIPS,
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
             "yearid": self.yearid,

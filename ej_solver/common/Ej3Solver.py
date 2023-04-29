@@ -4,6 +4,10 @@ import os
 from haversine import haversine
 import pika
 
+STATIONS = "stations"
+TRIPS = "trips"
+RESULTS = "results"
+
 class Ej3Solver:
     def __init__(self, EjSolver, channel):
         self._EjSolver = EjSolver
@@ -23,10 +27,10 @@ class Ej3Solver:
         finished = False
         body = str(body.decode("utf-8"))
         data = json.loads(body)
-        if data["type"] == "stations":
+        if data["type"] == STATIONS:
             self._stations_name[(data["code"], data["yearid"])] = data["name"]
             self._montreal_stations[data["name"]] = MontrealStation(data["latitude"], data["longitude"])
-        elif data["type"] == "trips":
+        elif data["type"] == TRIPS:
             start_station_name = self._stations_name[(data["start_station_code"], data["yearid"])]
             start_sation = self._montreal_stations[start_station_name]
             origin = (start_sation._latitude, start_sation._longitude)
@@ -41,11 +45,11 @@ class Ej3Solver:
         if finished: self._exit()
     
     def _process_eof(self, eof):
-        if eof == "stations":
+        if eof == STATIONS:
             self._stations_eof_to_expect -= 1
             if self._stations_eof_to_expect == 0:
                 self._send_eof_confirm()
-        elif eof == "trips":
+        elif eof == TRIPS:
             self._trips_eof_to_expect -= 1
             if self._trips_eof_to_expect == 0:
                 self._send_results()
@@ -57,7 +61,7 @@ class Ej3Solver:
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": "stations"
+            "eof": STATIONS
         })
         self._send(json_eof)
 
@@ -65,7 +69,7 @@ class Ej3Solver:
         results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": "trips",
+            "eof": TRIPS,
             "results": str(results)
         })
         self._send(json_results)
@@ -81,7 +85,7 @@ class Ej3Solver:
     def _send(self, data):
         self._channel.basic_publish(
             exchange='',
-            routing_key='results',
+            routing_key=RESULTS,
             body=data,
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent

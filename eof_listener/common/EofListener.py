@@ -5,6 +5,7 @@ import logging
 from time import sleep
 import pika
 
+EOFLISTENER = "efolistener"
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
@@ -40,7 +41,7 @@ class EofListener:
                     pika.ConnectionParameters(host='rabbitmq'))
                 channel = connection.channel()
 
-                channel.queue_declare(queue="eoflistener", durable=True)
+                channel.queue_declare(queue=EOFLISTENER, durable=True)
                 channel.queue_declare(queue=WE1, durable=True)
                 channel.queue_declare(queue=TE2, durable=True)
                 channel.queue_declare(queue=SE3, durable=True)

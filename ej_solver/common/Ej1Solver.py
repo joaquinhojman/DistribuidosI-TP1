@@ -3,6 +3,10 @@ import logging
 import os
 import pika
 
+WEATHER = "weather"
+TRIPS = "trips"
+RESULTS = "results"
+
 class Ej1Solver:
     def __init__(self, EjSolver, channel):
         self._EjSolver = EjSolver
@@ -21,9 +25,9 @@ class Ej1Solver:
         finished = False
         body = str(body.decode("utf-8"))
         data = json.loads(body)
-        if data["type"] == "weather":
+        if data["type"] == WEATHER:
             self._days_with_more_than_30mm_prectot[(data["city"], data["date"])] = DayWithMoreThan30mmPrectot()
-        elif data["type"] == "trips":
+        elif data["type"] == TRIPS:
             if (data["city"], data["start_date"]) in self._days_with_more_than_30mm_prectot:
                 self._days_with_more_than_30mm_prectot[(data["city"], data["start_date"])].add_trip(data["duration_sec"])
         elif data["type"] == "eof":
@@ -34,11 +38,11 @@ class Ej1Solver:
         if finished: self._exit()
 
     def _process_eof(self, eof):
-        if eof == "weather":
+        if eof == WEATHER:
             self._weathers_eof_to_expect -= 1
             if self._weathers_eof_to_expect == 0:
                 self._send_eof_confirm()
-        elif eof == "trips":
+        elif eof == TRIPS:
             self._trips_eof_to_expect -= 1
             if self._trips_eof_to_expect == 0:
                 self._send_results()
@@ -50,14 +54,14 @@ class Ej1Solver:
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": "weather"
+            "eof": WEATHER
         })
         self._send(json_eof)
 
     def _send_results(self):
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": "trips",
+            "eof": TRIPS,
             "results": str(self._get_results())
         })
         self._send(json_results)
@@ -71,7 +75,7 @@ class Ej1Solver:
     def _send(self, data):
         self._channel.basic_publish(
             exchange='',
-            routing_key='results',
+            routing_key=RESULTS,
             body=data,
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
