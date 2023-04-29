@@ -97,3 +97,13 @@ class Trip:
             "end_station_code": self.end_station_code,
             "yearid": self.yearid,
         })
+
+class EOF:
+    def __init__(self, topic):
+        self.topic = topic
+    
+    def get_json(self):
+        return json.dumps({
+            "type": "eof",
+            "eof": self.topic,
+        })

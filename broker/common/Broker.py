@@ -3,7 +3,7 @@ import os
 from time import sleep
 import pika
 
-from common.types import Station, Trip, Weather
+from common.types import EOF, Station, Trip, Weather
 
 class Broker:
     def __init__(self, broker_type, broker_number, weather, stations, trips):
@@ -72,6 +72,7 @@ class Broker:
 
     def _callback_weather(self, ch, method, properties, body):
         body = body.decode("utf-8")
+        self._check_eof(body[:3])
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         weathers = str(body).split('\n')
         for w in weathers:
@@ -82,6 +83,7 @@ class Broker:
 
     def _callback_stations(self, ch, method, properties, body):
         body = body.decode("utf-8")
+        self._check_eof(body[:3])
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         stations = str(body).split('\n')
         for s in stations:
@@ -94,6 +96,7 @@ class Broker:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
+        self._check_eof(body[:3])
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         trips = str(body).split('\n')
         for t in trips:
@@ -105,6 +108,26 @@ class Broker:
             trip_for_ej3solver = trip.get_trip_for_ej3filter()
             self._send_data_to_queue("te3", trip_for_ej3solver)
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _check_eof(self, body):
+        if body == "EOF":
+            self._send_eof(self)
+            self._channel.stop_consuming()
+            exit(0)
+    
+    def _send_eof(self):
+        if self._broker_type == "weather":
+            self._send_data_to_queue("eoflistener", self._broker_type)
+        elif self._broker_type == "stations":
+            self._send_data_to_queue("ej2solver", EOF(self._broker_type).get_json())
+            self._send_data_to_queue("eoflistener", self._broker_type)
+        elif self._broker_type == "trips":
+            self._send_data_to_queue("ej1solver", EOF(self._broker_type).get_json())
+            self._send_data_to_queue("eoflistener", self._broker_type)
+        else:
+            logging.error(f'action: send_eof | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')
+            return
+        logging.info(f'action: send_eof | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def _send_data_to_queue(self, queue, data):
         self._channel.basic_publish(
