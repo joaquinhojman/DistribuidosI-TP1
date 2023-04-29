@@ -45,7 +45,7 @@ class Station:
 
     def get_station_for_ej2solver(self):
         return json.dumps({
-            "type": "station",
+            "type": "stations",
             "city": self.city,
             "code": self.code,
             "name": self.name,

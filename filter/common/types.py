@@ -50,7 +50,7 @@ class Se3:
 
     def get_json(self):
         return json.dumps({
-            "type": "station",
+            "type": "stations",
             "code": self.code,
             "name": self.name,
             "latitude": self.latitude,

@@ -22,10 +22,10 @@ class Ej2Solver:
         finished = False
         body = str(body.decode("utf-8"))
         data = json.loads(body)
-        if data["type"] == "station":
+        if data["type"] == "stations":
             self._stations_name[(data["city"], data["code"], data["yearid"])] = data["name"]
             self._stations[data["name"]] = Station()
-        elif data["type"] == "trip":
+        elif data["type"] == "trips":
             station_name = self._stations_name[(data["city"], data["start_station_code"], data["yearid"])]
             self._stations[station_name].add_trip(data["yearid"])
         elif data["type"] == "eof":
@@ -36,11 +36,11 @@ class Ej2Solver:
         if finished: self._exit()
     
     def _process_eof(self, eof):
-        if eof == "station":
+        if eof == "stations":
             self._stations_eof_to_expect -= 1
             if self._stations_eof_to_expect == 0:
                 self._send_eof_confirm()
-        elif eof == "trip":
+        elif eof == "trips":
             self._trips_eof_to_expect -= 1
             if self._trips_eof_to_expect == 0:
                 self._send_results()
@@ -52,7 +52,7 @@ class Ej2Solver:
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": "station"
+            "eof": "stations"
         })
         self._send(json_eof)
 
@@ -60,7 +60,7 @@ class Ej2Solver:
         results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": "trip",
+            "eof": "trips",
             "results": str(results)
         })
         self._send(json_results)
