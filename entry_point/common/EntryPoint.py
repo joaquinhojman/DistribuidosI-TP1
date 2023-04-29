@@ -12,6 +12,9 @@ from common.Data import Data
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
+EJ1SOLVER = "ej1solver"
+EJ2SOLVER = "ej2solver"
+EJ3SOLVER = "ej3solver"
 
 class EntryPoint:
     def __init__(self, port, listen_backlog):
@@ -28,9 +31,9 @@ class EntryPoint:
 
         self._actual_topic = None
         self._solvers_confirmated = {
-            "Ej1Solver": False,
-            "Ej2Solver": False,
-            "Ej3Solver": False
+            EJ1SOLVER: False,
+            EJ2SOLVER: False,
+            EJ3SOLVER: False
         }
         self._results = None
     
@@ -171,13 +174,14 @@ class EntryPoint:
         self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
+        logging.info(f'action: _callback | result: in_progress')
         finished = False
         eof = EOF(body.decode('utf-8'))
         if eof.eof != self._actual_topic:
             logging.error(f'action: _callback | result: fail | error: eof.eof != self._actual_topic')
             return
         self._solvers_confirmated[eof.EjSolver] = True
-        if all(self._solvers_confirmated.values()):
+        if self._all_solvers_confirmated():
             self._reset_solvers_confirmated_dict()
             self._results = eof.results
             finished = True
@@ -188,6 +192,16 @@ class EntryPoint:
         self._protocol.send(self._results)
         ack = self._protocol.receive_ack()
         return ack
+
+    def _all_solvers_confirmated(self):
+        logging.info(f'action: _all_solvers_confirmated | result: in_progress | {self._solvers_confirmated} | {self._actual_topic}')
+        if self._actual_topic == WEATHER:
+            return self._solvers_confirmated[EJ1SOLVER] == True
+        elif self._actual_topic == STATIONS:
+            return self._solvers_confirmated[EJ2SOLVER] == True and self._solvers_confirmated[EJ3SOLVER] == True
+        elif self._actual_topic == TRIPS:
+            return all(self._solvers_confirmated.values())
+        return False
 
     def _reset_solvers_confirmated_dict(self):
         for key in self._solvers_confirmated:

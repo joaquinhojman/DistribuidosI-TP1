@@ -18,6 +18,7 @@ class Ej1Solver:
         self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
 
     def _callback(self, ch, method, properties, body):
+        finished = False
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == "weather":
@@ -46,7 +47,7 @@ class Ej1Solver:
             logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
         return False
 
-    def _send_eof_confirm(self, eof):
+    def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
             "eof": "weather"

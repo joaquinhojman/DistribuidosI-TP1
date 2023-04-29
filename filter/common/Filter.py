@@ -76,7 +76,8 @@ class Filter:
 
     def _callback_we1(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body, "ej1solver", ch, method)
+        eof = self._check_eof(body, "ej1solver", ch, method)
+        if eof: return
         we1 = We1(str(body))
         if we1.is_valid():
             self._send_data_to_queue("ej1solver", we1.get_json())
@@ -84,7 +85,8 @@ class Filter:
 
     def _callback_te2(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body, "ej2solver", ch, method)
+        eof = self._check_eof(body, "ej2solver", ch, method)
+        if eof: return
         te2 = Te2(str(body))
         if te2.is_valid():
             self._send_data_to_queue("ej2solver", te2.get_json())
@@ -92,7 +94,8 @@ class Filter:
 
     def _callback_se3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body, "ej3solver", ch, method)
+        eof = self._check_eof(body, "ej3solver", ch, method)
+        if eof: return
         se3 = Se3(str(body))
         if se3.is_valid():
             self._send_data_to_queue("ej3solver", se3.get_json())
@@ -100,7 +103,8 @@ class Filter:
 
     def _callback_te3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body, "ej3solver", ch, method)
+        eof = self._check_eof(body, "ej3solver", ch, method)
+        if eof: return
         te3 = Te3(str(body))
         if te3.is_valid():
             self._send_data_to_queue("ej3solver", te3.get_json())
@@ -108,14 +112,16 @@ class Filter:
 
     def _check_eof(self, body, queue, ch, method):
         if (body[:3] == "EOF"):
-            logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
             self._send_eof(body, queue)
             ch.basic_ack(delivery_tag=method.delivery_tag)
             self._exit()
+            return True
+        return False
 
     def _send_eof(self, body, queue):
         eof = EOF(body.split(",")[1])
         self._send_data_to_queue(queue, eof.get_json())
+        logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def _send_data_to_queue(self, queue, data):
         self._channel.basic_publish(
