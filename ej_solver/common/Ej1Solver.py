@@ -53,6 +53,7 @@ class Ej1Solver:
     def _send_results(self):
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
+            "eof": "trip",
             "results": str(self._get_results())
         })
         self._send(json_results)

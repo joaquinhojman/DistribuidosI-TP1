@@ -61,6 +61,7 @@ class Ej3Solver:
         results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
+            "eof": "trip",
             "results": str(results)
         })
         self._send(json_results)

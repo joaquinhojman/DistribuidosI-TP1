@@ -1,4 +1,5 @@
 
+import json
 import os
 import socket
 import logging
@@ -24,6 +25,14 @@ class EntryPoint:
             STATIONS: int(os.getenv('SBRKCANT', "")),
             TRIPS: int(os.getenv('TBRKCANT', ""))
         }
+
+        self._actual_topic = None
+        self._solvers_confirmated = {
+            "Ej1Solver": False,
+            "Ej2Solver": False,
+            "Ej3Solver": False
+        }
+        self._results = None
     
         self._sigterm_received = False
         self._client_socket = None
@@ -100,6 +109,7 @@ class EntryPoint:
         if _topic is None or _topic != topic:
             logging.error(f'action: receive_topic | result: fail | topic: {_topic} | expected: {topic}')
             return False
+        self._actual_topic = topic
 
         try: 
             while True:
@@ -112,9 +122,10 @@ class EntryPoint:
                 
                 self._protocol.send_ack(True)
 
-            self._send_eofs(topic)
-            #expects solvers confirmation to send eof ack
+            self._send_eofs()
+            self._expect_solvers_confirmation()
             self._protocol.send_ack(True)
+            self._actual_topic = None
         except Exception as e:
             try:
                 self._protocol.send_ack(False)
@@ -138,10 +149,10 @@ class EntryPoint:
             logging.error(f'action: receive_topic | result: fail | error: {e}')
             return None
 
-    def _send_eofs(self, topic):
-        logging.info(f'action: receive_data | eof received | topic: {topic}')
-        for _ in range(self._cant_brokers[topic]):
-            self._send_data_to_queue(topic, "EOF")
+    def _send_eofs(self):
+        logging.info(f'action: receive_data | eof received | topic: {self._actual_topic}')
+        for _ in range(self._cant_brokers[self._actual_topic]):
+            self._send_data_to_queue(self._actual_topic, "EOF")
 
     def _send_data_to_queue(self, queue, data):
         self._channel.basic_publish(
@@ -152,8 +163,32 @@ class EntryPoint:
             delivery_mode = 2, # make message persistent
         ))
 
+    def _expect_solvers_confirmation(self):
+        self._channel.basic_qos(prefetch_count=1)
+        self._channel.basic_consume(queue='results', on_message_callback=self._callback)
+        self._channel.start_consuming()
+
+    def _callback(self, ch, method, properties, body):
+        eof = EOF(body.decode('utf-8'))
+        if eof.eof != self._actual_topic:
+            logging.error(f'action: _callback | result: fail | error: eof.eof != self._actual_topic')
+            return
+        self._solvers_confirmated[eof.EjSolver] = True
+        if all(self._solvers_confirmated.values()):
+            self._reset_solvers_confirmated_dict()
+            self._results = eof.results
+            self._channel.stop_consuming()
+
     def _send_results(self):
         pass
 
-    def _get_results(self):
-        pass
+    def _reset_solvers_confirmated_dict(self):
+        for key in self._solvers_confirmated:
+            self._solvers_confirmated[key] = False
+
+class EOF:
+    def __init__(self, data):
+        data = json.loads(data)
+        self.EjSolver = data['EjSolver']
+        self.eof = data["eof"]
+        self.results = data["results"] if self.eof == "trip" else None
