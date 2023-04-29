@@ -26,10 +26,11 @@ class Ej1Solver:
             if (data["city"],data["start_date"]) in self._days_with_more_than_30mm_prectot:
                 self._days_with_more_than_30mm_prectot[(data["city"], data["start_date"])].add_trip(data["duration_sec"])
         elif data["type"] == "eof":
-            self._process_eof(data["eof"])
+            finished = self._process_eof(data["eof"])
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        if finished: self._exit()
 
     def _process_eof(self, eof):
         if eof == "weather":
@@ -40,9 +41,10 @@ class Ej1Solver:
             self._trips_eof_to_expect -= 1
             if self._trips_eof_to_expect == 0:
                 self._send_results()
-                self._exit()
+                return True
         else:
             logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
+        return False
 
     def _send_eof_confirm(self, eof):
         json_eof = json.dumps({

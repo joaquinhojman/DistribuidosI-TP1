@@ -62,13 +62,16 @@ class EofListener:
         self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
-        self._proccess_eof(body.decode("utf-8"))
+        finished = self._proccess_eof(body.decode("utf-8"))
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        if finished: self._exit()
 
     def _proccess_eof(self, body):
+        finished = False
         self._remaining_brokers_eof[body] -= 1
         if self._remaining_brokers_eof[body] == 0:
-            self._send_eofs(body)
+            finished = self._send_eofs(body)
+        return finished
 
     def _send_eofs(self, body):
         if body == WEATHER:
@@ -82,11 +85,12 @@ class EofListener:
                 self._send(TE2, "EOF,"+body)
             for _ in range(self._cant_filters[TE3]):
                 self._send(TE3, "EOF,"+body)
-            self._exit()
+            return True
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
             return
         logging.info(f'action: send eof | result: success | body: {body}')
+        return False
 
     def _send(self, queue, data):
         self._channel.basic_publish(

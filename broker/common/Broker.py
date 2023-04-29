@@ -72,7 +72,7 @@ class Broker:
 
     def _callback_weather(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body[:3])
+        self._check_eof(body[:3], ch, method)
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         weathers = str(body).split('\n')
         for w in weathers:
@@ -83,7 +83,7 @@ class Broker:
 
     def _callback_stations(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body[:3])
+        self._check_eof(body[:3], ch, method)
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         stations = str(body).split('\n')
         for s in stations:
@@ -96,7 +96,7 @@ class Broker:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._check_eof(body[:3])
+        self._check_eof(body[:3], ch, method)
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         trips = str(body).split('\n')
         for t in trips:
@@ -109,9 +109,10 @@ class Broker:
             self._send_data_to_queue("te3", trip_for_ej3solver)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    def _check_eof(self, body):
+    def _check_eof(self, body, ch, method):
         if body == "EOF":
             self._send_eof()
+            ch.basic_ack(delivery_tag=method.delivery_tag)
             self._exit()
     
     def _send_eof(self):

@@ -171,6 +171,7 @@ class EntryPoint:
         self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
+        finished = False
         eof = EOF(body.decode('utf-8'))
         if eof.eof != self._actual_topic:
             logging.error(f'action: _callback | result: fail | error: eof.eof != self._actual_topic')
@@ -179,8 +180,9 @@ class EntryPoint:
         if all(self._solvers_confirmated.values()):
             self._reset_solvers_confirmated_dict()
             self._results = eof.results
-            self._channel.stop_consuming()
+            finished = True
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        if finished: self._channel.stop_consuming()
 
     def _send_results(self):
         self._protocol.send(self._results)

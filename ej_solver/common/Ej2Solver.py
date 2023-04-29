@@ -28,10 +28,11 @@ class Ej2Solver:
             station_name = self._stations_name[(data["city"], data["start_station_code"], data["yearid"])]
             self._stations[station_name].add_trip(data["yearid"])
         elif data["type"] == "eof":
-            self._process_eof(data["eof"])
+            finished = self._process_eof(data["eof"])
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        if finished: self._exit()
     
     def _process_eof(self, eof):
         if eof == "station":
@@ -42,9 +43,10 @@ class Ej2Solver:
             self._trips_eof_to_expect -= 1
             if self._trips_eof_to_expect == 0:
                 self._send_results()
-                self._exit()
+                return True
         else:
             logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
+        return False
 
     def _send_eof_confirm(self, eof):
         json_eof = json.dumps({
