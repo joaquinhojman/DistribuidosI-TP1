@@ -72,15 +72,15 @@ class EofListener:
     def _send_eofs(self, body):
         if body == WEATHER:
             for _ in range(self._cant_filters[WE1]):
-                self._send(WE1, "EOF")
+                self._send(WE1, "EOF,"+body)
         elif body == STATIONS:
             for _ in range(self._cant_filters[SE3]):
-                self._send(SE3, "EOF")
+                self._send(SE3, "EOF,"+body)
         elif body == TRIPS:
             for _ in range(self._cant_filters[TE2]):
-                self._send(TE2, "EOF")
+                self._send(TE2, "EOF,"+body)
             for _ in range(self._cant_filters[TE3]):
-                self._send(TE3, "EOF")
+                self._send(TE3, "EOF,"+body)
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
             return
