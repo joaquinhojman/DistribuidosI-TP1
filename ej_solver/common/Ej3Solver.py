@@ -86,7 +86,7 @@ class Ej3Solver:
 
     def _exit(self):
         self._channel.stop_consuming()
-        exit(0)
+        self._channel.close()
 
 class MontrealStation:
     def __init__(self, latitude, longitude):

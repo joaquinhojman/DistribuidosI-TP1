@@ -76,7 +76,7 @@ class Ej1Solver:
 
     def _exit(self):
         self._channel.stop_consuming()
-        exit(0)
+        self._channel.close()
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):

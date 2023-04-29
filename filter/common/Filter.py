@@ -127,4 +127,4 @@ class Filter:
 
     def _exit(self):
         self._channel.stop_consuming()
-        exit(0)
+        self._channel.close()

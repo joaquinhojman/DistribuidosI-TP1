@@ -65,6 +65,7 @@ class EntryPoint:
         self._sigterm_received = True
         try:
             self._server_socket.close()
+            self._channel.close()
         except:
             pass
         logging.info(f'action: Handle SIGTERM | result: success')
