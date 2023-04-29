@@ -220,4 +220,4 @@ class EOF:
         data = json.loads(data)
         self.EjSolver = data['EjSolver']
         self.eof = data["eof"]
-        self.results = data["results"] if self.eof == "trip" else None
+        self.results = data["results"] if self.eof == "trips" else None

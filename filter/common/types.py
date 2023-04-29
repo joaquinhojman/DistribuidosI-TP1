@@ -29,7 +29,7 @@ class Te2:
 
     def get_json(self):
         return json.dumps({
-            "type": "trip",
+            "type": "trips",
             "city": self.city,
             "start_station_code": self.start_station_code,
             "yearid": self.yearid,
@@ -71,7 +71,7 @@ class Te3:
 
     def get_json(self):
         return json.dumps({
-            "type": "trip",
+            "type": "trips",
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
             "yearid": self.yearid,
