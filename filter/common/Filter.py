@@ -32,7 +32,7 @@ class Filter:
                 channel.queue_declare(queue=self._filter_type, durable=True)
                 self._channel = channel
             except Exception as e:
-                sleep(5)
+                sleep(15)
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):

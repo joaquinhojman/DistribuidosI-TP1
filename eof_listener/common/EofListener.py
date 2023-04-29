@@ -48,7 +48,7 @@ class EofListener:
 
                 self._channel = channel
             except Exception as e:
-                sleep(5)
+                sleep(15)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):

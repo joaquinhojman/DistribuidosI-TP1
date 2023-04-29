@@ -28,7 +28,7 @@ class EjSolver:
                 channel.queue_declare(queue="results", durable=True)
                 self._channel = channel
             except Exception as e:
-                sleep(5)
+                sleep(15)
         logging.info(f'action: initialize_rabbitmq | result: success | EjSolver: {self._EjSolver}')
 
     def _sigterm_handler(self, _signo, _stack_frame):

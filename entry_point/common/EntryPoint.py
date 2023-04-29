@@ -57,7 +57,7 @@ class EntryPoint:
 
                 self._channel = channel
             except Exception as e:
-                sleep(5)
+                sleep(15)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -72,12 +72,12 @@ class EntryPoint:
 
     def run(self):
         try:
-            logging.info(f'action: run | result: in_progress')
-            while not self._sigterm_received:
-                client_socket = self._accept_new_connection(self._server_socket)
-                if client_socket is None: continue
-                self._client_socket = client_socket
-                self._run()
+            logging.info(f'action: run | result: in_progress')            
+            client_socket = self._accept_new_connection(self._server_socket)
+            if client_socket is None: return
+            self._client_socket = client_socket
+            self._run()
+            self._close_connection()
         except Exception as e:
             logging.error(f'action: run | result: fail | error: {e}')
             self._sigterm_handler()
@@ -102,7 +102,8 @@ class EntryPoint:
         res = self._receive_data(TRIPS)
         if res == False: return
         
-        self._send_results()
+        ack = self._send_results()
+        logging.info(f'action: run | result: success | ack: {ack}')
 
     def _receive_data(self, topic):
         logging.info(f'action: receive_data | topic: {topic} | result: in_progress')
@@ -181,11 +182,21 @@ class EntryPoint:
             self._channel.stop_consuming()
 
     def _send_results(self):
-        pass
+        self._protocol.send(self._results)
+        ack = self._protocol.receive_ack()
+        return ack
 
     def _reset_solvers_confirmated_dict(self):
         for key in self._solvers_confirmated:
             self._solvers_confirmated[key] = False
+
+    def _close_connection(self):
+        if self._client_socket is not None:
+            self._client_socket.close()
+        if self._server_socket is not None:
+            self._server_socket.close()
+        if self._channel is not None:
+            self._channel.close()
 
 class EOF:
     def __init__(self, data):
