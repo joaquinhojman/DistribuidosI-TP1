@@ -1,18 +1,32 @@
 
+import os
 import socket
 import logging
 from time import sleep
 import pika
 
+WEATHER = "weather"
+STATIONS = "stations"
+TRIPS = "trips"
+WE1 = "we1"
+TE2 = "te2"
+SE3 = "se3"
+TE3 = "te3"
+
 class EofListener:
     def __init__(self):
-        self._weather_broker_entities = 0
-        self._station_broker_entities = 0
-        self._trip_broker_entities = 0
+        self._remaining_brokers_eof = {
+            WEATHER: int(os.getenv('WBRKCANT', "")),
+            STATIONS: int(os.getenv('SBRKCANT', "")),
+            TRIPS: int(os.getenv('TBRKCANT', ""))
+        }
 
-        self._we1_filter_entities = 0
-        self._te2_filter_entities = 0
-        self._se3_filter_entities = 0
+        self._cant_filters = {
+            WE1: int(os.getenv('WE1FCANT', "")),
+            TE2: int(os.getenv('TE2FCANT', "")),
+            SE3: int(os.getenv('SE3FCANT', "")),
+            TE3: int(os.getenv('TE3FCANT', ""))
+        }
 
         self._channel = None
         self._create_RabbitMQ_Connection()
@@ -27,9 +41,10 @@ class EofListener:
                 channel = connection.channel()
 
                 channel.queue_declare(queue="eoflistener", durable=True)
-                channel.queue_declare(queue="we1", durable=True)
-                channel.queue_declare(queue="te2", durable=True)
-                channel.queue_declare(queue="se3", durable=True)
+                channel.queue_declare(queue=WE1, durable=True)
+                channel.queue_declare(queue=TE2, durable=True)
+                channel.queue_declare(queue=SE3, durable=True)
+                channel.queue_declare(queue=TE3, durable=True)
 
                 self._channel = channel
             except Exception as e:
@@ -47,4 +62,29 @@ class EofListener:
         self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
-        pass
+        self._proccess_eof(body.decode("utf-8"))
+
+    def _proccess_eof(self, body):
+        self._remaining_brokers_eof[body] -= 1
+        if self._remaining_brokers_eof[body] == 0:
+            self._send_eofs(body)
+
+    def _send_eofs(self, body):
+        if body == WEATHER:
+            for _ in range(self._cant_filters[WE1]):
+                self._send(WE1, "EOF")
+        elif body == STATIONS:
+            for _ in range(self._cant_filters[SE3]):
+                self._send(SE3, "EOF")
+        elif body == TRIPS:
+            for _ in range(self._cant_filters[TE2]):
+                self._send(TE2, "EOF")
+            for _ in range(self._cant_filters[TE3]):
+                self._send(TE3, "EOF")
+        else:
+            logging.error(f'action: send eof | result: error | error: invalid body')
+            return
+        logging.info(f'action: send eof | result: success | body: {body}')
+
+    def _send(self, queue, data):
+        self._channel.basic_publish(exchange='', routing_key=queue, body=data)

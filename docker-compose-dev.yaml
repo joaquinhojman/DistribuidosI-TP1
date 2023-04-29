@@ -28,6 +28,9 @@ services:
         - rabbitmq
       environment:
         - PYTHONUNBUFFERED=1
+        - WBRKCANT=2
+        - SBRKCANT=2
+        - TBRKCANT=2
       networks:
         - testing_net
       volumes:
@@ -185,7 +188,7 @@ services:
       environment:
         - EJSOLVER=ej2solver
         - SBRKCANT=2
-        - TE1FCANT=2
+        - TE2FCANT=2
 
     Ej3Solver:
       <<: *EjSolver
@@ -204,6 +207,14 @@ services:
         - rabbitmq
       links: 
         - rabbitmq
+      environment:
+        - WBRKCANT=2
+        - SBRKCANT=2
+        - TBRKCANT=2
+        - WE1FCANT=2
+        - TE2FCANT=2
+        - SE3FCANT=2
+        - TE3FCANT=2
       networks:
         - testing_net
 

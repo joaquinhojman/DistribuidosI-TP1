@@ -8,7 +8,7 @@ class Ej2Solver:
         self._channel = channel
 
         self._stations_eof_to_expect = int(os.getenv('SBRKCANT', ""))
-        self._trips_eof_to_expect = int(os.getenv('TE1FCANT', ""))
+        self._trips_eof_to_expect = int(os.getenv('TE2FCANT', ""))
 
         self._stations_name = {}
         self._stations = {}

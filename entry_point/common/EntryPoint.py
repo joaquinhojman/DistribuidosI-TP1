@@ -1,4 +1,5 @@
 
+import os
 import socket
 import logging
 from time import sleep
@@ -17,6 +18,12 @@ class EntryPoint:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+
+        self._cant_brokers = {
+            WEATHER: int(os.getenv('WBRKCANT', "")),
+            STATIONS: int(os.getenv('SBRKCANT', "")),
+            TRIPS: int(os.getenv('TBRKCANT', ""))
+        }
     
         self._sigterm_received = False
         self._client_socket = None
@@ -99,9 +106,7 @@ class EntryPoint:
                 data_recv = self._protocol.receive()
                 data = Data(data_recv)
                 if data.topic != topic: return None
-                if data.eof == True:
-                    logging.error(f'action: receive_data | eof received | topic: {topic}')
-                    break
+                if data.eof == True: break
                 
                 self._send_data_to_queue(topic, data.data)
                 
@@ -133,6 +138,11 @@ class EntryPoint:
             logging.error(f'action: receive_topic | result: fail | error: {e}')
             return None
 
+    def _send_eofs(self, topic):
+        logging.info(f'action: receive_data | eof received | topic: {topic}')
+        for _ in range(self._cant_brokers[topic]):
+            self._send_data_to_queue(topic, "EOF")
+
     def _send_data_to_queue(self, queue, data):
         self._channel.basic_publish(
             exchange='',
@@ -141,9 +151,6 @@ class EntryPoint:
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
         ))
-    
-    def _send_eofs(self, topic):
-        pass
 
     def _send_results(self):
         pass
