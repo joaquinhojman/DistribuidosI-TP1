@@ -24,7 +24,7 @@ class Ej1Solver:
         if data["type"] == "weather":
             self._days_with_more_than_30mm_prectot[(data["city"], data["date"])] = DayWithMoreThan30mmPrectot()
         elif data["type"] == "trips":
-            if (data["city"],data["start_date"]) in self._days_with_more_than_30mm_prectot:
+            if (data["city"], data["start_date"]) in self._days_with_more_than_30mm_prectot:
                 self._days_with_more_than_30mm_prectot[(data["city"], data["start_date"])].add_trip(data["duration_sec"])
         elif data["type"] == "eof":
             finished = self._process_eof(data["eof"])
@@ -76,7 +76,7 @@ class Ej1Solver:
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
         ))
-        logging.info(f'action: _send | result: success | data: {data}')
+        logging.info(f'action: _send_results | result: success')
 
     def _exit(self):
         self._channel.stop_consuming()
@@ -92,4 +92,7 @@ class DayWithMoreThan30mmPrectot:
         self._total_duration += duration
 
     def get_average_duration(self):
-        return self._total_duration / self._n_trips
+        try:
+            return self._total_duration / self._n_trips
+        except ZeroDivisionError:
+            return 0.0

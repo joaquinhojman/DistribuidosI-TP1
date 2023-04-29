@@ -86,7 +86,7 @@ class Ej3Solver:
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
         ))
-        logging.info(f'action: _send | result: success | data: {data}')
+        logging.info(f'action: _send_results | result: success')
 
     def _exit(self):
         self._channel.stop_consuming()

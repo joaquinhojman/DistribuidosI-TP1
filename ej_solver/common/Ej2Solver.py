@@ -66,7 +66,7 @@ class Ej2Solver:
         self._send(json_results)
 
     def _get_results(self):
-        results = {[]}
+        results = {}
         for key, value in self._stations.items():
             if value.duplicate_trips():
                 results[key] = (value._trips_on_2016, value._trips_on_2017)
@@ -80,7 +80,7 @@ class Ej2Solver:
             properties=pika.BasicProperties(
             delivery_mode = 2, # make message persistent
         ))
-        logging.info(f'action: _send | result: success | data: {data}')
+        logging.info(f'action: _send_results | result: success')
 
     def _exit(self):
         self._channel.stop_consuming()
@@ -100,4 +100,4 @@ class Station:
             logging.error(f'action: add_trip | result: error | error: Invalid year | year: {year}')
 
     def duplicate_trips(self):
-        return self.add_2016_trip * 2 <= self.add_2017_trip
+        return self._trips_on_2016 * 2 <= self._trips_on_2017

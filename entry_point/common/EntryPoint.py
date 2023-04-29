@@ -35,7 +35,11 @@ class EntryPoint:
             EJ2SOLVER: False,
             EJ3SOLVER: False
         }
-        self._results = None
+        self._results = {
+            EJ1SOLVER: None,
+            EJ2SOLVER: None,
+            EJ3SOLVER: None
+        }
     
         self._sigterm_received = False
         self._client_socket = None
@@ -181,15 +185,15 @@ class EntryPoint:
             logging.error(f'action: _callback | result: fail | error: eof.eof != self._actual_topic')
             return
         self._solvers_confirmated[eof.EjSolver] = True
+        self._results[eof.EjSolver] = eof.results
         if self._all_solvers_confirmated():
             self._reset_solvers_confirmated_dict()
-            self._results = eof.results
             finished = True
         ch.basic_ack(delivery_tag=method.delivery_tag)
         if finished: self._channel.stop_consuming()
 
     def _send_results(self):
-        self._protocol.send(self._results)
+        self._protocol.send(str(self._results))
         ack = self._protocol.receive_ack()
         return ack
 
