@@ -5,7 +5,7 @@ import logging
 from time import sleep
 import pika
 
-EOFLISTENER = "efolistener"
+EOFLISTENER = "eoflistener"
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
@@ -59,7 +59,7 @@ class EofListener:
     def run(self):
         logging.info(f'action: run | result: in_progress')
         self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue="eoflistener", on_message_callback=self._callback)
+        self._channel.basic_consume(queue=EOFLISTENER, on_message_callback=self._callback)
         self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):

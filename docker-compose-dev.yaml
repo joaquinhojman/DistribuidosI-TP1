@@ -30,7 +30,7 @@ services:
         - PYTHONUNBUFFERED=1
         - WBRKCANT=2
         - SBRKCANT=2
-        - TBRKCANT=2
+        - TBRKCANT=4
       networks:
         - testing_net
       volumes:
@@ -102,6 +102,20 @@ services:
         - BROKER_ID=2
         - BROKER_TYPE=trips
     
+    broker_trips3:
+      <<: *broker
+      container_name: broker_trips3
+      environment:
+        - BROKER_ID=3
+        - BROKER_TYPE=trips
+    
+    broker_trips4:
+      <<: *broker
+      container_name: broker_trips4
+      environment:
+        - BROKER_ID=4
+        - BROKER_TYPE=trips
+    
     filter_weather1: &filter
       container_name: filter_weather1
       image: filter:latest
@@ -152,6 +166,20 @@ services:
         - FILTER_ID=2
         - FILTER_TYPE=te2
 
+    filter_trips_e2_3:
+      <<: *filter
+      container_name: filter_trips_e2_3
+      environment:
+        - FILTER_ID=3
+        - FILTER_TYPE=te2
+
+    filter_trips_e2_4:
+      <<: *filter
+      container_name: filter_trips_e2_4
+      environment:
+        - FILTER_ID=4
+        - FILTER_TYPE=te2
+
     filter_trips_e3_1:
       <<: *filter
       container_name: filter_trips_e3_1
@@ -166,6 +194,20 @@ services:
         - FILTER_ID=2
         - FILTER_TYPE=te3
 
+    filter_trips_e3_3:
+      <<: *filter
+      container_name: filter_trips_e3_3
+      environment:
+        - FILTER_ID=3
+        - FILTER_TYPE=te3
+
+    filter_trips_e3_4:
+      <<: *filter
+      container_name: filter_trips_e3_4
+      environment:
+        - FILTER_ID=4
+        - FILTER_TYPE=te3
+
     Ej1Solver: &EjSolver
       container_name: Ej1Solver
       image: ej_solver:latest
@@ -178,7 +220,7 @@ services:
       environment:
         - EJSOLVER=ej1solver
         - WE1FCANT=2
-        - TBRKCANT=2
+        - TBRKCANT=4
       networks:
         - testing_net
 
@@ -188,7 +230,7 @@ services:
       environment:
         - EJSOLVER=ej2solver
         - SBRKCANT=2
-        - TE2FCANT=2
+        - TE2FCANT=4
 
     Ej3Solver:
       <<: *EjSolver
@@ -196,7 +238,7 @@ services:
       environment:
         - EJSOLVER=ej3solver
         - SE3FCANT=2
-        - TE3FCANT=2
+        - TE3FCANT=4
 
     EofListener:
       container_name: EofListener
@@ -210,11 +252,11 @@ services:
       environment:
         - WBRKCANT=2
         - SBRKCANT=2
-        - TBRKCANT=2
+        - TBRKCANT=4
         - WE1FCANT=2
-        - TE2FCANT=2
+        - TE2FCANT=4
         - SE3FCANT=2
-        - TE3FCANT=2
+        - TE3FCANT=4
       networks:
         - testing_net
 

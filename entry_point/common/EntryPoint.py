@@ -130,7 +130,7 @@ class EntryPoint:
                 
                 self._send_data_to_queue(topic, data.data)
                 
-                self._protocol.send_ack(True)
+                #self._protocol.send_ack(True)
 
             self._send_eofs()
             self._expect_solvers_confirmation()
@@ -153,7 +153,7 @@ class EntryPoint:
             data = self._protocol.receive()
             topic = data.split(';')[0]
             logging.info(f'action: receive_topic | result: success | topic: {topic}')
-            self._protocol.send_ack(True)
+            #self._protocol.send_ack(True)
             return topic
         except Exception as e:
             logging.error(f'action: receive_topic | result: fail | error: {e}')

@@ -1,6 +1,7 @@
 import logging
 import os
 import socket
+from time import sleep
 
 from protocol.protocol import Protocol
 
@@ -62,6 +63,7 @@ class FileReader:
             while not eof:
                 data, eof = self._get_data(row_header, data_type, city_name)
                 self._send(data)
+                sleep(0.0005) #need cpu time to another tasks (only for local)
             self._f.close()
 
             if (send_eof): self._send_eof(data_type)
@@ -106,13 +108,14 @@ class FileReader:
         return row
 
     def _send_eof(self, data_type):
-        self._send(self._get_eof_packet(data_type))
+        self._send(self._get_eof_packet(data_type), True)
 
     def _get_eof_packet(self, data_type):
         return data_type + ";1"
 
-    def _send(self, data):
+    def _send(self, data, expect_ack=False):
         self._protocol.send(data)
+        if not expect_ack: return
         ack = self._protocol.receive_ack()
         if ack == False:
             raise Exception("received ack was False")

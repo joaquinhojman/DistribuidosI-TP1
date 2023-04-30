@@ -50,7 +50,7 @@ class Se3:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.city == "Montreal"
+        return self.city == "montreal"
 
     def get_json(self):
         return json.dumps({
@@ -71,7 +71,7 @@ class Te3:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.city == "Montreal"
+        return self.city == "montreal"
 
     def get_json(self):
         return json.dumps({

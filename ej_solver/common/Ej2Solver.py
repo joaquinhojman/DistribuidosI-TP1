@@ -104,4 +104,4 @@ class Station:
             logging.error(f'action: add_trip | result: error | error: Invalid year | year: {year}')
 
     def duplicate_trips(self):
-        return self._trips_on_2016 * 2 <= self._trips_on_2017
+        return (self._trips_on_2016 * 2 <= self._trips_on_2017) and self._trips_on_2017 != 0

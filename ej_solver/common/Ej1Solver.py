@@ -69,7 +69,9 @@ class Ej1Solver:
     def _get_results(self):
         results = {}
         for key, value in self._days_with_more_than_30mm_prectot.items():
-            results[key] = value.get_average_duration()
+            average_duration = value.get_average_duration()
+            if average_duration > 0.0:
+                results[key] = value.get_average_duration()
         return results
     
     def _send(self, data):
