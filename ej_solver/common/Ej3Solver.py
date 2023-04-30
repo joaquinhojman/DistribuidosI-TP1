@@ -102,7 +102,7 @@ class MontrealStation:
         self._longitude = float(longitude)
 
         self._trips = 0
-        self._total_km_to_come = 0
+        self._total_km_to_come = 0.0
 
     def add_trip(self, origin):
         end = (self._latitude, self._longitude)
@@ -112,4 +112,7 @@ class MontrealStation:
         self._total_km_to_come += distance_in_km
     
     def get_average_km(self):
-        return self._total_km_to_come / self._trips
+        try:
+            return self._total_km_to_come / self._trips
+        except ZeroDivisionError:
+            return 0.0

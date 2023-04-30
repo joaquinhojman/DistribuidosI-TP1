@@ -28,8 +28,8 @@ services:
         - rabbitmq
       environment:
         - PYTHONUNBUFFERED=1
-        - WBRKCANT=4
-        - SBRKCANT=4
+        - WBRKCANT=2
+        - SBRKCANT=2
         - TBRKCANT=4
       networks:
         - testing_net
@@ -74,20 +74,6 @@ services:
         - BROKER_ID=2
         - BROKER_TYPE=weather
     
-    broker_weather3:
-      <<: *broker
-      container_name: broker_weather3
-      environment:
-        - BROKER_ID=3
-        - BROKER_TYPE=weather
-    
-    broker_weather4:
-      <<: *broker
-      container_name: broker_weather4
-      environment:
-        - BROKER_ID=4
-        - BROKER_TYPE=weather
-    
     broker_stations1:
       <<: *broker
       container_name: broker_stations1
@@ -100,20 +86,6 @@ services:
       container_name: broker_stations2
       environment:
         - BROKER_ID=2
-        - BROKER_TYPE=stations
-
-    broker_stations3:
-      <<: *broker
-      container_name: broker_stations3
-      environment:
-        - BROKER_ID=3
-        - BROKER_TYPE=stations
-
-    broker_stations4:
-      <<: *broker
-      container_name: broker_stations4
-      environment:
-        - BROKER_ID=4
         - BROKER_TYPE=stations
 
     broker_trips1:
@@ -166,20 +138,6 @@ services:
         - FILTER_ID=2
         - FILTER_TYPE=we1
 
-    filter_weather3:
-      <<: *filter
-      container_name: filter_weather3
-      environment:
-        - FILTER_ID=3
-        - FILTER_TYPE=we1
-
-    filter_weather4:
-      <<: *filter
-      container_name: filter_weather4
-      environment:
-        - FILTER_ID=4
-        - FILTER_TYPE=we1
-
     filter_stations1:
       <<: *filter
       container_name: filter_stations1
@@ -192,20 +150,6 @@ services:
       container_name: filter_stations2
       environment:
         - FILTER_ID=2
-        - FILTER_TYPE=se3
-
-    filter_stations3:
-      <<: *filter
-      container_name: filter_stations3
-      environment:
-        - FILTER_ID=3
-        - FILTER_TYPE=se3
-
-    filter_stations4:
-      <<: *filter
-      container_name: filter_stations4
-      environment:
-        - FILTER_ID=4
         - FILTER_TYPE=se3
 
     filter_trips_e2_1:
@@ -275,7 +219,7 @@ services:
         - rabbitmq
       environment:
         - EJSOLVER=ej1solver
-        - WE1FCANT=4
+        - WE1FCANT=2
         - TBRKCANT=4
       networks:
         - testing_net
@@ -285,7 +229,7 @@ services:
       container_name: Ej2Solver
       environment:
         - EJSOLVER=ej2solver
-        - SBRKCANT=4
+        - SBRKCANT=2
         - TE2FCANT=4
 
     Ej3Solver:
@@ -293,7 +237,7 @@ services:
       container_name: Ej3Solver
       environment:
         - EJSOLVER=ej3solver
-        - SE3FCANT=4
+        - SE3FCANT=2
         - TE3FCANT=4
 
     EofListener:
@@ -306,12 +250,12 @@ services:
       links: 
         - rabbitmq
       environment:
-        - WBRKCANT=4
-        - SBRKCANT=4
+        - WBRKCANT=2
+        - SBRKCANT=2
         - TBRKCANT=4
-        - WE1FCANT=4
+        - WE1FCANT=2
         - TE2FCANT=4
-        - SE3FCANT=4
+        - SE3FCANT=2
         - TE3FCANT=4
       networks:
         - testing_net
