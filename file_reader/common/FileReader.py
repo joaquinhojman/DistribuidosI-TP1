@@ -106,13 +106,14 @@ class FileReader:
         return row
 
     def _send_eof(self, data_type):
-        self._send(self._get_eof_packet(data_type))
+        self._send(self._get_eof_packet(data_type), True)
 
     def _get_eof_packet(self, data_type):
         return data_type + ";1"
 
-    def _send(self, data):
+    def _send(self, data, expect_ack=False):
         self._protocol.send(data)
+        if not expect_ack: return
         ack = self._protocol.receive_ack()
         if ack == False:
             raise Exception("received ack was False")
