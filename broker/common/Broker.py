@@ -34,8 +34,10 @@ class Broker:
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        while self._channel is None:
+        retries =  int(os.getenv('RMQRETRIES', "5"))
+        while retries > 0 and self._channel is None:
             sleep(15)
+            retries -= 1
             try:
                 connection = pika.BlockingConnection(
                     pika.ConnectionParameters(host='rabbitmq'))

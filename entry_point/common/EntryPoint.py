@@ -50,8 +50,10 @@ class EntryPoint:
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
-        while self._channel is None:
+        retries =  int(os.getenv('RMQRETRIES', "5"))
+        while retries > 0 and self._channel is None:
             sleep(15)
+            retries -= 1
             try: 
                 # Create RabbitMQ communication channel
                 connection = pika.BlockingConnection(
