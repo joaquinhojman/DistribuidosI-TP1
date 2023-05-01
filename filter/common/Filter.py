@@ -26,6 +26,8 @@ class Filter:
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        if self._channel is not None:
+            self._channel.close()
         logging.info(f'action: Handle SIGTERM | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def _initialize_rabbitmq(self):
@@ -45,22 +47,27 @@ class Filter:
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):
-        logging.info(f'action: run | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.basic_qos(prefetch_count=1)
-        
-        if self._filter_type == self._we1:
-            self._run_we1_filter()
-        elif self._filter_type == self._te2:
-            self._run_te2_filter()
-        elif self._filter_type == self._se3:
-            self._run_se3_filter()
-        elif self._filter_type == self._te3:
-            self._run_te3_filter()
-        else:
-            logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: Invalid filter type')
-            raise Exception("Invalid filter type")
-        
-        self._channel.start_consuming()
+        try:
+            logging.info(f'action: run | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+            self._channel.basic_qos(prefetch_count=1)
+            
+            if self._filter_type == self._we1:
+                self._run_we1_filter()
+            elif self._filter_type == self._te2:
+                self._run_te2_filter()
+            elif self._filter_type == self._se3:
+                self._run_se3_filter()
+            elif self._filter_type == self._te3:
+                self._run_te3_filter()
+            else:
+                logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: Invalid filter type')
+                raise Exception("Invalid filter type")
+            
+            self._channel.start_consuming()
+        except Exception as e:
+            logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: {e}')
+            if self._channel is not None:
+                self._channel.close()
 
     def _run_we1_filter(self):
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')

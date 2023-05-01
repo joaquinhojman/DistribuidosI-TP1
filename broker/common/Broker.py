@@ -28,6 +28,8 @@ class Broker:
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
+        if self._channel is not None:
+            self._channel.close()
         logging.info(f'action: Handle SIGTERM | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def _initialize_rabbitmq(self):
@@ -49,20 +51,25 @@ class Broker:
         logging.info(f'action: initialize_rabbitmq | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def run(self):
-        logging.info(f'action: run | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.basic_qos(prefetch_count=1)
-        
-        if self._broker_type == self._weather:
-            self._run_weather_broker()
-        elif self._broker_type == self._stations:
-            self._run_stations_broker()
-        elif self._broker_type == self._trips:
-            self._run_trips_broker()
-        else:
-            logging.error(f'action: run | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')
-            raise Exception("Invalid broker type")
-        
-        self._channel.start_consuming()
+        try:
+            logging.info(f'action: run | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
+            self._channel.basic_qos(prefetch_count=1)
+            
+            if self._broker_type == self._weather:
+                self._run_weather_broker()
+            elif self._broker_type == self._stations:
+                self._run_stations_broker()
+            elif self._broker_type == self._trips:
+                self._run_trips_broker()
+            else:
+                logging.error(f'action: run | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')
+                raise Exception("Invalid broker type")
+            
+            self._channel.start_consuming()
+        except Exception as e:
+            logging.error(f'action: run | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: {e}')
+            if self._channel is not None:
+                self._channel.close()
 
     def _run_weather_broker(self):
         logging.info(f'action: run_weather_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')

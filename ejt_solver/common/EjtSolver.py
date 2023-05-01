@@ -34,19 +34,26 @@ class EjtSolver:
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress | EjtSolver: {self._EjtSolver}')
+        if self._channel is not None:
+            self._channel.close()
         logging.info(f'action: Handle SIGTERM | result: success | EjtSolver: {self._EjtSolver}')
 
     def run(self):
-        logging.info(f'action: run | result: in_progress | EjSolver: {self._EjtSolver}')
-        if self._EjtSolver == self._ej1tsolver:
-            ej1tSolver = Ej1tSolver(self._EjtSolver, self._channel, )
-            ej1tSolver.run()
-        elif self._EjtSolver == self._ej2tsolver:
-            ej2tSolver = Ej2tSolver(self._EjtSolver, self._channel, )
-            ej2tSolver.run()
-        elif self._EjtSolver == self._ej3tsolver:
-            ej3tSolver = Ej3tSolver(self._EjtSolver, self._channel, )
-            ej3tSolver.run()
-        else:
-            logging.error(f'action: run | result: error | EjtSolver: {self._EjtSolver} | error: Invalid filter type')
-            raise Exception("Invalid filter type")
+        try:
+            logging.info(f'action: run | result: in_progress | EjSolver: {self._EjtSolver}')
+            if self._EjtSolver == self._ej1tsolver:
+                ej1tSolver = Ej1tSolver(self._EjtSolver, self._channel, )
+                ej1tSolver.run()
+            elif self._EjtSolver == self._ej2tsolver:
+                ej2tSolver = Ej2tSolver(self._EjtSolver, self._channel, )
+                ej2tSolver.run()
+            elif self._EjtSolver == self._ej3tsolver:
+                ej3tSolver = Ej3tSolver(self._EjtSolver, self._channel, )
+                ej3tSolver.run()
+            else:
+                logging.error(f'action: run | result: error | EjtSolver: {self._EjtSolver} | error: Invalid filter type')
+                raise Exception("Invalid filter type")
+        except Exception as e:
+            logging.error(f'action: run | result: error | EjtSolver: {self._EjtSolver} | error: {e}')
+            if self._channel is not None:
+                self._channel.close()

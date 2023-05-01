@@ -55,13 +55,20 @@ class EofListener:
 
     def _sigterm_handler(self, _signo, _stack_frame):
         logging.info(f'action: Handle SIGTERM | result: in_progress')
+        if self._channel is not None:
+            self._channel.close()
         logging.info(f'action: Handle SIGTERM | result: success')
 
     def run(self):
-        logging.info(f'action: run | result: in_progress')
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=EOFLISTENER, on_message_callback=self._callback)
-        self._channel.start_consuming()
+        try:
+            logging.info(f'action: run | result: in_progress')
+            self._channel.basic_qos(prefetch_count=1)
+            self._channel.basic_consume(queue=EOFLISTENER, on_message_callback=self._callback)
+            self._channel.start_consuming()
+        except Exception as e:
+            logging.error(f'action: run | result: error | error: {e}')        
+            if self._channel is not None:
+                self._channel.close()
 
     def _callback(self, ch, method, properties, body):
         finished = self._proccess_eof(body.decode("utf-8"))

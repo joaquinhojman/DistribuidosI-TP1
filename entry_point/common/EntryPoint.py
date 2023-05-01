@@ -1,5 +1,4 @@
 
-import json
 import os
 import socket
 import logging
@@ -7,7 +6,7 @@ from time import sleep
 import pika
 
 from protocol.protocol import Protocol
-from common.Data import Data
+from common.Data import EOF, Data
 
 WEATHER = "weather"
 STATIONS = "stations"
@@ -220,10 +219,3 @@ class EntryPoint:
             self._server_socket.close()
         if self._channel is not None:
             self._channel.close()
-
-class EOF:
-    def __init__(self, data):
-        data = json.loads(data)
-        self.EjSolver = data['EjSolver']
-        self.eof = data["eof"]
-        self.results = data["results"] if self.eof == "trips" else None
