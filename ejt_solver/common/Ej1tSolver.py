@@ -39,7 +39,7 @@ class Ej1tSolver:
         if data["type"] == "trips":
             key = str((data["city"], data["start_date"]))
             if key in self._days_with_more_than_30mm_prectot:
-                self._days_with_more_than_30mm_prectot[key].add_trip(data["duration_sec"])
+                self._days_with_more_than_30mm_prectot[key].add_trip(float(data["duration_sec"]))
         elif data["type"] == "eof":
             self._send_trips_to_ej1solver()
             ch.basic_ack(delivery_tag=method.delivery_tag)
