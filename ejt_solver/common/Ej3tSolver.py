@@ -61,7 +61,7 @@ class Ej3tSolver:
     def _send_trips_to_ej3solver(self):
         data = {}
         for k, v in self._montreal_stations.items():
-            data[k] =( v._trips, v._total_km_to_come)
+            data[k] = str(v._trips) + "," + str(v._total_km_to_come)
         self._channel.basic_publish(exchange='', routing_key=EJ3TRIPS, body=str(data))
         logging.info(f'action: _send_trips_to_ej3solver | result: trips sended | EjtSolver: {self._EjtSolver}')
 

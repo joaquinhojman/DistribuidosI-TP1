@@ -27,7 +27,7 @@ class Ej1tSolver:
 
     def _callback_weathers(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        days_list = list(body)
+        days_list = eval(body)
         for day in days_list:
             self._days_with_more_than_30mm_prectot[day] = DayWithMoreThan30mmPrectot()
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -52,7 +52,7 @@ class Ej1tSolver:
     def _send_trips_to_ej1solver(self):
         data = {}
         for k, v in self._days_with_more_than_30mm_prectot.items():
-            data[k] =( v._n_trips, v._total_duration)
+            data[k] = str(v._n_trips) + "," + str(v._total_duration)
         self._channel.basic_publish(exchange='', routing_key=EJ1TRIPS, body=str(data))
         logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjtSolver: {self._EjtSolver}')
 

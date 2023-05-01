@@ -25,8 +25,12 @@ class Ej3Solver:
 
     def run(self):
         logging.info(f'action: run_Ej3Solver | result: in_progress')
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
+        self._channel.start_consuming()
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=EJ3TRIPS, on_message_callback=self._callback_trips)
+        self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         finished = False
@@ -76,7 +80,8 @@ class Ej3Solver:
         self._ej3tsolvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
-            self._montreal_stations[k].add_trip(v[0], v[1])
+            values = v.split(",")
+            self._montreal_stations[k].add_trip(values[0], values[1])
         ch.basic_ack(delivery_tag=method.delivery_tag)
         if self._ej3tsolvers_cant == 0:
             self._send_results()

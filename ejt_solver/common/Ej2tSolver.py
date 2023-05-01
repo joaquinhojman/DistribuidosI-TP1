@@ -55,7 +55,7 @@ class Ej2tSolver:
     def _send_trips_to_ej2solver(self):
         data = {}
         for k, v in self._stations.items():
-            data[k] =( v._trips_on_2016, v._trips_on_2017)
+            data[k] = str(v._trips_on_2016) + "," + str(v._trips_on_2017)
         self._channel.basic_publish(exchange='', routing_key=EJ2TRIPS, body=str(data))
         logging.info(f'action: _send_trips_to_ej2solver | result: trips sended | EjtSolver: {self._EjtSolver}')
 

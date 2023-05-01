@@ -24,8 +24,12 @@ class Ej2Solver:
 
     def run(self):
         logging.info(f'action: run_Ej2Solver | result: in_progress')
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
+        self._channel.start_consuming()
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=EJ2TRIPS, on_message_callback=self._callback_trips)
+        self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         finished = False
@@ -72,8 +76,9 @@ class Ej2Solver:
         self._ej2tsolvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
-            self._stations[k].add_trip("2016", v[0])
-            self._stations[k].add_trip("2017", v[1])
+            values = v.split(",")
+            self._stations[k].add_trip("2016", int(values[0]))
+            self._stations[k].add_trip("2017", int(values[1]))
         ch.basic_ack(delivery_tag=method.delivery_tag)
         if self._ej2tsolvers_cant == 0:
             self._send_results()

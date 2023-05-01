@@ -39,8 +39,6 @@ class EjSolver:
 
     def run(self):
         logging.info(f'action: run | result: in_progress | EjSolver: {self._EjSolver}')
-        self._channel.basic_qos(prefetch_count=1)
-        
         if self._EjSolver == self._ej1solver:
             ej1Solver = Ej1Solver(self._EjSolver, self._channel)
             ej1Solver.run()
@@ -54,4 +52,3 @@ class EjSolver:
             logging.error(f'action: run | result: error | EjSolver: {self._EjSolver} | error: Invalid filter type')
             raise Exception("Invalid filter type")
         
-        self._channel.start_consuming()

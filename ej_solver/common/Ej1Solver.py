@@ -23,8 +23,12 @@ class Ej1Solver:
 
     def run(self):
         logging.info(f'action: run_Ej1Solver | result: in_progress')
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
+        self._channel.start_consuming()
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=EJ1TRIPS, on_message_callback=self._callback_trips)
+        self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         finished = False
@@ -48,7 +52,7 @@ class Ej1Solver:
         return False
 
     def _send_weather_to_ejt1solver(self):
-        data = str(self._days_with_more_than_30mm_prectot.keys())
+        data = str(list(self._days_with_more_than_30mm_prectot.keys()))
         for _ in range(0, self._ej1tsolvers_cant):
             self._channel.basic_publish(
                 exchange='',
@@ -70,7 +74,8 @@ class Ej1Solver:
         self._ej1tsolvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
-            self._days_with_more_than_30mm_prectot[k].add_trip(v[0], v[1])
+            values = v.split(",")
+            self._days_with_more_than_30mm_prectot[k].add_trips(int(values[0]), float(values[1]))
         ch.basic_ack(delivery_tag=method.delivery_tag)
         if self._ej1tsolvers_cant == 0:
             self._send_results()
