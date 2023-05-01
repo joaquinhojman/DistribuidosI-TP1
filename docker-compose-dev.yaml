@@ -199,7 +199,7 @@ services:
         - EJ3TCANT=2
     
     Ej1tSolver_1: &EjTSolver
-      container_name: Ej1tSolver
+      container_name: Ej1tSolver_1
       image: ejt_solver:latest
       entrypoint: python3 /main.py
       restart: on-failure

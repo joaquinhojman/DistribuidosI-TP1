@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import pika
-import haversine
+from haversine import haversine
 
 EJ3TRIPS = "ej3trips"
 EJ3STATIONS = "ej3stations"
