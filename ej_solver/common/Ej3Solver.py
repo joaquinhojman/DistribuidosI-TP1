@@ -33,7 +33,7 @@ class Ej3Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == STATIONS:
-            self._stations_name[(data["code"], data["yearid"])] = data["name"]
+            self._stations_name[str((data["code"], data["yearid"]))] = data["name"]
             self._montreal_stations[data["name"]] = MontrealStation(data["latitude"], data["longitude"])
         elif data["type"] == "eof":
             finished = self._process_eof()

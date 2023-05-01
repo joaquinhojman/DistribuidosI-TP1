@@ -31,7 +31,7 @@ class Ej1Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == WEATHER:
-            self._days_with_more_than_30mm_prectot[(data["city"], data["date"])] = DayWithMoreThan30mmPrectot()
+            self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
         elif data["type"] == "eof":
             finished = self._process_eof()
         else:

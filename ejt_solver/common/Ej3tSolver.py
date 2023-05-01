@@ -31,7 +31,7 @@ class Ej3tSolver:
     def _callback_stations(self, ch, method, properties, body):
         body = body.decode("utf-8")
         data = body.split(";")
-        self._montreal_stations_name = eval(data[0])
+        self._stations_name = eval(data[0])
         stations_list = eval(data[1])
         for station in stations_list:
             station_data = station.split("+")

@@ -32,7 +32,7 @@ class Ej2Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == STATIONS:
-            self._stations_name[(data["city"], data["code"], data["yearid"])] = data["name"]
+            self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
             self._stations[data["name"]] = Station()
         elif data["type"] == "eof":
             finished = self._process_eof()

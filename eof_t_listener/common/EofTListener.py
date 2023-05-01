@@ -74,13 +74,13 @@ class EofTListener:
 
     def _send_eofs(self, body):
         if body == TE2:
-            for _ in range(self._cant_filters[EJ2TSOLVER]):
+            for _ in range(self._cant_solvers[EJ2TSOLVER]):
                 self._send(EJ2TSOLVER, self._get_eof())
         elif body == TE3:
-            for _ in range(self._cant_filters[EJ3TSOLVER]):
+            for _ in range(self._cant_solvers[EJ3TSOLVER]):
                 self._send(EJ3TSOLVER, self._get_eof())
         elif body == TRIPS:
-            for _ in range(self._cant_filters[EJ1TSOLVER]):
+            for _ in range(self._cant_solvers[EJ1TSOLVER]):
                 self._send(EJ1TSOLVER, self._get_eof())
             return True
         else:
