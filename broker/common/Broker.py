@@ -33,6 +33,7 @@ class Broker:
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
         while self._channel is None:
+            sleep(15)
             try:
                 connection = pika.BlockingConnection(
                     pika.ConnectionParameters(host='rabbitmq'))
@@ -44,7 +45,7 @@ class Broker:
 
                 self._channel = channel
             except Exception as e:
-                sleep(15)
+                pass
         logging.info(f'action: initialize_rabbitmq | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def run(self):

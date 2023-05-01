@@ -35,6 +35,7 @@ class EofListener:
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
         while self._channel is None:
+            sleep(15)
             try: 
                 # Create RabbitMQ communication channel
                 connection = pika.BlockingConnection(
@@ -49,7 +50,7 @@ class EofListener:
 
                 self._channel = channel
             except Exception as e:
-                sleep(15)
+                pass
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):

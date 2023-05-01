@@ -31,6 +31,7 @@ class Filter:
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
         while self._channel is None:
+            sleep(15)
             try:
                 connection = pika.BlockingConnection(
                     pika.ConnectionParameters(host='rabbitmq'))
@@ -40,7 +41,7 @@ class Filter:
                 channel.queue_declare(queue=EOFTLISTENER, durable=True)
                 self._channel = channel
             except Exception as e:
-                sleep(15)
+                pass
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):

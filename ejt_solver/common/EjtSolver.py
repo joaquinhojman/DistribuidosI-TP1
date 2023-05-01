@@ -20,6 +20,7 @@ class EjtSolver:
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | EjtSolver: {self._EjtSolver}')
         while self._channel is None:
+            sleep(15)
             try:
                 connection = pika.BlockingConnection(
                     pika.ConnectionParameters(host='rabbitmq'))
@@ -28,7 +29,7 @@ class EjtSolver:
                 channel.queue_declare(queue=self._EjtSolver, durable=True)
                 self._channel = channel
             except Exception as e:
-                sleep(15)
+                pass
         logging.info(f'action: initialize_rabbitmq | result: success | EjtSolver: {self._EjtSolver}')
 
     def _sigterm_handler(self, _signo, _stack_frame):
