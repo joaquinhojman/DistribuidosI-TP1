@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from haversine import haversine
 import pika
 
 STATIONS = "stations"
