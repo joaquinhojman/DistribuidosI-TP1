@@ -5,6 +5,8 @@ import pika
 
 STATIONS = "stations"
 TRIPS = "trips"
+EJ2TRIPS = "ej2trips"
+EJ2STATIONS = "ej2stations"
 RESULTS = "results"
 
 class Ej2Solver:
@@ -13,45 +15,54 @@ class Ej2Solver:
         self._channel = channel
 
         self._stations_eof_to_expect = int(os.getenv('SBRKCANT', ""))
-        self._trips_eof_to_expect = int(os.getenv('TE2FCANT', ""))
+        self._ej2tsolvers_cant = int(os.getenv('EJ2TCANT', ""))
 
         self._stations_name = {}
         self._stations = {}
+        channel.queue_declare(queue=EJ2TRIPS, durable=True)
+        channel.queue_declare(queue=EJ2STATIONS, durable=True)
 
     def run(self):
         logging.info(f'action: run_Ej2Solver | result: in_progress')
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
+        self._channel.start_consuming()
+        self._channel.basic_qos(prefetch_count=1)
+        self._channel.basic_consume(queue=EJ2TRIPS, on_message_callback=self._callback_trips)
+        self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         finished = False
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == STATIONS:
-            self._stations_name[(data["city"], data["code"], data["yearid"])] = data["name"]
+            self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
             self._stations[data["name"]] = Station()
-        elif data["type"] == TRIPS:
-            station_name = self._stations_name[(data["city"], data["start_station_code"], data["yearid"])]
-            self._stations[station_name].add_trip(data["yearid"])
         elif data["type"] == "eof":
-            finished = self._process_eof(data["eof"])
+            finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        if finished: self._exit()
+        if finished: self._channel.stop_consuming()
     
-    def _process_eof(self, eof):
-        if eof == STATIONS:
-            self._stations_eof_to_expect -= 1
-            if self._stations_eof_to_expect == 0:
-                self._send_eof_confirm()
-        elif eof == TRIPS:
-            self._trips_eof_to_expect -= 1
-            if self._trips_eof_to_expect == 0:
-                self._send_results()
-                return True
-        else:
-            logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
+    def _process_eof(self):
+        self._stations_eof_to_expect -= 1
+        if self._stations_eof_to_expect == 0:
+            self._send_stations_to_ejt2solver()
+            self._send_eof_confirm()
+            return True
         return False
+    
+    def _send_stations_to_ejt2solver(self):
+        data = str(self._stations_name) + ";" + str(list(self._stations.keys()))
+        for _ in range(0, self._ej2tsolvers_cant):
+            self._channel.basic_publish(
+                exchange='',
+                routing_key=EJ2STATIONS,
+                body=data,
+                properties=pika.BasicProperties(
+                delivery_mode = 2, # make message persistent
+            ))
 
     def _send_eof_confirm(self):
         json_eof = json.dumps({
@@ -59,6 +70,19 @@ class Ej2Solver:
             "eof": STATIONS
         })
         self._send(json_eof)
+
+    def _callback_trips(self, ch, method, properties, body):
+        body = body.decode("utf-8")
+        self._ej2tsolvers_cant -= 1
+        trips = eval(body)
+        for k, v in trips.items():
+            values = v.split(",")
+            self._stations[k].add_trip("2016", int(values[0]))
+            self._stations[k].add_trip("2017", int(values[1]))
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        if self._ej2tsolvers_cant == 0:
+            self._send_results()
+            self._exit()
 
     def _send_results(self):
         results = self._get_results()
@@ -95,11 +119,11 @@ class Station:
         self._trips_on_2016 = 0
         self._trips_on_2017 = 0
     
-    def add_trip(self, year):
+    def add_trip(self, year, n):
         if year == "2016":
-            self._trips_on_2016 += 1
+            self._trips_on_2016 += n
         elif year == "2017":
-            self._trips_on_2017 += 1
+            self._trips_on_2017 += n
         else:
             logging.error(f'action: add_trip | result: error | error: Invalid year | year: {year}')
 

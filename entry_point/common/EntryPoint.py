@@ -1,5 +1,4 @@
 
-import json
 import os
 import socket
 import logging
@@ -7,7 +6,7 @@ from time import sleep
 import pika
 
 from protocol.protocol import Protocol
-from common.Data import Data
+from common.Data import EOF, Data
 
 WEATHER = "weather"
 STATIONS = "stations"
@@ -51,7 +50,10 @@ class EntryPoint:
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
-        while self._channel is None:
+        retries =  int(os.getenv('RMQRETRIES', "5"))
+        while retries > 0 and self._channel is None:
+            sleep(15)
+            retries -= 1
             try: 
                 # Create RabbitMQ communication channel
                 connection = pika.BlockingConnection(
@@ -65,7 +67,7 @@ class EntryPoint:
 
                 self._channel = channel
             except Exception as e:
-                sleep(15)
+                pass
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -219,10 +221,3 @@ class EntryPoint:
             self._server_socket.close()
         if self._channel is not None:
             self._channel.close()
-
-class EOF:
-    def __init__(self, data):
-        data = json.loads(data)
-        self.EjSolver = data['EjSolver']
-        self.eof = data["eof"]
-        self.results = data["results"] if self.eof == "trips" else None

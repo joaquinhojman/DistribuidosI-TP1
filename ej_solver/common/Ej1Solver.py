@@ -5,6 +5,8 @@ import pika
 
 WEATHER = "weather"
 TRIPS = "trips"
+EJ1TRIPS = "ej1trips"
+EJ1WEATHER = "ej1weather"
 RESULTS = "results"
 
 class Ej1Solver:
@@ -13,43 +15,52 @@ class Ej1Solver:
         self._channel = channel
         
         self._weathers_eof_to_expect = int(os.getenv('WE1FCANT', ""))
-        self._trips_eof_to_expect = int(os.getenv('TBRKCANT', ""))
+        self._ej1tsolvers_cant = int(os.getenv('EJ1TCANT', ""))
 
         self._days_with_more_than_30mm_prectot = {}
+        channel.queue_declare(queue=EJ1TRIPS, durable=True)
+        channel.queue_declare(queue=EJ1WEATHER, durable=True)
 
     def run(self):
         logging.info(f'action: run_Ej1Solver | result: in_progress')
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
+        self._channel.start_consuming()
+        self._channel.basic_qos(prefetch_count=1)
+        self._channel.basic_consume(queue=EJ1TRIPS, on_message_callback=self._callback_trips)
+        self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         finished = False
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == WEATHER:
-            self._days_with_more_than_30mm_prectot[(data["city"], data["date"])] = DayWithMoreThan30mmPrectot()
-        elif data["type"] == TRIPS:
-            if (data["city"], data["start_date"]) in self._days_with_more_than_30mm_prectot:
-                self._days_with_more_than_30mm_prectot[(data["city"], data["start_date"])].add_trip(data["duration_sec"])
+            self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
         elif data["type"] == "eof":
-            finished = self._process_eof(data["eof"])
+            finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        if finished: self._exit()
+        if finished: self._channel.stop_consuming()
 
-    def _process_eof(self, eof):
-        if eof == WEATHER:
-            self._weathers_eof_to_expect -= 1
-            if self._weathers_eof_to_expect == 0:
-                self._send_eof_confirm()
-        elif eof == TRIPS:
-            self._trips_eof_to_expect -= 1
-            if self._trips_eof_to_expect == 0:
-                self._send_results()
-                return True
-        else:
-            logging.error(f'action: _callback | result: error | error: Invalid eof | eof: {eof}')
+    def _process_eof(self,):
+        self._weathers_eof_to_expect -= 1
+        if self._weathers_eof_to_expect == 0:
+            self._send_weather_to_ejt1solver()
+            self._send_eof_confirm()
+            return True
         return False
+
+    def _send_weather_to_ejt1solver(self):
+        data = str(list(self._days_with_more_than_30mm_prectot.keys()))
+        for _ in range(0, self._ej1tsolvers_cant):
+            self._channel.basic_publish(
+                exchange='',
+                routing_key=EJ1WEATHER,
+                body=data,
+                properties=pika.BasicProperties(
+                delivery_mode = 2, # make message persistent
+            ))
 
     def _send_eof_confirm(self):
         json_eof = json.dumps({
@@ -57,6 +68,18 @@ class Ej1Solver:
             "eof": WEATHER
         })
         self._send(json_eof)
+    
+    def _callback_trips(self, ch, method, properties, body):
+        body = body.decode("utf-8")
+        self._ej1tsolvers_cant -= 1
+        trips = eval(body)
+        for k, v in trips.items():
+            values = v.split(",")
+            self._days_with_more_than_30mm_prectot[k].add_trips(int(values[0]), float(values[1]))
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        if self._ej1tsolvers_cant == 0:
+            self._send_results()
+            self._exit()
 
     def _send_results(self):
         json_results = json.dumps({
@@ -93,8 +116,8 @@ class DayWithMoreThan30mmPrectot:
         self._n_trips = 0
         self._total_duration = 0.0
 
-    def add_trip(self, duration):
-        self._n_trips += 1
+    def add_trips(self, n, duration):
+        self._n_trips += n
         self._total_duration += duration
 
     def get_average_duration(self):

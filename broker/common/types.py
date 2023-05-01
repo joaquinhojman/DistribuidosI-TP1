@@ -1,5 +1,6 @@
 
 import json
+from datetime import datetime, timedelta
 
 WEATHER = "weather"
 STATIONS = "stations"
@@ -34,7 +35,7 @@ class Weather:
     def get_weather_for_ej1filter(self):
         return json.dumps({
             "city": self.city,
-            "date": self.date,
+            "date": (datetime.strptime(self.date, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d"), # day - 1
             "prectot": self.prectot,
         })
 
@@ -83,7 +84,7 @@ class Trip:
         return json.dumps({
             "type": TRIPS,
             "city": self.city,
-            "start_date": self.start_date,
+            "start_date": self.start_date[:10], # YYYY-MM-DD
             "duration_sec": self.duration_sec,
         })
 

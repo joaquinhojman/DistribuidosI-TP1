@@ -30,7 +30,8 @@ services:
         - PYTHONUNBUFFERED=1
         - WBRKCANT=2
         - SBRKCANT=2
-        - TBRKCANT=4
+        - TBRKCANT=2
+        - RMQRETRIES=5
       networks:
         - testing_net
       volumes:
@@ -71,6 +72,7 @@ services:
       <<: *broker
       container_name: broker_weather2
       environment:
+        - RMQRETRIES=5
         - BROKER_ID=2
         - BROKER_TYPE=weather
     
@@ -78,6 +80,7 @@ services:
       <<: *broker
       container_name: broker_stations1
       environment:
+        - RMQRETRIES=5
         - BROKER_ID=1
         - BROKER_TYPE=stations
 
@@ -85,6 +88,7 @@ services:
       <<: *broker
       container_name: broker_stations2
       environment:
+        - RMQRETRIES=5
         - BROKER_ID=2
         - BROKER_TYPE=stations
 
@@ -92,6 +96,7 @@ services:
       <<: *broker
       container_name: broker_trips1
       environment:
+        - RMQRETRIES=5
         - BROKER_ID=1
         - BROKER_TYPE=trips
 
@@ -99,21 +104,8 @@ services:
       <<: *broker
       container_name: broker_trips2
       environment:
+        - RMQRETRIES=5
         - BROKER_ID=2
-        - BROKER_TYPE=trips
-    
-    broker_trips3:
-      <<: *broker
-      container_name: broker_trips3
-      environment:
-        - BROKER_ID=3
-        - BROKER_TYPE=trips
-    
-    broker_trips4:
-      <<: *broker
-      container_name: broker_trips4
-      environment:
-        - BROKER_ID=4
         - BROKER_TYPE=trips
     
     filter_weather1: &filter
@@ -126,6 +118,7 @@ services:
       links: 
         - rabbitmq
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=we1
       networks:
@@ -135,6 +128,7 @@ services:
       <<: *filter
       container_name: filter_weather2
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=we1
 
@@ -142,6 +136,7 @@ services:
       <<: *filter
       container_name: filter_stations1
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=se3
 
@@ -149,6 +144,7 @@ services:
       <<: *filter
       container_name: filter_stations2
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=se3
 
@@ -156,6 +152,7 @@ services:
       <<: *filter
       container_name: filter_trips_e2_1
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=te2
 
@@ -163,27 +160,15 @@ services:
       <<: *filter
       container_name: filter_trips_e2_2
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=2
-        - FILTER_TYPE=te2
-
-    filter_trips_e2_3:
-      <<: *filter
-      container_name: filter_trips_e2_3
-      environment:
-        - FILTER_ID=3
-        - FILTER_TYPE=te2
-
-    filter_trips_e2_4:
-      <<: *filter
-      container_name: filter_trips_e2_4
-      environment:
-        - FILTER_ID=4
         - FILTER_TYPE=te2
 
     filter_trips_e3_1:
       <<: *filter
       container_name: filter_trips_e3_1
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=te3
 
@@ -191,21 +176,8 @@ services:
       <<: *filter
       container_name: filter_trips_e3_2
       environment:
+        - RMQRETRIES=5
         - FILTER_ID=2
-        - FILTER_TYPE=te3
-
-    filter_trips_e3_3:
-      <<: *filter
-      container_name: filter_trips_e3_3
-      environment:
-        - FILTER_ID=3
-        - FILTER_TYPE=te3
-
-    filter_trips_e3_4:
-      <<: *filter
-      container_name: filter_trips_e3_4
-      environment:
-        - FILTER_ID=4
         - FILTER_TYPE=te3
 
     Ej1Solver: &EjSolver
@@ -218,9 +190,10 @@ services:
       links: 
         - rabbitmq
       environment:
+        - RMQRETRIES=5
         - EJSOLVER=ej1solver
         - WE1FCANT=2
-        - TBRKCANT=4
+        - EJ1TCANT=2
       networks:
         - testing_net
 
@@ -228,17 +201,66 @@ services:
       <<: *EjSolver
       container_name: Ej2Solver
       environment:
+        - RMQRETRIES=5
         - EJSOLVER=ej2solver
         - SBRKCANT=2
-        - TE2FCANT=4
+        - EJ2TCANT=2
 
     Ej3Solver:
       <<: *EjSolver
       container_name: Ej3Solver
       environment:
+        - RMQRETRIES=5
         - EJSOLVER=ej3solver
         - SE3FCANT=2
-        - TE3FCANT=4
+        - EJ3TCANT=2
+    
+    Ej1tSolver_1: &EjTSolver
+      container_name: Ej1tSolver_1
+      image: ejt_solver:latest
+      entrypoint: python3 /main.py
+      restart: on-failure
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
+      environment:
+        - RMQRETRIES=5
+        - EJTSOLVER=ej1tsolver
+      networks:
+        - testing_net
+  
+    Ej1tSolver_2:
+      <<: *EjTSolver
+      container_name: Ej1tSolver_2
+      environment:
+        - RMQRETRIES=5
+        - EJTSOLVER=ej1tsolver
+
+    Ej2tSolver_1:
+      <<: *EjTSolver
+      container_name: Ej2tSolver_1
+      environment:
+        - RMQRETRIES=5
+        - EJTSOLVER=ej2tsolver
+    Ej2tSolver_2:
+      <<: *EjTSolver
+      container_name: Ej2tSolver_2
+      environment:
+        - RMQRETRIES=5
+        - EJTSOLVER=ej2tsolver
+    Ej3tSolver_1:
+      <<: *EjTSolver
+      container_name: Ej3tSolver_1
+      environment:
+        - RMQRETRIES=5
+        - EJTSOLVER=ej3tsolver
+    Ej3tSolver_2:
+      <<: *EjTSolver
+      container_name: Ej3tSolver_2
+      environment:
+        - RMQRETRIES=5
+        - EJTSOLVER=ej3tsolver
 
     EofListener:
       container_name: EofListener
@@ -250,13 +272,34 @@ services:
       links: 
         - rabbitmq
       environment:
+        - RMQRETRIES=5
         - WBRKCANT=2
         - SBRKCANT=2
-        - TBRKCANT=4
+        - TBRKCANT=2
         - WE1FCANT=2
-        - TE2FCANT=4
+        - TE2FCANT=2
         - SE3FCANT=2
-        - TE3FCANT=4
+        - TE3FCANT=2
+      networks:
+        - testing_net
+
+    EofTListener:
+      container_name: EofTListener
+      image: eof_t_listener:latest
+      entrypoint: python3 /main.py
+      restart: on-failure
+      depends_on:
+        - rabbitmq
+      links: 
+        - rabbitmq
+      environment:
+        - RMQRETRIES=5
+        - TE2FCANT=2
+        - TE3FCANT=2
+        - TBRKCANT=2
+        - EJ1TCANT=2
+        - EJ2TCANT=2
+        - EJ3TCANT=2
       networks:
         - testing_net
 

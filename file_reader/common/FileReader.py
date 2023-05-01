@@ -23,25 +23,32 @@ class FileReader:
         logging.info(f'action: Handle SIGTERM | result: success')
 
     def run(self):
-        self._make_connection()
+        try:
+            logging.info(f'action: run | result: in_progress')
+            self._make_connection()
 
-        #self._send_data("data/test/weather.csv", send_topic=True, send_eof=True)
-        #self._send_data("data/test/stations.csv", send_topic=True, send_eof=True)
-        #self._send_data("data/test/trips.csv", send_topic=True, send_eof=True)
-        
-        self._send_data("data/montreal/weather.csv", send_topic=True)
-        self._send_data("data/toronto/weather.csv")
-        self._send_data("data/washington/weather.csv", send_eof=True)
-        self._send_data("data/montreal/stations.csv", send_topic=True)
-        self._send_data("data/toronto/stations.csv")
-        self._send_data("data/washington/stations.csv", send_eof=True)
-        self._send_data("data/montreal/trips.csv", send_topic=True)
-        self._send_data("data/toronto/trips.csv")
-        self._send_data("data/washington/trips.csv", send_eof=True)
+            #self._send_data("data/test/weather.csv", send_topic=True, send_eof=True)
+            #self._send_data("data/test/stations.csv", send_topic=True, send_eof=True)
+            #self._send_data("data/test/trips.csv", send_topic=True, send_eof=True)
+            
+            self._send_data("data/montreal/weather.csv", send_topic=True)
+            self._send_data("data/toronto/weather.csv")
+            self._send_data("data/washington/weather.csv", send_eof=True)
+            self._send_data("data/montreal/stations.csv", send_topic=True)
+            self._send_data("data/toronto/stations.csv")
+            self._send_data("data/washington/stations.csv", send_eof=True)
+            self._send_data("data/montreal/trips.csv", send_topic=True)
+            self._send_data("data/toronto/trips.csv")
+            self._send_data("data/washington/trips.csv", send_eof=True)
 
-        self._receive_results()
+            self._receive_results()
 
-        self._close_connection()
+            self._close_connection()
+            logging.info(f'action: run | result: success')
+        except Exception as e:
+            logging.error(f'action: run | result: fail | error: {e}')
+            self._sigterm_handler()
+            return
 
     def _make_connection(self):
         logging.info(f'action: make_connection | result: in_progress | ip: {self._ip} | port: {self._port}')
