@@ -22,7 +22,7 @@ class Ej2tSolver:
         self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=EJ2STATIONS, on_message_callback=self._callback_stations)
         self._channel.start_consuming()
-        logging.info(f'action: run | result: weathers getted | EjtSolver: {self._EjtSolver}')
+        logging.info(f'action: run | result: stations getted | EjtSolver: {self._EjtSolver}')
         self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self._EjtSolver, on_message_callback=self._callback_trips)
         self._channel.start_consuming()

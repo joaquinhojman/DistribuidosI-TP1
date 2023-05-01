@@ -100,7 +100,7 @@ class Ej3Solver:
         results = {}
         for key, value in self._montreal_stations.items():
             avg_km = value.get_average_km()
-            if avg_km > 6:
+            if avg_km > 6.0:
                 results[key] = avg_km
         return results
 
