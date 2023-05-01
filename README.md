@@ -13,5 +13,6 @@ De replicar las entidades mencionadas, se debe informar en las variables de ento
 
 - De replicar algunos de los EJTsolver, se debe informar de la siguiente manera: De replicar EJ1Tsolver, se debe informar en Ej1Solver y en EofTListener en la env EJ1TCANT. De replicar EJ2Tsolver, se debe informar en Ej2Solver y en EofTListener en la env EJ2TCANT. De replicar EJ3Tsolver, se debe informar en Ej3Solver y en EofTListener en la env EJ3TCANT. 
 
+No se incluyen los archivos de datos. Debe descargarse el zip y guardar las carpetas montreal, toronto y washington en una carpeta llamada .data en la raiz del proyecto.
 
 Ademas, se aclara que si se quiere correr el sistema se deben modificar dos rows del archivo de stations de toronto. La 691 y la 822 tienen caracteres invalidos que no pueden procesarse correctamente. La 691 debe modificarse el caracter invalido por un "–" y la 822 por un "’".
