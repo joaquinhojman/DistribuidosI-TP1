@@ -81,7 +81,7 @@ class Ej3Solver:
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
-            self._montreal_stations[k].add_trip(values[0], values[1])
+            self._montreal_stations[k].add_trip(int(values[0]), float(values[1]))
         ch.basic_ack(delivery_tag=method.delivery_tag)
         if self._ej3tsolvers_cant == 0:
             self._send_results()

@@ -61,16 +61,16 @@ class EofTListener:
         self._channel.start_consuming()
 
     def _callback(self, ch, method, properties, body):
-        finished = self._proccess_eof(body.decode("utf-8"))
+        self._proccess_eof(body.decode("utf-8"))
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        if finished: self._exit()
+        if self._finished(): self._exit()
 
     def _proccess_eof(self, body):
         finished = False
         self._remaining_eof[body] -= 1
+        logging.info(f'action: proccess eof | result: in_progress | body: {body} | remaining: {self._remaining_eof[body]}')
         if self._remaining_eof[body] == 0:
             finished = self._send_eofs(body)
-        return finished
 
     def _send_eofs(self, body):
         if body == TE2:
@@ -82,12 +82,13 @@ class EofTListener:
         elif body == TRIPS:
             for _ in range(self._cant_solvers[EJ1TSOLVER]):
                 self._send(EJ1TSOLVER, self._get_eof())
-            return True
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
             return
         logging.info(f'action: send eof | result: success | body: {body}')
-        return False
+
+    def _finished(self):
+        return self._remaining_eof[TE2] == 0 and self._remaining_eof[TE3] == 0 and self._remaining_eof[TRIPS] == 0
 
     def _send(self, queue, data):
         self._channel.basic_publish(

@@ -135,7 +135,7 @@ class Filter:
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def _send_eof_to_eoftlistener(self):
-        eof = "eof"
+        eof = self._filter_type
         self._send_data_to_queue(EOFTLISTENER, eof)
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
