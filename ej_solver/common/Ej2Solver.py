@@ -14,7 +14,7 @@ class Ej2Solver:
         self._EjSolver = EjSolver
         self._channel = channel
 
-        self._stations_eof_to_expect = int(os.getenv('SBRKCANT', ""))
+        self._stations_eof_to_expect = int(os.getenv('SE2FCANT', ""))
         self._ej2tsolvers_cant = int(os.getenv('EJ2TCANT', ""))
 
         self._stations_name = {}

@@ -10,6 +10,7 @@ WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
 WE1 = "we1"
+SE2 = "se2"
 TE2 = "te2"
 SE3 = "se3"
 TE3 = "te3"
@@ -26,6 +27,7 @@ class EofListener:
 
         self._cant_filters = {
             WE1: int(os.getenv('WE1FCANT', "")),
+            SE2: int(os.getenv('SE2FCANT', "")),
             TE2: int(os.getenv('TE2FCANT', "")),
             SE3: int(os.getenv('SE3FCANT', "")),
             TE3: int(os.getenv('TE3FCANT', ""))
@@ -47,6 +49,7 @@ class EofListener:
 
                 channel.queue_declare(queue=EOFLISTENER, durable=True)
                 channel.queue_declare(queue=WE1, durable=True)
+                channel.queue_declare(queue=SE2, durable=True)
                 channel.queue_declare(queue=TE2, durable=True)
                 channel.queue_declare(queue=SE3, durable=True)
                 channel.queue_declare(queue=TE3, durable=True)
@@ -93,6 +96,8 @@ class EofListener:
             for _ in range(self._cant_filters[WE1]):
                 self._send(WE1, "EOF,"+body)
         elif body == STATIONS:
+            for _ in range(self._cant_filters[SE2]):
+                self._send(SE2, "EOF,"+body)
             for _ in range(self._cant_filters[SE3]):
                 self._send(SE3, "EOF,"+body)
         elif body == TRIPS:

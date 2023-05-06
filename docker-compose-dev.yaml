@@ -132,17 +132,33 @@ services:
         - FILTER_ID=2
         - FILTER_TYPE=we1
 
-    filter_stations1:
+    filter_stations_e2_1:
       <<: *filter
-      container_name: filter_stations1
+      container_name: filter_stations_e2_1
+      environment:
+        - RMQRETRIES=5
+        - FILTER_ID=1
+        - FILTER_TYPE=se2
+
+    filter_stations_e2_2:
+      <<: *filter
+      container_name: filter_stations_e2_2
+      environment:
+        - RMQRETRIES=5
+        - FILTER_ID=2
+        - FILTER_TYPE=se2
+
+    filter_stations_e3_1:
+      <<: *filter
+      container_name: filter_stations_e3_1
       environment:
         - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=se3
 
-    filter_stations2:
+    filter_stations_e3_2:
       <<: *filter
-      container_name: filter_stations2
+      container_name: filter_stations_e3_2
       environment:
         - RMQRETRIES=5
         - FILTER_ID=2
@@ -203,7 +219,7 @@ services:
       environment:
         - RMQRETRIES=5
         - EJSOLVER=ej2solver
-        - SBRKCANT=2
+        - SE2FCANT=2
         - EJ2TCANT=2
 
     Ej3Solver:
@@ -277,6 +293,7 @@ services:
         - SBRKCANT=2
         - TBRKCANT=2
         - WE1FCANT=2
+        - SE2FCANT=2
         - TE2FCANT=2
         - SE3FCANT=2
         - TE3FCANT=2

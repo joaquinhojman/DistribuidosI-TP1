@@ -21,6 +21,26 @@ class We1:
             "date": self.date,
         })
 
+class Se2:
+    def __init__(self, se2):
+        data = json.loads(se2)
+        self.city = data["city"]
+        self.code = data["code"]
+        self.name = data["name"]
+        self.yearid = data["yearid"]
+    
+    def is_valid(self):
+        return self.yearid == "2016" or self.yearid == "2017"
+
+    def get_json(self):
+        return json.dumps({
+            "type": STATIONS,
+            "city": self.city,
+            "code": self.code,
+            "name": self.name,
+            "yearid": self.yearid,
+        })
+
 class Te2:
     def __init__(self, te2):
         data = json.loads(te2)

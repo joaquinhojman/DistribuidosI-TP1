@@ -13,6 +13,7 @@ def initialize_config():
     try:
         config_params["logging_level"] = os.getenv('LOGGING_LEVEL', config["DEFAULT"]["LOGGING_LEVEL"])
         config_params["we1"] = os.getenv('WE1', config["DEFAULT"]["WE1"])
+        config_params["se2"] = os.getenv('SE2', config["DEFAULT"]["SE2"])
         config_params["te2"] = os.getenv('TE2', config["DEFAULT"]["TE2"])
         config_params["se3"] = os.getenv('SE3', config["DEFAULT"]["SE3"])
         config_params["te3"] = os.getenv('TE3', config["DEFAULT"]["TE3"])
@@ -27,6 +28,7 @@ def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
     we1 = config_params["we1"]
+    se2 = config_params["se2"]
     te2 = config_params["te2"]
     se3 = config_params["se3"]
     te3 = config_params["te3"]
@@ -36,7 +38,7 @@ def main():
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
 
-    filter = Filter(filter, filter_number, we1, te2, se3, te3)
+    filter = Filter(filter, filter_number, we1, se2, te2, se3, te3)
     signal.signal(signal.SIGTERM, filter._sigterm_handler)
     filter.run()
 

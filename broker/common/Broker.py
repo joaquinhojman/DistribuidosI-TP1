@@ -3,7 +3,7 @@ import os
 from time import sleep
 import pika
 
-from common.types import EOF, Station, Trip, Weather
+from common.types import Station, Trip, Weather
 
 EOFLISTENER = "eoflistener"
 EOFTLISTENER = "eoftlistener"
@@ -11,6 +11,7 @@ EJ1TSOLVER = "ej1tsolver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
 WE1 = "we1"
+SE2 = "se2"
 TE2 = "te2"
 SE3 = "se3"
 TE3 = "te3"
@@ -83,7 +84,7 @@ class Broker:
 
     def _run_stations_broker(self):
         logging.info(f'action: run_stations_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._channel.queue_declare(queue=EJ2SOLVER, durable=True)
+        self._channel.queue_declare(queue=SE2, durable=True)
         self._channel.queue_declare(queue=SE3, durable=True)
         self._channel.basic_consume(queue=self._broker_type, on_message_callback=self._callback_stations)
 
@@ -114,8 +115,8 @@ class Broker:
         stations = body.split('\n')
         for s in stations:
             station = Station(s)
-            station_for_ej2solver = station.get_station_for_ej2solver()
-            self._send_data_to_queue(EJ2SOLVER, station_for_ej2solver)
+            station_for_ej2solver = station.get_station_for_ej2filter()
+            self._send_data_to_queue(SE2, station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
             self._send_data_to_queue(SE3, station_for_ej3filter)
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -148,7 +149,6 @@ class Broker:
         if self._broker_type == self._weather:
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         elif self._broker_type == self._stations:
-            self._send_data_to_queue(EJ2SOLVER, EOF(self._broker_type).get_json())
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         elif self._broker_type == self._trips:
             self._send_data_to_queue(EOFTLISTENER, "trips")

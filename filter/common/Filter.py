@@ -3,7 +3,7 @@ import os
 from time import sleep
 import pika
 
-from common.types import EOF, Se3, Te2, Te3, We1
+from common.types import EOF, Se3, Te2, Te3, We1, Se2
 
 EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
@@ -13,11 +13,12 @@ EJ2TSOLVER = "ej2tsolver"
 EJ3TSOLVER = "ej3tsolver"
 
 class Filter:
-    def __init__(self, filter_type, filter_number, we1, te2, se3, te3):
+    def __init__(self, filter_type, filter_number, we1, se2, te2, se3, te3):
         self._sigterm = False
         self._filter_type = filter_type
         self._filter_number = filter_number
         self._we1 = we1
+        self._se2 = se2
         self._te2 = te2
         self._se3 = se3
         self._te3 = te3
@@ -57,6 +58,8 @@ class Filter:
             
             if self._filter_type == self._we1:
                 self._run_we1_filter()
+            elif self._filter_type == self._se2:
+                self._run_se2_filter()
             elif self._filter_type == self._te2:
                 self._run_te2_filter()
             elif self._filter_type == self._se3:
@@ -78,6 +81,11 @@ class Filter:
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
         self._channel.queue_declare(queue=EJ1SOLVER, durable=True)
         self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_we1)
+
+    def _run_se2_filter(self):
+        logging.info(f'action: _run_se2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._channel.queue_declare(queue=EJ2TSOLVER, durable=True)
+        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se2)
 
     def _run_te2_filter(self):
         logging.info(f'action: _run_te2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
@@ -102,6 +110,15 @@ class Filter:
         we1 = We1(body)
         if we1.is_valid():
             self._send_data_to_queue(EJ1SOLVER, we1.get_json())
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _callback_se2(self, ch, method, properties, body):
+        body = body.decode("utf-8")
+        eof = self._check_eof(body, EJ2SOLVER, ch, method)
+        if eof: return
+        se2 = Se2(body)
+        if se2.is_valid():
+            self._send_data_to_queue(EJ2SOLVER, se2.get_json())
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def _callback_te2(self, ch, method, properties, body):
