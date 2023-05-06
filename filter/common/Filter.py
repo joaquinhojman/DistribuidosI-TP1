@@ -1,8 +1,8 @@
 import logging
 import os
 from time import sleep
-import pika
 
+from common.Middleware import Middleware
 from common.types import EOF, Se3, Te2, Te3, We1, Se2
 
 EJ1SOLVER = "ej1solver"
@@ -23,28 +23,25 @@ class Filter:
         self._se3 = se3
         self._te3 = te3
 
-        self._channel = None
+        self._middleware: Middleware = None
 
     def _sigterm_handler(self, _signo, _stack_frame):
         self._sigterm = True
-        if self._channel is not None:
-            self._channel.close()
+        if self._middleware is not None:
+            self._middleware.close()
         exit(0)
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
         retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
+        while retries > 0 and self._middleware is None:
             sleep(15)
             retries -= 1
             try:
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
+                self._middleware = Middleware()
 
-                channel.queue_declare(queue=self._filter_type, durable=True)
-                channel.queue_declare(queue=EOFTLISTENER, durable=True)
-                self._channel = channel
+                self._middleware.queue_declare(queue=self._filter_type, durable=True)
+                self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
             except Exception as e:
                 if self._sigterm: exit(0)
                 pass
@@ -54,7 +51,7 @@ class Filter:
         try:
             self._initialize_rabbitmq()
             logging.info(f'action: run | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-            self._channel.basic_qos(prefetch_count=1)
+            self._middleware.basic_qos(prefetch_count=1)
             
             if self._filter_type == self._we1:
                 self._run_we1_filter()
@@ -70,37 +67,37 @@ class Filter:
                 logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: Invalid filter type')
                 raise Exception("Invalid filter type")
             
-            self._channel.start_consuming()
+            self._middleware.start_consuming()
         except Exception as e:
             logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: {e}')
-            if self._channel is not None:
-                self._channel.close()
+            if self._middleware is not None:
+                self._middleware.close()
             exit(0)
 
     def _run_we1_filter(self):
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ1SOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_we1)
+        self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)
+        self._middleware.recv_message(queue=self._filter_type, callback=self._callback_we1)
 
     def _run_se2_filter(self):
         logging.info(f'action: _run_se2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ2TSOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se2)
+        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
+        self._middleware.recv_message(queue=self._filter_type, callback=self._callback_se2)
 
     def _run_te2_filter(self):
         logging.info(f'action: _run_te2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ2TSOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te2)
+        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
+        self._middleware.recv_message(queue=self._filter_type, callback=self._callback_te2)
 
     def _run_se3_filter(self):
         logging.info(f'action: _run_se3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ3SOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se3)
+        self._middleware.queue_declare(queue=EJ3SOLVER, durable=True)
+        self._middleware.recv_message(queue=self._filter_type, callback=self._callback_se3)
 
     def _run_te3_filter(self):
         logging.info(f'action: _run_te3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ3TSOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te3)
+        self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
+        self._middleware.recv_message(queue=self._filter_type, callback=self._callback_te3)
 
 
     def _callback_we1(self, ch, method, properties, body):
@@ -170,14 +167,8 @@ class Filter:
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def _send_data_to_queue(self, queue, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=queue,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
+        self._middleware.send_message(queue=queue, data=data)
 
     def _exit(self):
-        self._channel.stop_consuming()
-        self._channel.close()
+        self._middleware.stop_consuming()
+        self._middleware.close()

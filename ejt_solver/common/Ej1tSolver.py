@@ -1,29 +1,28 @@
 import json
 import logging
-import os
-import pika
+from common.Middleware import Middleware
 
 EJ1TRIPS = "ej1trips"
 EJ1WEATHER = "ej1weather"
 
 class Ej1tSolver:
-    def __init__(self, ejtsolver, channel):
+    def __init__(self, ejtsolver, middleware):
         self._EjtSolver = ejtsolver
-        self._channel = channel
+        self._middleware: Middleware = middleware
 
         self._days_with_more_than_30mm_prectot = {}
-        channel.queue_declare(queue=EJ1TRIPS, durable=True)
-        channel.queue_declare(queue=EJ1WEATHER, durable=True)
+        self._middleware.queue_declare(queue=EJ1TRIPS, durable=True)
+        self._middleware.queue_declare(queue=EJ1WEATHER, durable=True)
 
     def run(self):
         logging.info(f'action: run | result: in_progress | EjtSolver: {self._EjtSolver}')
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=EJ1WEATHER, on_message_callback=self._callback_weathers)
-        self._channel.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue=EJ1WEATHER, callback=self._callback_weathers)
+        self._middleware.start_consuming()
         logging.info(f'action: run | result: weathers getted | EjtSolver: {self._EjtSolver}')
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=self._EjtSolver, on_message_callback=self._callback_trips)
-        self._channel.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue=self._EjtSolver, callback=self._callback_trips)
+        self._middleware.start_consuming()
 
     def _callback_weathers(self, ch, method, properties, body):
         body = body.decode("utf-8")
@@ -31,7 +30,7 @@ class Ej1tSolver:
         for day in days_list:
             self._days_with_more_than_30mm_prectot[day] = DayWithMoreThan30mmPrectot()
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        self._channel.stop_consuming()
+        self._middleware.stop_consuming()
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
@@ -43,7 +42,7 @@ class Ej1tSolver:
         elif data["type"] == "eof":
             self._send_trips_to_ej1solver()
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self._channel.stop_consuming()
+            self._middleware.stop_consuming()
             return
         else:
             logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
@@ -53,7 +52,7 @@ class Ej1tSolver:
         data = {}
         for k, v in self._days_with_more_than_30mm_prectot.items():
             data[k] = str(v._n_trips) + "," + str(v._total_duration)
-        self._channel.basic_publish(exchange='', routing_key=EJ1TRIPS, body=str(data))
+        self._middleware.send_message(queue=EJ1TRIPS, data=str(data))
         logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjtSolver: {self._EjtSolver}')
 
 class DayWithMoreThan30mmPrectot:

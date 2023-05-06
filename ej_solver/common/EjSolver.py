@@ -1,7 +1,7 @@
 import logging
 import os
 from time import sleep
-import pika
+from common.Middleware import Middleware
 from common.Ej1Solver import Ej1Solver
 from common.Ej2Solver import Ej2Solver
 from common.Ej3Solver import Ej3Solver
@@ -16,22 +16,19 @@ class EjSolver:
         self._ej2solver = ej2solver
         self._ej3solver = ej3solver
 
-        self._channel = None
+        self._middleware: Middleware = None
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | EjSolver: {self._EjSolver}')
         retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
+        while retries > 0 and self._middleware is None:
             sleep(15)
             retries -= 1
             try:
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
+                self._middleware = Middleware()
 
-                channel.queue_declare(queue=self._EjSolver, durable=True)
-                channel.queue_declare(queue=RESULTS, durable=True)
-                self._channel = channel
+                self._middleware.queue_declare(queue=self._EjSolver, durable=True)
+                self._middleware.queue_declare(queue=RESULTS, durable=True)
             except Exception as e:
                 if self._sigterm: exit(0)
                 pass
@@ -39,8 +36,8 @@ class EjSolver:
 
     def _sigterm_handler(self, _signo, _stack_frame):
         self._sigterm = True
-        if self._channel is not None:
-            self._channel.close()
+        if self._middleware is not None:
+            self._middleware.close()
         exit(0)
 
     def run(self):
@@ -48,19 +45,19 @@ class EjSolver:
             self._initialize_rabbitmq()
             logging.info(f'action: run | result: in_progress | EjSolver: {self._EjSolver}')
             if self._EjSolver == self._ej1solver:
-                ej1Solver = Ej1Solver(self._EjSolver, self._channel)
+                ej1Solver = Ej1Solver(self._EjSolver, self._middleware)
                 ej1Solver.run()
             elif self._EjSolver == self._ej2solver:
-                ej2Solver = Ej2Solver(self._EjSolver, self._channel)
+                ej2Solver = Ej2Solver(self._EjSolver, self._middleware)
                 ej2Solver.run()
             elif self._EjSolver == self._ej3solver:
-                ej3Solver = Ej3Solver(self._EjSolver, self._channel)
+                ej3Solver = Ej3Solver(self._EjSolver, self._middleware)
                 ej3Solver.run()
             else:
                 logging.error(f'action: run | result: error | EjSolver: {self._EjSolver} | error: Invalid filter type')
                 raise Exception("Invalid filter type")
         except Exception as e:
             logging.error(f'action: run | result: error | EjSolver: {self._EjSolver} | error: {e}')
-            if self._channel is not None:
-                self._channel.close()
+            if self._middleware is not None:
+                self._middleware.close()
             exit(0)

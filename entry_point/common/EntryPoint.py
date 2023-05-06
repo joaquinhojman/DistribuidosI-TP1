@@ -3,9 +3,9 @@ import os
 import socket
 import logging
 from time import sleep
-import pika
 
 from protocol.protocol import Protocol
+from common.Middleware import Middleware
 from common.Data import EOF, Data
 
 WEATHER = "weather"
@@ -44,26 +44,21 @@ class EntryPoint:
         self._sigterm_received = False
         self._client_socket = None
         self._protocol = None
-        self._channel = None
+        self._middleware: Middleware = None
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
         retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
+        while retries > 0 and self._middleware is None:
             sleep(15)
             retries -= 1
             try: 
-                # Create RabbitMQ communication channel
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
+                self._middleware = Middleware()
 
-                channel.queue_declare(queue=WEATHER, durable=True)
-                channel.queue_declare(queue=STATIONS, durable=True)
-                channel.queue_declare(queue=TRIPS, durable=True)
-                channel.queue_declare(queue=RESULTS, durable=True)
-
-                self._channel = channel
+                self._middleware.queue_declare(queue=WEATHER, durable=True)
+                self._middleware.queue_declare(queue=STATIONS, durable=True)
+                self._middleware.queue_declare(queue=TRIPS, durable=True)
+                self._middleware.queue_declare(queue=RESULTS, durable=True)
             except Exception as e:
                 if self._sigterm_received: exit(0)
                 pass
@@ -73,7 +68,7 @@ class EntryPoint:
         self._sigterm_received = True
         try:
             self._server_socket.close()
-            self._channel.close()
+            self._middleware.close()
         except:
             pass
         exit(0)
@@ -166,18 +161,12 @@ class EntryPoint:
             self._send_data_to_queue(self._actual_topic, "EOF")
 
     def _send_data_to_queue(self, queue, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=queue,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
+        self._middleware.send_message(queue, data)
 
     def _expect_solvers_confirmation(self):
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue='results', on_message_callback=self._callback)
-        self._channel.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue='results', callback=self._callback)
+        self._middleware.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         logging.info(f'action: _callback | result: in_progress')
@@ -192,7 +181,7 @@ class EntryPoint:
             self._reset_solvers_confirmated_dict()
             finished = True
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        if finished: self._channel.stop_consuming()
+        if finished: self._middleware.stop_consuming()
 
     def _send_results(self):
         self._protocol.send(str(self._results))
@@ -218,5 +207,5 @@ class EntryPoint:
             self._client_socket.close()
         if self._server_socket is not None:
             self._server_socket.close()
-        if self._channel is not None:
-            self._channel.close()
+        if self._middleware is not None:
+            self._middleware.close()

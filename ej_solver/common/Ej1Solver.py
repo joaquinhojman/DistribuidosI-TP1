@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-import pika
+from common.Middleware import Middleware
 
 WEATHER = "weather"
 TRIPS = "trips"
@@ -10,25 +10,25 @@ EJ1WEATHER = "ej1weather"
 RESULTS = "results"
 
 class Ej1Solver:
-    def __init__(self, EjSolver, channel):
+    def __init__(self, EjSolver, middleware):
         self._EjSolver = EjSolver
-        self._channel = channel
+        self._middleware: Middleware = middleware
         
         self._weathers_eof_to_expect = int(os.getenv('WE1FCANT', ""))
         self._ej1tsolvers_cant = int(os.getenv('EJ1TCANT', ""))
 
         self._days_with_more_than_30mm_prectot = {}
-        channel.queue_declare(queue=EJ1TRIPS, durable=True)
-        channel.queue_declare(queue=EJ1WEATHER, durable=True)
+        self._middleware.queue_declare(queue=EJ1TRIPS, durable=True)
+        self._middleware.queue_declare(queue=EJ1WEATHER, durable=True)
 
     def run(self):
         logging.info(f'action: run_Ej1Solver | result: in_progress')
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=self._EjSolver, on_message_callback=self._callback)
-        self._channel.start_consuming()
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=EJ1TRIPS, on_message_callback=self._callback_trips)
-        self._channel.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback)
+        self._middleware.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue=EJ1TRIPS, callback=self._callback_trips)
+        self._middleware.start_consuming()
 
     def _callback(self, ch, method, properties, body):
         finished = False
@@ -41,7 +41,7 @@ class Ej1Solver:
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        if finished: self._channel.stop_consuming()
+        if finished: self._middleware.stop_consuming()
 
     def _process_eof(self,):
         self._weathers_eof_to_expect -= 1
@@ -54,13 +54,7 @@ class Ej1Solver:
     def _send_weather_to_ejt1solver(self):
         data = str(list(self._days_with_more_than_30mm_prectot.keys()))
         for _ in range(0, self._ej1tsolvers_cant):
-            self._channel.basic_publish(
-                exchange='',
-                routing_key=EJ1WEATHER,
-                body=data,
-                properties=pika.BasicProperties(
-                delivery_mode = 2, # make message persistent
-            ))
+            self._middleware.send_message(queue=EJ1WEATHER, data=data)
 
     def _send_eof_confirm(self):
         json_eof = json.dumps({
@@ -98,18 +92,12 @@ class Ej1Solver:
         return results
     
     def _send(self, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=RESULTS,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
+        self._middleware.send_message(queue=RESULTS, data=data)
         logging.info(f'action: _send_results | result: success')
 
     def _exit(self):
-        self._channel.stop_consuming()
-        self._channel.close()
+        self._middleware.stop_consuming()
+        self._middleware.close()
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):

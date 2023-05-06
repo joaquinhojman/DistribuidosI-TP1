@@ -1,31 +1,30 @@
 import json
 import logging
-import os
-import pika
+from common.Middleware import Middleware
 
 EJ2TRIPS = "ej2trips"
 EJ2STATIONS = "ej2stations"
 
 class Ej2tSolver:
-    def __init__(self, ejtsolver, channel):
+    def __init__(self, ejtsolver, middleware):
         self._EjtSolver = ejtsolver
-        self._channel = channel
+        self._middleware: Middleware = middleware
 
         self._stations_name = {}
         self._stations = {}
 
-        channel.queue_declare(queue=EJ2TRIPS, durable=True)
-        channel.queue_declare(queue=EJ2STATIONS, durable=True)
+        self._middleware.queue_declare(queue=EJ2TRIPS, durable=True)
+        self._middleware.queue_declare(queue=EJ2STATIONS, durable=True)
 
     def run(self):
         logging.info(f'action: run | result: in_progress | EjtSolver: {self._EjtSolver}')
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=EJ2STATIONS, on_message_callback=self._callback_stations)
-        self._channel.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue=EJ2STATIONS, callback=self._callback_stations)
+        self._middleware.start_consuming()
         logging.info(f'action: run | result: stations getted | EjtSolver: {self._EjtSolver}')
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=self._EjtSolver, on_message_callback=self._callback_trips)
-        self._channel.start_consuming()
+        self._middleware.basic_qos(prefetch_count=1)
+        self._middleware.recv_message(queue=self._EjtSolver, callback=self._callback_trips)
+        self._middleware.start_consuming()
 
     def _callback_stations(self, ch, method, properties, body):
         body = body.decode("utf-8")
@@ -35,7 +34,7 @@ class Ej2tSolver:
         for station in stations_list:
             self._stations[station] = Station()
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        self._channel.stop_consuming()
+        self._middleware.stop_consuming()
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
@@ -46,7 +45,7 @@ class Ej2tSolver:
         elif data["type"] == "eof":
             self._send_trips_to_ej2solver()
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self._channel.stop_consuming()
+            self._middleware.stop_consuming()
             return
         else:
             logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
@@ -56,7 +55,7 @@ class Ej2tSolver:
         data = {}
         for k, v in self._stations.items():
             data[k] = str(v._trips_on_2016) + "," + str(v._trips_on_2017)
-        self._channel.basic_publish(exchange='', routing_key=EJ2TRIPS, body=str(data))
+        self._middleware.send_message(queue=EJ2TRIPS, data=str(data))
         logging.info(f'action: _send_trips_to_ej2solver | result: trips sended | EjtSolver: {self._EjtSolver}')
 
 class Station:

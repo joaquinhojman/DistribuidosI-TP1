@@ -3,7 +3,7 @@ import os
 import socket
 import logging
 from time import sleep
-import pika
+from common.Middleware import Middleware
 
 EOFLISTENER = "eoflistener"
 WEATHER = "weather"
@@ -33,28 +33,23 @@ class EofListener:
             TE3: int(os.getenv('TE3FCANT', ""))
         }
 
-        self._channel = None
+        self._middleware: Middleware = None
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
         retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
+        while retries > 0 and self._middleware is None:
             sleep(15)
             retries -= 1
             try: 
-                # Create RabbitMQ communication channel
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
+                self._middleware = Middleware()
 
-                channel.queue_declare(queue=EOFLISTENER, durable=True)
-                channel.queue_declare(queue=WE1, durable=True)
-                channel.queue_declare(queue=SE2, durable=True)
-                channel.queue_declare(queue=TE2, durable=True)
-                channel.queue_declare(queue=SE3, durable=True)
-                channel.queue_declare(queue=TE3, durable=True)
-
-                self._channel = channel
+                self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
+                self._middleware.queue_declare(queue=WE1, durable=True)
+                self._middleware.queue_declare(queue=SE2, durable=True)
+                self._middleware.queue_declare(queue=TE2, durable=True)
+                self._middleware.queue_declare(queue=SE3, durable=True)
+                self._middleware.queue_declare(queue=TE3, durable=True)
             except Exception as e:
                 if self._sigterm: exit(0)
                 pass
@@ -62,21 +57,21 @@ class EofListener:
 
     def _sigterm_handler(self, _signo, _stack_frame):
         self._sigterm = True
-        if self._channel is not None:
-            self._channel.close()
+        if self._middleware is not None:
+            self._middleware.close()
         exit(0)
 
     def run(self):
         try:
             self._create_RabbitMQ_Connection()
             logging.info(f'action: run | result: in_progress')
-            self._channel.basic_qos(prefetch_count=1)
-            self._channel.basic_consume(queue=EOFLISTENER, on_message_callback=self._callback)
-            self._channel.start_consuming()
+            self._middleware.basic_qos(prefetch_count=1)
+            self._middleware.recv_message(queue=EOFLISTENER, callback=self._callback)
+            self._middleware.start_consuming()
         except Exception as e:
             logging.error(f'action: run | result: error | error: {e}')        
-            if self._channel is not None:
-                self._channel.close()
+            if self._middleware is not None:
+                self._middleware.close()
             exit(0)
 
     def _callback(self, ch, method, properties, body):
@@ -113,14 +108,8 @@ class EofListener:
         return False
 
     def _send(self, queue, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=queue,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
+        self._middleware.send_message(queue=queue, data=data)
 
     def _exit(self):
-        self._channel.stop_consuming()
-        self._channel.close()
+        self._middleware.stop_consuming()
+        self._middleware.close()
