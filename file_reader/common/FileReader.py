@@ -16,11 +16,10 @@ class FileReader:
         self._f = None
     
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress')
         self._close_connection()
         if self._f is not None:
             self._f.close()
-        logging.info(f'action: Handle SIGTERM | result: success')
+        exit(0)
 
     def run(self):
         try:
@@ -47,8 +46,10 @@ class FileReader:
             logging.info(f'action: run | result: success')
         except Exception as e:
             logging.error(f'action: run | result: fail | error: {e}')
-            self._sigterm_handler()
-            return
+            self._close_connection()
+            if self._f is not None:
+                self._f.close()
+            exit(0)
 
     def _make_connection(self):
         logging.info(f'action: make_connection | result: in_progress | ip: {self._ip} | port: {self._port}')

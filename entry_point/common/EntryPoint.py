@@ -46,8 +46,6 @@ class EntryPoint:
         self._protocol = None
         self._channel = None
 
-        self._create_RabbitMQ_Connection()
-
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
         retries =  int(os.getenv('RMQRETRIES', "5"))
@@ -67,21 +65,22 @@ class EntryPoint:
 
                 self._channel = channel
             except Exception as e:
+                if self._sigterm_received: exit(0)
                 pass
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress')
         self._sigterm_received = True
         try:
             self._server_socket.close()
             self._channel.close()
         except:
             pass
-        logging.info(f'action: Handle SIGTERM | result: success')
+        exit(0)
 
     def run(self):
         try:
+            self._create_RabbitMQ_Connection()
             logging.info(f'action: run | result: in_progress')            
             client_socket = self._accept_new_connection(self._server_socket)
             if client_socket is None: return
@@ -91,7 +90,7 @@ class EntryPoint:
         except Exception as e:
             logging.error(f'action: run | result: fail | error: {e}')
             self._sigterm_handler()
-            return
+            exit(0)
 
     def _accept_new_connection(self, server_socket: socket):
         logging.info(f'action: accept_connections | result: in_progress')

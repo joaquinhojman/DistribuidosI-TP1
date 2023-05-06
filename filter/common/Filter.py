@@ -14,6 +14,7 @@ EJ3TSOLVER = "ej3tsolver"
 
 class Filter:
     def __init__(self, filter_type, filter_number, we1, te2, se3, te3):
+        self._sigterm = False
         self._filter_type = filter_type
         self._filter_number = filter_number
         self._we1 = we1
@@ -22,13 +23,12 @@ class Filter:
         self._te3 = te3
 
         self._channel = None
-        self._initialize_rabbitmq()
 
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._sigterm = True
         if self._channel is not None:
             self._channel.close()
-        logging.info(f'action: Handle SIGTERM | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        exit(0)
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
@@ -45,11 +45,13 @@ class Filter:
                 channel.queue_declare(queue=EOFTLISTENER, durable=True)
                 self._channel = channel
             except Exception as e:
+                if self._sigterm: exit(0)
                 pass
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):
         try:
+            self._initialize_rabbitmq()
             logging.info(f'action: run | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
             self._channel.basic_qos(prefetch_count=1)
             
@@ -70,6 +72,7 @@ class Filter:
             logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: {e}')
             if self._channel is not None:
                 self._channel.close()
+            exit(0)
 
     def _run_we1_filter(self):
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')

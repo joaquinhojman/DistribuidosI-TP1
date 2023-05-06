@@ -16,6 +16,8 @@ EJ3TSOLVER = "ej3tsolver"
 
 class EofTListener:
     def __init__(self):
+        self._sigterm = False
+
         self._remaining_eof = {
             TE2: int(os.getenv('TE2FCANT', "")),
             TE3: int(os.getenv('TE3FCANT', "")),
@@ -29,7 +31,6 @@ class EofTListener:
         }
 
         self._channel = None
-        self._create_RabbitMQ_Connection()
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
@@ -54,13 +55,14 @@ class EofTListener:
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress')
+        self._sigterm = True
         if self._channel is not None:
             self._channel.close()
-        logging.info(f'action: Handle SIGTERM | result: success')
+        exit(0)
 
     def run(self):
         try:
+            self._create_RabbitMQ_Connection()
             logging.info(f'action: run | result: in_progress')
             self._channel.basic_qos(prefetch_count=1)
             self._channel.basic_consume(queue=EOFTLISTENER, on_message_callback=self._callback)
@@ -69,6 +71,7 @@ class EofTListener:
             logging.error(f'action: run | result: error | error: {e}')
             if self._channel is not None:
                 self._channel.close()
+            exit(0)
 
     def _callback(self, ch, method, properties, body):
         self._proccess_eof(body.decode("utf-8"))
