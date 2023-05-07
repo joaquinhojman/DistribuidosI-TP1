@@ -1,25 +1,39 @@
 import json
 import logging
+import os
 from common.Middleware import Middleware
 
-EJ2TRIPS = "ej2trips"
-EJ2STATIONS = "ej2stations"
+EJ2SOLVER = "ej2solver"
+STATIONS = "stations"
+SE2FILTER = "se2"
+STATIONS_EJ2_EXCHANGE = "stations_ej2_exchange"
 
 class Ej2tSolver:
     def __init__(self, ejtsolver, middleware):
         self._EjtSolver = ejtsolver
-        self._middleware: Middleware = middleware
+        self._id = os.getenv('EJ2TSOLVER_ID', "")
+        self._stations_eof_to_expect = int(os.getenv('SE2FCANT', ""))
 
+        self._middleware: Middleware = middleware
         self._stations_name = {}
         self._stations = {}
+        self._stations_queue = None
 
-        self._middleware.queue_declare(queue=EJ2TRIPS, durable=True)
-        self._middleware.queue_declare(queue=EJ2STATIONS, durable=True)
+        self._initialize_rabbitmq()
+
+    def _initialize_rabbitmq(self):
+        self._middleware.exchange_declare(exchange=STATIONS_EJ2_EXCHANGE, exchange_type='fanout')
+
+        self._stations_queue = f'{SE2FILTER}_{self._id}'
+        self._middleware(queue=self._stations_queue, durable=True, exclusive=True)
+        self._middleware.queue_bind(exchange=STATIONS_EJ2_EXCHANGE, queue=self._stations_queue)
+        
+        self._middleware.queue_declare(queue=EJ2SOLVER, durable=True)
 
     def run(self):
         logging.info(f'action: run | result: in_progress | EjtSolver: {self._EjtSolver}')
         self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=EJ2STATIONS, callback=self._callback_stations)
+        self._middleware.recv_message(queue=self._stations_queue, callback=self._callback_stations)
         self._middleware.start_consuming()
         logging.info(f'action: run | result: stations getted | EjtSolver: {self._EjtSolver}')
         self._middleware.basic_qos(prefetch_count=1)
@@ -27,14 +41,25 @@ class Ej2tSolver:
         self._middleware.start_consuming()
 
     def _callback_stations(self, ch, method, properties, body):
+        finished = False
         body = body.decode("utf-8")
-        data = body.split(";")
-        self._stations_name = eval(data[0])
-        stations_list = eval(data[1])
-        for station in stations_list:
-            self._stations[station] = Station()
+        data = json.loads(body)
+        if data["type"] == STATIONS:
+            self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
+            self._stations[data["name"]] = Station()
+        elif data["type"] == "eof":
+            finished = self._process_eof()
+        else:
+            logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
+        self._middleware.send_message(queue=EJ2SOLVER, data=body)
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        self._middleware.stop_consuming()
+        if finished: self._middleware.stop_consuming()
+    
+    def _process_eof(self):
+        self._stations_eof_to_expect -= 1
+        if self._stations_eof_to_expect == 0:
+            return True
+        return False
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
@@ -55,7 +80,7 @@ class Ej2tSolver:
         data = {}
         for k, v in self._stations.items():
             data[k] = str(v._trips_on_2016) + "," + str(v._trips_on_2017)
-        self._middleware.send_message(queue=EJ2TRIPS, data=str(data))
+        self._middleware.send_message(queue=EJ2SOLVER, data=str(data))
         logging.info(f'action: _send_trips_to_ej2solver | result: trips sended | EjtSolver: {self._EjtSolver}')
 
 class Station:

@@ -9,8 +9,14 @@ class Middleware:
     def basic_qos(self, prefetch_count):
         self.channel.basic_qos(prefetch_count=prefetch_count)
 
-    def queue_declare(self, queue, durable):
-        self.channel.queue_declare(queue=queue, durable=durable)
+    def queue_declare(self, queue, durable=False, exclusive=False):
+        self.channel.queue_declare(queue=queue, durable=durable, exclusive=exclusive)
+
+    def exchange_declare(self, exchange, exchange_type):
+        self.channel.exchange_declare(exchange=exchange, exchange_type=exchange_type)
+
+    def queue_bind(self, exchange, queue):
+        self.channel.queue_bind(exchange=exchange, queue=queue)
 
     def start_consuming(self):
         self.channel.start_consuming()
@@ -24,10 +30,14 @@ class Middleware:
             delivery_mode = 2, # make message persistent
         ))
 
-    #def send_to_exchange(self, exchange, routing_key, message):
-    #    self.channel.basic_publish(exchange=exchange,
-    #                               routing_key=routing_key,
-    #                               body=message)
+    def send_to_exchange(self, exchange, routing_key, message):
+        self.channel.basic_publish(
+            exchange=exchange,
+            routing_key='',
+            body=message,
+            properties=pika.BasicProperties(
+            delivery_mode = 2, # make message persistent
+        ))
 
     def stop_recv_message(self, consumer_tag):
         self.channel.basic_cancel(consumer_tag=consumer_tag)

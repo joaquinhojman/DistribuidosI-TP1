@@ -151,7 +151,7 @@ def generateBrokers(docker_compose, wbrkcant, sbrkcant, tbrkcant, rmqretries):
         docker_compose.write(f'        - testing_net\n')
         docker_compose.write(f"\n")
 
-def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3fcant, rmqretries):
+def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3fcant, rmqretries, ej1tcant, ej2tcant, ej3tcant):
     for i in range(1, we1fcant + 1):
         docker_compose.write(f'    filter_weather{i}:\n')
         docker_compose.write(f'      container_name: filter_weather{i}\n')
@@ -165,7 +165,7 @@ def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3f
         docker_compose.write(f'      environment:\n')
         docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
         docker_compose.write(f'        - FILTER_ID={i}\n')
-        docker_compose.write(f'        - FILTER_TYPE=we1\n')
+        docker_compose.write(f'        - EJTCANT={ej1tcant}\n')
         docker_compose.write(f'      networks:\n')
         docker_compose.write(f'        - testing_net\n')
         docker_compose.write(f"\n")
@@ -183,6 +183,7 @@ def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3f
         docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
         docker_compose.write(f'        - FILTER_ID={i}\n')
         docker_compose.write(f'        - FILTER_TYPE=se2\n')
+        docker_compose.write(f'        - EJTCANT={ej2tcant}\n')
         docker_compose.write(f'      networks:\n')
         docker_compose.write(f'        - testing_net\n')
         docker_compose.write(f"\n")
@@ -200,6 +201,7 @@ def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3f
         docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
         docker_compose.write(f'        - FILTER_ID={i}\n')
         docker_compose.write(f'        - FILTER_TYPE=se3\n')
+        docker_compose.write(f'        - EJTCANT={ej3tcant}\n')
         docker_compose.write(f'      networks:\n')
         docker_compose.write(f'        - testing_net\n')
         docker_compose.write(f"\n")
@@ -238,7 +240,7 @@ def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3f
         docker_compose.write(f'        - testing_net\n')
         docker_compose.write(f"\n")
 
-def generateEj1Solver(docker_compose, we1fcant, ej1tcant, rmqretries):
+def generateEj1Solver(docker_compose, ej1tcant, rmqretries):
     docker_compose.write(f'    Ej1Solver:\n')
     docker_compose.write(f'      container_name: Ej1Solver\n')
     docker_compose.write(f'      image: ej_solver:latest\n')
@@ -251,13 +253,12 @@ def generateEj1Solver(docker_compose, we1fcant, ej1tcant, rmqretries):
     docker_compose.write(f'      environment:\n')
     docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
     docker_compose.write(f'        - EJSOLVER=ej1solver\n')
-    docker_compose.write(f'        - WE1FCANT={we1fcant}\n')
     docker_compose.write(f'        - EJ1TCANT={ej1tcant}\n')
     docker_compose.write(f'      networks:\n')
     docker_compose.write(f'        - testing_net\n')
     docker_compose.write(f"\n")
 
-def generateEj2Solver(docker_compose, se2fcant, ej2tcant, rmqretries):
+def generateEj2Solver(docker_compose, ej2tcant, rmqretries):
     docker_compose.write(f'    Ej2Solver:\n')
     docker_compose.write(f'      container_name: Ej2Solver\n')
     docker_compose.write(f'      image: ej_solver:latest\n')
@@ -270,13 +271,12 @@ def generateEj2Solver(docker_compose, se2fcant, ej2tcant, rmqretries):
     docker_compose.write(f'      environment:\n')
     docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
     docker_compose.write(f'        - EJSOLVER=ej2solver\n')
-    docker_compose.write(f'        - SE2FCANT={se2fcant}\n')
     docker_compose.write(f'        - EJ2TCANT={ej2tcant}\n')
     docker_compose.write(f'      networks:\n')
     docker_compose.write(f'        - testing_net\n')
     docker_compose.write(f"\n")
 
-def generateEj3Solver(docker_compose, sef3fcant, ej3tcant, rmqretries):
+def generateEj3Solver(docker_compose, ej3tcant, rmqretries):
     docker_compose.write(f'    Ej3Solver:\n')
     docker_compose.write(f'      container_name: Ej3Solver\n')
     docker_compose.write(f'      image: ej_solver:latest\n')
@@ -289,13 +289,12 @@ def generateEj3Solver(docker_compose, sef3fcant, ej3tcant, rmqretries):
     docker_compose.write(f'      environment:\n')
     docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
     docker_compose.write(f'        - EJSOLVER=ej3solver\n')
-    docker_compose.write(f'        - SE3FCANT={sef3fcant}\n')
     docker_compose.write(f'        - EJ3TCANT={ej3tcant}\n')
     docker_compose.write(f'      networks:\n')
     docker_compose.write(f'        - testing_net\n')
     docker_compose.write(f"\n")
 
-def generateEjTSolvers(docker_compose, ej1tcant, ej2tcant, ej3tcant, rmqretries):
+def generateEjTSolvers(docker_compose, ej1tcant, ej2tcant, ej3tcant, rmqretries, we1fcant, se2fcant, se3fcant):
     for i in range(1, ej1tcant + 1):
         docker_compose.write(f'    Ej1tSolver_{i}:\n')
         docker_compose.write(f'      container_name: Ej1tSolver_{i}\n')
@@ -307,6 +306,8 @@ def generateEjTSolvers(docker_compose, ej1tcant, ej2tcant, ej3tcant, rmqretries)
         docker_compose.write(f'      links: \n')
         docker_compose.write(f'        - rabbitmq\n')
         docker_compose.write(f'      environment:\n')
+        docker_compose.write(f'        - EJ1TSOLVER_ID={i}\n')
+        docker_compose.write(f'        - WE1FCANT={we1fcant}\n')
         docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
         docker_compose.write(f'        - EJTSOLVER=ej1tsolver\n')
         docker_compose.write(f'      networks:\n')
@@ -323,6 +324,8 @@ def generateEjTSolvers(docker_compose, ej1tcant, ej2tcant, ej3tcant, rmqretries)
         docker_compose.write(f'      links: \n')
         docker_compose.write(f'        - rabbitmq\n')
         docker_compose.write(f'      environment:\n')
+        docker_compose.write(f'        - EJ2TSOLVER_ID={i}\n')
+        docker_compose.write(f'        - SE2FCANT={se2fcant}\n')
         docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
         docker_compose.write(f'        - EJTSOLVER=ej2tsolver\n')
         docker_compose.write(f'      networks:\n')
@@ -339,6 +342,8 @@ def generateEjTSolvers(docker_compose, ej1tcant, ej2tcant, ej3tcant, rmqretries)
         docker_compose.write(f'      links: \n')
         docker_compose.write(f'        - rabbitmq\n')
         docker_compose.write(f'      environment:\n')
+        docker_compose.write(f'        - EJ3TSOLVER_ID={i}\n')
+        docker_compose.write(f'        - SE3FCANT={se3fcant}\n')
         docker_compose.write(f'        - RMQRETRIES={rmqretries}\n')
         docker_compose.write(f'        - EJTSOLVER=ej3tsolver\n')
         docker_compose.write(f'      networks:\n')
@@ -397,11 +402,11 @@ def generateServices(docker_compose, config_params):
     generateEntryPoint(docker_compose,config_params["WBRKCANT"],config_params["SBRKCANT"],config_params["TBRKCANT"],config_params["RMQRETRIES"])
     generateFileReader(docker_compose)
     generateBrokers(docker_compose, config_params["WBRKCANT"],config_params["SBRKCANT"],config_params["TBRKCANT"],config_params["RMQRETRIES"])
-    generateFilters(docker_compose, config_params["WE1FCANT"], config_params["SE2FCANT"], config_params["TE2FCANT"], config_params["SE3FCANT"], config_params["TE3FCANT"],config_params["RMQRETRIES"])
-    generateEj1Solver(docker_compose, config_params["WE1FCANT"], config_params["EJ1TCANT"], config_params["RMQRETRIES"])
-    generateEj2Solver(docker_compose, config_params["SE2FCANT"], config_params["EJ2TCANT"], config_params["RMQRETRIES"])
-    generateEj3Solver(docker_compose, config_params["SE3FCANT"], config_params["EJ3TCANT"], config_params["RMQRETRIES"])
-    generateEjTSolvers(docker_compose, config_params["EJ1TCANT"], config_params["EJ2TCANT"], config_params["EJ3TCANT"], config_params["RMQRETRIES"])
+    generateFilters(docker_compose, config_params["WE1FCANT"], config_params["SE2FCANT"], config_params["TE2FCANT"], config_params["SE3FCANT"], config_params["TE3FCANT"],config_params["RMQRETRIES"], config_params["EJ1TCANT"], config_params["EJ2TCANT"], config_params["EJ3TCANT"])
+    generateEj1Solver(docker_compose, config_params["EJ1TCANT"], config_params["RMQRETRIES"])
+    generateEj2Solver(docker_compose, config_params["EJ2TCANT"], config_params["RMQRETRIES"])
+    generateEj3Solver(docker_compose, config_params["EJ3TCANT"], config_params["RMQRETRIES"])
+    generateEjTSolvers(docker_compose, config_params["EJ1TCANT"], config_params["EJ2TCANT"], config_params["EJ3TCANT"], config_params["RMQRETRIES"], config_params["WE1FCANT"], config_params["SE2FCANT"], config_params["SE3FCANT"])
     generateEOFListener(docker_compose, config_params["WBRKCANT"],config_params["SBRKCANT"],config_params["TBRKCANT"], config_params["WE1FCANT"], config_params["SE2FCANT"], config_params["TE2FCANT"], config_params["SE3FCANT"], config_params["TE3FCANT"], config_params["RMQRETRIES"])
     generateEOFTListener(docker_compose,config_params["TBRKCANT"], config_params["TE2FCANT"], config_params["TE3FCANT"], config_params["EJ1TCANT"], config_params["EJ2TCANT"], config_params["EJ3TCANT"], config_params["RMQRETRIES"])
 

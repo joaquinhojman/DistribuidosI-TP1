@@ -121,6 +121,7 @@ services:
         - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=we1
+        - EJTCANT=2
       networks:
         - testing_net
 
@@ -131,6 +132,7 @@ services:
         - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=we1
+        - EJTCANT=2
 
     filter_stations_e2_1:
       <<: *filter
@@ -139,6 +141,7 @@ services:
         - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=se2
+        - EJTCANT=2
 
     filter_stations_e2_2:
       <<: *filter
@@ -147,6 +150,7 @@ services:
         - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=se2
+        - EJTCANT=2
 
     filter_stations_e3_1:
       <<: *filter
@@ -155,6 +159,7 @@ services:
         - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=se3
+        - EJTCANT=2
 
     filter_stations_e3_2:
       <<: *filter
@@ -163,6 +168,7 @@ services:
         - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=se3
+        - EJTCANT=2
 
     filter_trips_e2_1:
       <<: *filter
@@ -208,7 +214,6 @@ services:
       environment:
         - RMQRETRIES=5
         - EJSOLVER=ej1solver
-        - WE1FCANT=2
         - EJ1TCANT=2
       networks:
         - testing_net
@@ -219,7 +224,6 @@ services:
       environment:
         - RMQRETRIES=5
         - EJSOLVER=ej2solver
-        - SE2FCANT=2
         - EJ2TCANT=2
 
     Ej3Solver:
@@ -228,7 +232,6 @@ services:
       environment:
         - RMQRETRIES=5
         - EJSOLVER=ej3solver
-        - SE3FCANT=2
         - EJ3TCANT=2
     
     Ej1tSolver_1: &EjTSolver
@@ -241,6 +244,8 @@ services:
       links: 
         - rabbitmq
       environment:
+        - EJ1TSOLVER_ID=1
+        - WE1FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej1tsolver
       networks:
@@ -250,6 +255,8 @@ services:
       <<: *EjTSolver
       container_name: Ej1tSolver_2
       environment:
+        - EJ1TSOLVER_ID=2
+        - WE1FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej1tsolver
 
@@ -257,24 +264,32 @@ services:
       <<: *EjTSolver
       container_name: Ej2tSolver_1
       environment:
+        - EJ2TSOLVER_ID=1
+        - SE2FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej2tsolver
     Ej2tSolver_2:
       <<: *EjTSolver
       container_name: Ej2tSolver_2
       environment:
+        - EJ2TSOLVER_ID=2
+        - SE2FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej2tsolver
     Ej3tSolver_1:
       <<: *EjTSolver
       container_name: Ej3tSolver_1
       environment:
+        - EJ3TSOLVER_ID=1
+        - SE3FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej3tsolver
     Ej3tSolver_2:
       <<: *EjTSolver
       container_name: Ej3tSolver_2
       environment:
+        - EJ3TSOLVER_ID=2
+        - SE3FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej3tsolver
 
