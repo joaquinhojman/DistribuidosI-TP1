@@ -30,7 +30,7 @@ class Middleware:
             delivery_mode = 2, # make message persistent
         ))
 
-    def send_to_exchange(self, exchange, routing_key, message):
+    def send_to_exchange(self, exchange, message):
         self.channel.basic_publish(
             exchange=exchange,
             routing_key='',

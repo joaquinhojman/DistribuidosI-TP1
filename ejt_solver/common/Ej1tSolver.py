@@ -24,7 +24,7 @@ class Ej1tSolver:
         self._middleware.exchange_declare(exchange=WEATHER_EJ1_EXCHANGE, exchange_type='fanout')
 
         self._wheater_queue = f'{WE1FILTER}_{self._id}'
-        self._middleware(queue=self._wheater_queue, durable=True, exclusive=True)
+        self._middleware.queue_declare(queue=self._wheater_queue, durable=True)
         self._middleware.queue_bind(exchange=WEATHER_EJ1_EXCHANGE, queue=self._wheater_queue)
         
         self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)

@@ -113,12 +113,12 @@ class Filter:
     def _create_queues_for_exchange(self, exchange, type, ejtsolvercant):
         for i in range(1, ejtsolvercant + 1):
             queue_name = f'{type}_{i}'
-            self._middleware.queue_declare(queue=queue_name)
+            self._middleware.queue_declare(queue=queue_name, durable=True)
             self._middleware.queue_bind(exchange=exchange, queue=queue_name)
 
     def _callback_we1(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, WEATHER_EJ1_EXCHANGE, ch, method)
+        eof = self._check_eof(body, WEATHER_EJ1_EXCHANGE, method)
         if eof: return
         we1 = We1(body)
         if we1.is_valid():
@@ -128,7 +128,7 @@ class Filter:
 
     def _callback_se2(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, STATIONS_EJ2_EXCHANGE, ch, method)
+        eof = self._check_eof(body, STATIONS_EJ2_EXCHANGE, method)
         if eof: return
         se2 = Se2(body)
         if se2.is_valid():
@@ -147,7 +147,7 @@ class Filter:
 
     def _callback_se3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, STATIONS_EJ3_EXCHANGE, ch, method)
+        eof = self._check_eof(body, STATIONS_EJ3_EXCHANGE, method)
         if eof: return
         se3 = Se3(body)
         if se3.is_valid():

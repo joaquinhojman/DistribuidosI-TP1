@@ -25,7 +25,7 @@ class Ej2tSolver:
         self._middleware.exchange_declare(exchange=STATIONS_EJ2_EXCHANGE, exchange_type='fanout')
 
         self._stations_queue = f'{SE2FILTER}_{self._id}'
-        self._middleware(queue=self._stations_queue, durable=True, exclusive=True)
+        self._middleware.queue_declare(queue=self._stations_queue, durable=True)
         self._middleware.queue_bind(exchange=STATIONS_EJ2_EXCHANGE, queue=self._stations_queue)
         
         self._middleware.queue_declare(queue=EJ2SOLVER, durable=True)
