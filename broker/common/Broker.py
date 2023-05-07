@@ -94,7 +94,7 @@ class Broker:
 
     def _callback_weather(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body[:3], ch, method)
+        eof = self._check_eof(body[:3], method)
         if eof: return
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         weathers = body.split('\n')
@@ -102,11 +102,11 @@ class Broker:
             weather = Weather(w)
             weather_for_ej1filter = weather.get_weather_for_ej1filter()
             self._send_data_to_queue(WE1, weather_for_ej1filter)
-        ch.basic_ack(method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
     def _callback_stations(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body[:3], ch, method)
+        eof = self._check_eof(body[:3], method)
         if eof: return
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         stations = body.split('\n')
@@ -116,11 +116,11 @@ class Broker:
             self._send_data_to_queue(SE2, station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
             self._send_data_to_queue(SE3, station_for_ej3filter)
-        ch.basic_ack(method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body[:3], ch, method)
+        eof = self._check_eof(body[:3], method)
         if eof: return
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         trips = body.split('\n')
@@ -132,12 +132,12 @@ class Broker:
             self._send_data_to_queue(TE2, trip_for_ej2filter)
             trip_for_ej3solver = trip.get_trip_for_ej3filter()
             self._send_data_to_queue(TE3, trip_for_ej3solver)
-        ch.basic_ack(method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
-    def _check_eof(self, body, ch, method):
+    def _check_eof(self, body, method):
         if body == "EOF":
             self._send_eof()
-            ch.basic_ack(method.delivery_tag)
+            self._middleware.send_ack(method.delivery_tag)
             self._exit()
             return True
         return False

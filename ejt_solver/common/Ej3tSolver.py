@@ -53,7 +53,7 @@ class Ej3tSolver:
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
         self._middleware.send_message(queue=EJ3SOLVER, data=body)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if finished: self._middleware.stop_consuming()
     
     def _process_eof(self):
@@ -74,12 +74,12 @@ class Ej3tSolver:
             self._montreal_stations[end_station_name].add_trip(origin) 
         elif data["type"] == "eof":
             self._send_trips_to_ej3solver()
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._middleware.send_ack(method.delivery_tag)
             self._middleware.stop_consuming()
             return
         else:
             logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej3solver(self):
         data = {}

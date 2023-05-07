@@ -180,7 +180,7 @@ class EntryPoint:
         if self._all_solvers_confirmated():
             self._reset_solvers_confirmated_dict()
             finished = True
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if finished: self._middleware.stop_consuming()
 
     def _send_results(self):

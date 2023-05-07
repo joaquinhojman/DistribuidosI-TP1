@@ -76,7 +76,7 @@ class EofListener:
 
     def _callback(self, ch, method, properties, body):
         finished = self._proccess_eof(body.decode("utf-8"))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if finished: self._exit()
 
     def _proccess_eof(self, body):
