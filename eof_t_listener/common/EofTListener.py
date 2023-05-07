@@ -71,7 +71,7 @@ class EofTListener:
 
     def _callback(self, ch, method, properties, body):
         self._proccess_eof(body.decode("utf-8"))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if self._finished(): self._exit()
 
     def _proccess_eof(self, body):

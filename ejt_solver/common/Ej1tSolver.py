@@ -29,7 +29,7 @@ class Ej1tSolver:
         days_list = eval(body)
         for day in days_list:
             self._days_with_more_than_30mm_prectot[day] = DayWithMoreThan30mmPrectot()
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         self._middleware.stop_consuming()
 
     def _callback_trips(self, ch, method, properties, body):
@@ -41,12 +41,12 @@ class Ej1tSolver:
                 self._days_with_more_than_30mm_prectot[key].add_trip(float(data["duration_sec"]))
         elif data["type"] == "eof":
             self._send_trips_to_ej1solver()
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._middleware.send_ack(method.delivery_tag)
             self._middleware.stop_consuming()
             return
         else:
             logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej1solver(self):
         data = {}

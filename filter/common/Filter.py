@@ -102,56 +102,56 @@ class Filter:
 
     def _callback_we1(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ1SOLVER, ch, method)
+        eof = self._check_eof(body, EJ1SOLVER, method)
         if eof: return
         we1 = We1(body)
         if we1.is_valid():
             self._send_data_to_queue(EJ1SOLVER, we1.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
     def _callback_se2(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ2SOLVER, ch, method)
+        eof = self._check_eof(body, EJ2SOLVER, method)
         if eof: return
         se2 = Se2(body)
         if se2.is_valid():
             self._send_data_to_queue(EJ2SOLVER, se2.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
     def _callback_te2(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EOFTLISTENER, ch, method)
+        eof = self._check_eof(body, EOFTLISTENER, method)
         if eof: return
         te2 = Te2(body)
         if te2.is_valid():
             self._send_data_to_queue(EJ2TSOLVER, te2.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
     def _callback_se3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ3SOLVER, ch, method)
+        eof = self._check_eof(body, EJ3SOLVER, method)
         if eof: return
         se3 = Se3(body)
         if se3.is_valid():
             self._send_data_to_queue(EJ3SOLVER, se3.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
     def _callback_te3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EOFTLISTENER, ch, method)
+        eof = self._check_eof(body, EOFTLISTENER, method)
         if eof: return
         te3 = Te3(body)
         if te3.is_valid():
             self._send_data_to_queue(EJ3TSOLVER, te3.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
 
-    def _check_eof(self, body, queue, ch, method):
+    def _check_eof(self, body, queue, method):
         if (body[:3] == "EOF"):
             if queue == EOFTLISTENER:
                 self._send_eof_to_eoftlistener()
             else:
                 self._send_eof_to_solver(body, queue)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._middleware.send_ack(method.delivery_tag)
             self._exit()
             return True
         return False

@@ -42,7 +42,7 @@ class Ej2Solver:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if finished: self._middleware.stop_consuming()
     
     def _process_eof(self):
@@ -73,7 +73,7 @@ class Ej2Solver:
             values = v.split(",")
             self._stations[k].add_trip("2016", int(values[0]))
             self._stations[k].add_trip("2017", int(values[1]))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if self._ej2tsolvers_cant == 0:
             self._send_results()
             self._exit()

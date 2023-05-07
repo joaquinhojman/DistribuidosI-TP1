@@ -40,7 +40,7 @@ class Ej1Solver:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if finished: self._middleware.stop_consuming()
 
     def _process_eof(self,):
@@ -70,7 +70,7 @@ class Ej1Solver:
         for k, v in trips.items():
             values = v.split(",")
             self._days_with_more_than_30mm_prectot[k].add_trips(int(values[0]), float(values[1]))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         if self._ej1tsolvers_cant == 0:
             self._send_results()
             self._exit()

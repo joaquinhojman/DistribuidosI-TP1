@@ -35,7 +35,7 @@ class Ej3tSolver:
         for station in stations_list:
             station_data = station.split("+")
             self._montreal_stations[station_data[0]] = MontrealStation(station_data[1], station_data[2])
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         self._middleware.stop_consuming()
 
     def _callback_trips(self, ch, method, properties, body):
@@ -50,12 +50,12 @@ class Ej3tSolver:
             self._montreal_stations[end_station_name].add_trip(origin) 
         elif data["type"] == "eof":
             self._send_trips_to_ej3solver()
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._middleware.send_ack(method.delivery_tag)
             self._middleware.stop_consuming()
             return
         else:
             logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej3solver(self):
         data = {}
