@@ -48,13 +48,15 @@ class Ej3tSolver:
         if data["type"] == STATIONS:
             self._stations_name[str((data["code"], data["yearid"]))] = data["name"]
             self._montreal_stations[data["name"]] = MontrealStation(data["latitude"], data["longitude"])
+            self._middleware.send_message(queue=EJ3SOLVER, data=body)
         elif data["type"] == "eof":
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        self._middleware.send_message(queue=EJ3SOLVER, data=body)
         self._middleware.send_ack(method.delivery_tag)
-        if finished: self._middleware.stop_consuming()
+        if finished: 
+            self._middleware.send_message(queue=EJ3SOLVER, data=body)
+            self._middleware.stop_consuming()
     
     def _process_eof(self):
         self._stations_eof_to_expect -= 1

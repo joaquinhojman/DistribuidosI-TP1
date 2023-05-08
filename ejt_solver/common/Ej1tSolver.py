@@ -45,13 +45,15 @@ class Ej1tSolver:
         data = json.loads(body)
         if data["type"] == WEATHER:
             self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
+            self._middleware.send_message(queue=EJ1SOLVER, data=body)
         elif data["type"] == "eof":
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        self._middleware.send_message(queue=EJ1SOLVER, data=body)
         self._middleware.send_ack(method.delivery_tag)
-        if finished: self._middleware.stop_consuming()
+        if finished: 
+            self._middleware.send_message(queue=EJ1SOLVER, data=body)
+            self._middleware.stop_consuming()
 
     def _process_eof(self,):
         self._weathers_eof_to_expect -= 1

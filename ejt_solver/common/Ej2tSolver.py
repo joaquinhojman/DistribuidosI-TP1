@@ -47,13 +47,15 @@ class Ej2tSolver:
         if data["type"] == STATIONS:
             self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
             self._stations[data["name"]] = Station()
+            self._middleware.send_message(queue=EJ2SOLVER, data=body)
         elif data["type"] == "eof":
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        self._middleware.send_message(queue=EJ2SOLVER, data=body)
         self._middleware.send_ack(method.delivery_tag)
-        if finished: self._middleware.stop_consuming()
+        if finished:
+            self._middleware.send_message(queue=EJ2SOLVER, data=body)
+            self._middleware.stop_consuming()
     
     def _process_eof(self):
         self._stations_eof_to_expect -= 1
