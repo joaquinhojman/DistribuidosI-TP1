@@ -3,7 +3,7 @@ import json
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
-EOF = "eof"
+_EOF = "eof"
 
 class We1:
     def __init__(self, we1):
@@ -108,6 +108,6 @@ class EOF:
     
     def get_json(self):
         return json.dumps({
-            "type": EOF,
+            "type": _EOF,
             "eof": self.topic,
         })

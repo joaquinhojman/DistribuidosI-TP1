@@ -1,6 +1,6 @@
 import json
 
-EOF = "eof"
+_EOF = "eof"
 EJSOLVER = "EjSolver"
 RESULTS = "results"
 TRIPS = "trips"
@@ -18,5 +18,5 @@ class EOF:
     def __init__(self, data):
         data = json.loads(data)
         self.EjSolver = data[EJSOLVER]
-        self.eof = data[EOF]
+        self.eof = data[_EOF]
         self.results = data[RESULTS] if self.eof == TRIPS else None
