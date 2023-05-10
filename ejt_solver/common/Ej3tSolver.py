@@ -6,8 +6,10 @@ from haversine import haversine
 
 EJ3SOLVER = "ej3solver"
 STATIONS = "stations"
+TRIPS = "trips"
 SE3FILTER = "se3"
 STATIONS_EJ3_EXCHANGE = "stations_ej3_exchange"
+EOF = "eof"
 
 class Ej3tSolver:
     def __init__(self, ejtsolver, middleware):
@@ -49,7 +51,7 @@ class Ej3tSolver:
             self._stations_name[str((data["code"], data["yearid"]))] = data["name"]
             self._montreal_stations[data["name"]] = MontrealStation(data["latitude"], data["longitude"])
             self._middleware.send_message(queue=EJ3SOLVER, data=body)
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -67,14 +69,14 @@ class Ej3tSolver:
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
         data = json.loads(body)
-        if data["type"] == "trips": 
+        if data["type"] == TRIPS: 
             start_station_name = self._stations_name[str((data["start_station_code"], data["yearid"]))]
             start_sation = self._montreal_stations[start_station_name]
             origin = (start_sation._latitude, start_sation._longitude)
 
             end_station_name = self._stations_name[str((data["end_station_code"], data["yearid"]))]
             self._montreal_stations[end_station_name].add_trip(origin) 
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             self._send_trips_to_ej3solver()
             self._middleware.send_ack(method.delivery_tag)
             self._middleware.stop_consuming()

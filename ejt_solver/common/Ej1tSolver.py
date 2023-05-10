@@ -5,8 +5,10 @@ from common.Middleware import Middleware
 
 EJ1SOLVER = "ej1solver"
 WEATHER = "weather"
+TRIPS = "trips"
 WE1FILTER = "we1"
 WEATHER_EJ1_EXCHANGE = "weather_ej1_exchange"
+EOF = "eof"
 
 class Ej1tSolver:
     def __init__(self, ejtsolver, middleware):
@@ -46,7 +48,7 @@ class Ej1tSolver:
         if data["type"] == WEATHER:
             self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
             self._middleware.send_message(queue=EJ1SOLVER, data=body)
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -64,11 +66,11 @@ class Ej1tSolver:
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
         data = json.loads(body)
-        if data["type"] == "trips":
+        if data["type"] == TRIPS:
             key = str((data["city"], data["start_date"]))
             if key in self._days_with_more_than_30mm_prectot:
                 self._days_with_more_than_30mm_prectot[key].add_trip(float(data["duration_sec"]))
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             self._send_trips_to_ej1solver()
             self._middleware.send_ack(method.delivery_tag)
             self._middleware.stop_consuming()

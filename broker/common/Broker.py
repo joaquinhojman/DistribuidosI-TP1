@@ -15,6 +15,8 @@ SE2 = "se2"
 TE2 = "te2"
 SE3 = "se3"
 TE3 = "te3"
+EOF = "eof"
+TRIPS = "trips"
 
 class Broker:
     def __init__(self, broker_type, broker_number, weather, stations, trips):
@@ -135,7 +137,7 @@ class Broker:
         self._middleware.send_ack(method.delivery_tag)
 
     def _check_eof(self, body, method):
-        if body == "EOF":
+        if body == EOF:
             self._send_eof()
             self._middleware.send_ack(method.delivery_tag)
             self._exit()
@@ -148,7 +150,7 @@ class Broker:
         elif self._broker_type == self._stations:
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         elif self._broker_type == self._trips:
-            self._send_data_to_queue(EOFTLISTENER, "trips")
+            self._send_data_to_queue(EOFTLISTENER, TRIPS)
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         else:
             logging.error(f'action: send_eof | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')

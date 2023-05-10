@@ -5,8 +5,10 @@ from common.Middleware import Middleware
 
 EJ2SOLVER = "ej2solver"
 STATIONS = "stations"
+TRIPS = "trips"
 SE2FILTER = "se2"
 STATIONS_EJ2_EXCHANGE = "stations_ej2_exchange"
+EOF = "eof"
 
 class Ej2tSolver:
     def __init__(self, ejtsolver, middleware):
@@ -48,7 +50,7 @@ class Ej2tSolver:
             self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
             self._stations[data["name"]] = Station()
             self._middleware.send_message(queue=EJ2SOLVER, data=body)
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -66,10 +68,10 @@ class Ej2tSolver:
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
         data = json.loads(body)
-        if data["type"] == "trips": 
+        if data["type"] == TRIPS: 
             station_name = self._stations_name[str((data["city"], data["start_station_code"], data["yearid"]))]
             self._stations[station_name].add_trip(data["yearid"])
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             self._send_trips_to_ej2solver()
             self._middleware.send_ack(method.delivery_tag)
             self._middleware.stop_consuming()

@@ -6,6 +6,7 @@ from common.Middleware import Middleware
 WEATHER = "weather"
 TRIPS = "trips"
 RESULTS = "results"
+EOF = "eof"
 
 class Ej1Solver:
     def __init__(self, EjSolver, middleware):
@@ -33,7 +34,7 @@ class Ej1Solver:
         if data["type"] == WEATHER:
             if str((data["city"], data["date"])) not in self._days_with_more_than_30mm_prectot:
                 self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -50,7 +51,7 @@ class Ej1Solver:
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": WEATHER
+            EOF: WEATHER
         })
         self._send(json_eof)
     
@@ -69,7 +70,7 @@ class Ej1Solver:
     def _send_results(self):
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": TRIPS,
+            EOF: TRIPS,
             "results": str(self._get_results())
         })
         self._send(json_results)

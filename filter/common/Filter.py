@@ -15,6 +15,7 @@ EJ3TSOLVER = "ej3tsolver"
 WEATHER_EJ1_EXCHANGE = "weather_ej1_exchange"
 STATIONS_EJ2_EXCHANGE = "stations_ej2_exchange"
 STATIONS_EJ3_EXCHANGE = "stations_ej3_exchange"
+_EOF = "eof"
 
 class Filter:
     def __init__(self, filter_type, filter_number, we1, se2, te2, se3, te3):
@@ -165,7 +166,7 @@ class Filter:
         self._middleware.send_ack(method.delivery_tag)
 
     def _check_eof(self, body, queue, method):
-        if (body[:3] == "EOF"):
+        if (body[:3] == _EOF):
             if queue == EOFTLISTENER:
                 self._send_eof_to_eoftlistener()
             else:

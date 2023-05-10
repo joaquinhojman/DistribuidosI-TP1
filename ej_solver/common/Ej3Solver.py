@@ -6,6 +6,7 @@ from common.Middleware import Middleware
 STATIONS = "stations"
 TRIPS = "trips"
 RESULTS = "results"
+EOF = "eof"
 
 class Ej3Solver:
     def __init__(self, EjSolver, middleware):
@@ -35,7 +36,7 @@ class Ej3Solver:
             if str((data["code"], data["yearid"])) not in self._stations_name:
                 self._stations_name[str((data["code"], data["yearid"]))] = data["name"]
                 self._montreal_stations[data["name"]] = MontrealStation(data["latitude"], data["longitude"])
-        elif data["type"] == "eof":
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -52,7 +53,7 @@ class Ej3Solver:
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": STATIONS
+            EOF: STATIONS
         })
         self._send(json_eof)
 
@@ -72,7 +73,7 @@ class Ej3Solver:
         results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": TRIPS,
+            EOF: TRIPS,
             "results": str(results)
         })
         self._send(json_results)

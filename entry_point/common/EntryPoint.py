@@ -15,6 +15,7 @@ RESULTS = "results"
 EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
+_EOF = "eof"
 
 class EntryPoint:
     def __init__(self, port, listen_backlog):
@@ -158,7 +159,7 @@ class EntryPoint:
     def _send_eofs(self):
         logging.info(f'action: receive_data | eof received | topic: {self._actual_topic}')
         for _ in range(self._cant_brokers[self._actual_topic]):
-            self._send_data_to_queue(self._actual_topic, "EOF")
+            self._send_data_to_queue(self._actual_topic, _EOF)
 
     def _send_data_to_queue(self, queue, data):
         self._middleware.send_message(queue, data)
