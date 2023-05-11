@@ -2,7 +2,7 @@ import logging
 from configparser import ConfigParser
 import os
 import signal
-from common.EofTListener import EofTListener
+from common.EofTripsListener import EofTripsListener
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -26,7 +26,7 @@ def main():
     initialize_log(logging_level)
     logging.debug(f"action: config | result: success | logging_level: {logging_level}")
 
-    eof_listener = EofTListener()
+    eof_listener = EofTripsListener()
     signal.signal(signal.SIGTERM, eof_listener._sigterm_handler)
     eof_listener.run()
 

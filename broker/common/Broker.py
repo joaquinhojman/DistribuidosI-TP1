@@ -7,7 +7,7 @@ from common.Middleware import Middleware
 from common.types import Station, Trip, Weather
 
 EOFLISTENER = "eoflistener"
-EOFTLISTENER = "eoftlistener"
+EOFTRIPSLISTENER = "eoftripslistener"
 EJ1TSOLVER = "ej1tsolver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
@@ -42,7 +42,7 @@ class Broker:
 
         self._middleware.queue_declare(queue=self._broker_type, durable=True)
         self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
-        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EOFTRIPSLISTENER, durable=True)
         logging.info(f'action: initialize_rabbitmq | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def run(self):
@@ -154,7 +154,7 @@ class Broker:
         elif self._broker_type == self._stations:
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         elif self._broker_type == self._trips:
-            self._send_data_to_queue(EOFTLISTENER, TRIPS)
+            self._send_data_to_queue(EOFTRIPSLISTENER, TRIPS)
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         else:
             logging.error(f'action: send_eof | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')

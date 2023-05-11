@@ -6,7 +6,7 @@ import logging
 from time import sleep
 from common.Middleware import Middleware
 
-EOFTLISTENER = "eoftlistener"
+EOFTRIPSLISTENER = "eoftripslistener"
 TRIPS = "trips"
 TE2 = "te2"
 TE3 = "te3"
@@ -14,7 +14,7 @@ EJ1TSOLVER = "ej1tsolver"
 EJ2TSOLVER = "ej2tsolver"
 EJ3TSOLVER = "ej3tsolver"
 
-class EofTListener:
+class EofTripsListener:
     def __init__(self):
         self._sigterm = False
 
@@ -36,7 +36,7 @@ class EofTListener:
         logging.info(f'action: create rabbitmq connections | result: in_progress')
         self._middleware = Middleware()
 
-        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EOFTRIPSLISTENER, durable=True)
         self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
         self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
         self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
@@ -53,7 +53,7 @@ class EofTListener:
             self._create_RabbitMQ_Connection()
             logging.info(f'action: run | result: in_progress')
             self._middleware.basic_qos(prefetch_count=1)
-            self._middleware.recv_message(queue=EOFTLISTENER, callback=self._callback)
+            self._middleware.recv_message(queue=EOFTRIPSLISTENER, callback=self._callback)
             self._middleware.start_consuming()
         except Exception as e:
             logging.error(f'action: run | result: error | error: {e}')

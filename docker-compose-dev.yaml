@@ -108,7 +108,7 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - EofTListener
+        - EofTripsListener
       links: 
         - rabbitmq
       environment:
@@ -298,9 +298,9 @@ services:
       networks:
         - testing_net
 
-    EofTListener:
-      container_name: EofTListener
-      image: eof_t_listener:latest
+    EofTripsListener:
+      container_name: EofTripsListener
+      image: eof_trips_listener:latest
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:

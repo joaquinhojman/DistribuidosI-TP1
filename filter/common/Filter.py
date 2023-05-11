@@ -8,7 +8,7 @@ from common.types import EOF, Se3, Te2, Te3, We1, Se2
 EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
-EOFTLISTENER = "eoftlistener"
+EOFTRIPSLISTENER = "eoftripslistener"
 EJ1TSOLVER = "ej1tsolver"
 EJ2TSOLVER = "ej2tsolver"
 EJ3TSOLVER = "ej3tsolver"
@@ -42,7 +42,7 @@ class Filter:
         self._middleware = Middleware()
 
         self._middleware.queue_declare(queue=self._filter_type, durable=True)
-        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EOFTRIPSLISTENER, durable=True)
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):
@@ -131,7 +131,7 @@ class Filter:
 
     def _callback_te2(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EOFTLISTENER, method)
+        eof = self._check_eof(body, EOFTRIPSLISTENER, method)
         if eof: return
         trips = body.split('\n')
         trips_for_ej2tsolver = []
@@ -156,7 +156,7 @@ class Filter:
 
     def _callback_te3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EOFTLISTENER, method)
+        eof = self._check_eof(body, EOFTRIPSLISTENER, method)
         if eof: return
         trips = body.split('\n')
         trips_for_ej3tsolver = []
@@ -171,8 +171,8 @@ class Filter:
 
     def _check_eof(self, body, queue, method):
         if (body[:3] == _EOF):
-            if queue == EOFTLISTENER:
-                self._send_eof_to_eoftlistener()
+            if queue == EOFTRIPSLISTENER:
+                self._send_eof_to_eoftripslistener()
             else:
                 self._send_eof_to_ejtsolver(body, queue)
             self._middleware.send_ack(method.delivery_tag)
@@ -185,9 +185,9 @@ class Filter:
         self._middleware.send_to_exchange(exchange=exchange, message=eof.get_json())
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
-    def _send_eof_to_eoftlistener(self):
+    def _send_eof_to_eoftripslistener(self):
         eof = self._filter_type
-        self._send_data_to_queue(EOFTLISTENER, eof)
+        self._send_data_to_queue(EOFTRIPSLISTENER, eof)
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def _send_data_to_queue(self, queue, data):
