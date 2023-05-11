@@ -71,7 +71,10 @@ class Ej3tSolver:
         trips = body.split("\n")
         for t in trips:
             data = json.loads(t)
-            if data["type"] == TRIPS: 
+            if data["type"] == TRIPS:
+                if (str((data["start_station_code"], data["yearid"])) not in self._stations_name) or (str((data["end_station_code"], data["yearid"])) not in self._stations_name):
+                    continue
+
                 start_station_name = self._stations_name[str((data["start_station_code"], data["yearid"]))]
                 start_sation = self._montreal_stations[start_station_name]
                 origin = (start_sation._latitude, start_sation._longitude)

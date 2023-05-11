@@ -71,6 +71,9 @@ class Ej2tSolver:
         for t in trips:
             data = json.loads(t)
             if data["type"] == TRIPS: 
+                if str((data["city"], data["start_station_code"], data["yearid"])) not in self._stations_name:
+                    continue
+
                 station_name = self._stations_name[str((data["city"], data["start_station_code"], data["yearid"]))]
                 self._stations[station_name].add_trip(data["yearid"])
             elif data["type"] == EOF:
