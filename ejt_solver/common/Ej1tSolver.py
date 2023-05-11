@@ -65,18 +65,21 @@ class Ej1tSolver:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        data = json.loads(body)
-        if data["type"] == TRIPS:
-            key = str((data["city"], data["start_date"]))
-            if key in self._days_with_more_than_30mm_prectot:
-                self._days_with_more_than_30mm_prectot[key].add_trip(float(data["duration_sec"]))
-        elif data["type"] == EOF:
-            self._send_trips_to_ej1solver()
-            self._middleware.send_ack(method.delivery_tag)
-            self._middleware.stop_consuming()
-            return
-        else:
-            logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
+        trips = body.split("\n")
+        logging.info(f'action: _callback_trips | trips: {trips}')
+        for t in trips:
+            data = json.loads(t)
+            if data["type"] == TRIPS:
+                key = str((data["city"], data["start_date"]))
+                if key in self._days_with_more_than_30mm_prectot:
+                    self._days_with_more_than_30mm_prectot[key].add_trip(float(data["duration_sec"]))
+            elif data["type"] == EOF:
+                self._send_trips_to_ej1solver()
+                self._middleware.send_ack(method.delivery_tag)
+                self._middleware.stop_consuming()
+                return
+            else:
+                logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
         self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej1solver(self):

@@ -67,17 +67,20 @@ class Ej2tSolver:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        data = json.loads(body)
-        if data["type"] == TRIPS: 
-            station_name = self._stations_name[str((data["city"], data["start_station_code"], data["yearid"]))]
-            self._stations[station_name].add_trip(data["yearid"])
-        elif data["type"] == EOF:
-            self._send_trips_to_ej2solver()
-            self._middleware.send_ack(method.delivery_tag)
-            self._middleware.stop_consuming()
-            return
-        else:
-            logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
+        trips = body.split("\n")
+        logging.info(f'action: _callback_trips | trips: {trips}')
+        for t in trips:
+            data = json.loads(t)
+            if data["type"] == TRIPS: 
+                station_name = self._stations_name[str((data["city"], data["start_station_code"], data["yearid"]))]
+                self._stations[station_name].add_trip(data["yearid"])
+            elif data["type"] == EOF:
+                self._send_trips_to_ej2solver()
+                self._middleware.send_ack(method.delivery_tag)
+                self._middleware.stop_consuming()
+                return
+            else:
+                logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
         self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej2solver(self):

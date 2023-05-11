@@ -68,21 +68,24 @@ class Ej3tSolver:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        data = json.loads(body)
-        if data["type"] == TRIPS: 
-            start_station_name = self._stations_name[str((data["start_station_code"], data["yearid"]))]
-            start_sation = self._montreal_stations[start_station_name]
-            origin = (start_sation._latitude, start_sation._longitude)
+        trips = body.split("\n")
+        logging.info(f'action: _callback_trips | trips: {trips}')
+        for t in trips:
+            data = json.loads(t)
+            if data["type"] == TRIPS: 
+                start_station_name = self._stations_name[str((data["start_station_code"], data["yearid"]))]
+                start_sation = self._montreal_stations[start_station_name]
+                origin = (start_sation._latitude, start_sation._longitude)
 
-            end_station_name = self._stations_name[str((data["end_station_code"], data["yearid"]))]
-            self._montreal_stations[end_station_name].add_trip(origin) 
-        elif data["type"] == EOF:
-            self._send_trips_to_ej3solver()
-            self._middleware.send_ack(method.delivery_tag)
-            self._middleware.stop_consuming()
-            return
-        else:
-            logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
+                end_station_name = self._stations_name[str((data["end_station_code"], data["yearid"]))]
+                self._montreal_stations[end_station_name].add_trip(origin) 
+            elif data["type"] == EOF:
+                self._send_trips_to_ej3solver()
+                self._middleware.send_ack(method.delivery_tag)
+                self._middleware.stop_consuming()
+                return
+            else:
+                logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
         self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej3solver(self):

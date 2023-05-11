@@ -133,9 +133,15 @@ class Filter:
         body = body.decode("utf-8")
         eof = self._check_eof(body, EOFTLISTENER, method)
         if eof: return
-        te2 = Te2(body)
-        if te2.is_valid():
-            self._send_data_to_queue(EJ2TSOLVER, te2.get_json())
+        trips = body.split('\n')
+        trips_for_ej2tsolver = []
+        for t in trips:
+            te2 = Te2(t)
+            if te2.is_valid():
+                trips_for_ej2tsolver.append(te2.get_json())
+        message = "\n".join(trips_for_ej2tsolver)
+        if message != "":
+            self._send_data_to_queue(EJ2TSOLVER, message)
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_se3(self, ch, method, properties, body):
@@ -152,9 +158,15 @@ class Filter:
         body = body.decode("utf-8")
         eof = self._check_eof(body, EOFTLISTENER, method)
         if eof: return
-        te3 = Te3(body)
-        if te3.is_valid():
-            self._send_data_to_queue(EJ3TSOLVER, te3.get_json())
+        trips = body.split('\n')
+        trips_for_ej3tsolver = []
+        for t in trips:
+            te3 = Te3(t)
+            if te3.is_valid():
+                trips_for_ej3tsolver.append(te3.get_json())
+        message = "\n".join(trips_for_ej3tsolver)
+        if message != "": 
+            self._send_data_to_queue(EJ3TSOLVER, message)
         self._middleware.send_ack(method.delivery_tag)
 
     def _check_eof(self, body, queue, method):
