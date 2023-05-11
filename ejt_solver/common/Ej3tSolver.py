@@ -69,7 +69,6 @@ class Ej3tSolver:
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
         trips = body.split("\n")
-        logging.info(f'action: _callback_trips | trips: {trips}')
         for t in trips:
             data = json.loads(t)
             if data["type"] == TRIPS: 
