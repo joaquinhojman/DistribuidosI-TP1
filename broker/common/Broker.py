@@ -38,20 +38,11 @@ class Broker:
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try:
-                self._middleware = Middleware()
+        self._middleware = Middleware()
 
-                self._middleware.queue_declare(queue=self._broker_type, durable=True)
-                self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
-                self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
-
-            except Exception as e:
-                if self._sigterm: exit(0)
-                pass
+        self._middleware.queue_declare(queue=self._broker_type, durable=True)
+        self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
         logging.info(f'action: initialize_rabbitmq | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def run(self):

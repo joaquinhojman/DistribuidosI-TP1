@@ -49,20 +49,12 @@ class EntryPoint:
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try: 
-                self._middleware = Middleware()
+        self._middleware = Middleware()
 
-                self._middleware.queue_declare(queue=WEATHER, durable=True)
-                self._middleware.queue_declare(queue=STATIONS, durable=True)
-                self._middleware.queue_declare(queue=TRIPS, durable=True)
-                self._middleware.queue_declare(queue=RESULTS, durable=True)
-            except Exception as e:
-                if self._sigterm_received: exit(0)
-                pass
+        self._middleware.queue_declare(queue=WEATHER, durable=True)
+        self._middleware.queue_declare(queue=STATIONS, durable=True)
+        self._middleware.queue_declare(queue=TRIPS, durable=True)
+        self._middleware.queue_declare(queue=RESULTS, durable=True)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):

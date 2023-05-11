@@ -39,18 +39,10 @@ class Filter:
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try:
-                self._middleware = Middleware()
+        self._middleware = Middleware()
 
-                self._middleware.queue_declare(queue=self._filter_type, durable=True)
-                self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
-            except Exception as e:
-                if self._sigterm: exit(0)
-                pass
+        self._middleware.queue_declare(queue=self._filter_type, durable=True)
+        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):
