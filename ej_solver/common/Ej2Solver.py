@@ -5,22 +5,19 @@ from common.Middleware import Middleware
 
 STATIONS = "stations"
 TRIPS = "trips"
-EJ2TRIPS = "ej2trips"
-EJ2STATIONS = "ej2stations"
 RESULTS = "results"
+EOF = "eof"
 
 class Ej2Solver:
     def __init__(self, EjSolver, middleware):
         self._EjSolver = EjSolver
         self._middleware: Middleware = middleware
 
-        self._stations_eof_to_expect = int(os.getenv('SE2FCANT', ""))
+        self._stations_eof_to_expect = int(os.getenv('EJ2TCANT', ""))
         self._ej2tsolvers_cant = int(os.getenv('EJ2TCANT', ""))
 
         self._stations_name = {}
         self._stations = {}
-        self._middleware.queue_declare(queue=EJ2TRIPS, durable=True)
-        self._middleware.queue_declare(queue=EJ2STATIONS, durable=True)
 
     def run(self):
         logging.info(f'action: run_Ej2Solver | result: in_progress')
@@ -28,7 +25,7 @@ class Ej2Solver:
         self._middleware.recv_message(queue=self._EjSolver, callback=self._callback)
         self._middleware.start_consuming()
         self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=EJ2TRIPS, callback=self._callback_trips)
+        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback_trips)
         self._middleware.start_consuming()
 
     def _callback(self, ch, method, properties, body):
@@ -36,9 +33,10 @@ class Ej2Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == STATIONS:
-            self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
-            self._stations[data["name"]] = Station()
-        elif data["type"] == "eof":
+            if str((data["city"], data["code"], data["yearid"])) not in self._stations_name:
+                self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
+                self._stations[data["name"]] = Station()
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -48,20 +46,14 @@ class Ej2Solver:
     def _process_eof(self):
         self._stations_eof_to_expect -= 1
         if self._stations_eof_to_expect == 0:
-            self._send_stations_to_ejt2solver()
             self._send_eof_confirm()
             return True
         return False
     
-    def _send_stations_to_ejt2solver(self):
-        data = str(self._stations_name) + ";" + str(list(self._stations.keys()))
-        for _ in range(0, self._ej2tsolvers_cant):
-            self._middleware.send_message(queue=EJ2STATIONS, data=data)
-
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": STATIONS
+            EOF: STATIONS
         })
         self._send(json_eof)
 
@@ -82,7 +74,7 @@ class Ej2Solver:
         results = self._get_results()
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": TRIPS,
+            EOF: TRIPS,
             "results": str(results)
         })
         self._send(json_results)

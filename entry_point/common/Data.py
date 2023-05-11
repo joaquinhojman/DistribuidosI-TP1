@@ -1,5 +1,10 @@
 import json
 
+_EOF = "eof"
+EJSOLVER = "EjSolver"
+RESULTS = "results"
+TRIPS = "trips"
+
 class Data:
     def __init__(self, data):
         info = data.split(";")
@@ -12,6 +17,6 @@ class Data:
 class EOF:
     def __init__(self, data):
         data = json.loads(data)
-        self.EjSolver = data['EjSolver']
-        self.eof = data["eof"]
-        self.results = data["results"] if self.eof == "trips" else None
+        self.EjSolver = data[EJSOLVER]
+        self.eof = data[_EOF]
+        self.results = data[RESULTS] if self.eof == TRIPS else None

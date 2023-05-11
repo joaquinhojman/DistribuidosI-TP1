@@ -19,17 +19,7 @@ class EjtSolver:
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | EjtSolver: {self._EjtSolver}')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try:
-                self._middleware = Middleware()
-
-                self._middleware.queue_declare(queue=self._EjtSolver, durable=True)
-            except Exception as e:
-                if self._sigterm: exit(0)
-                pass
+        self._middleware = Middleware()
         logging.info(f'action: initialize_rabbitmq | result: success | EjtSolver: {self._EjtSolver}')
 
     def _sigterm_handler(self, _signo, _stack_frame):

@@ -9,8 +9,13 @@ EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
 EOFTLISTENER = "eoftlistener"
+EJ1TSOLVER = "ej1tsolver"
 EJ2TSOLVER = "ej2tsolver"
 EJ3TSOLVER = "ej3tsolver"
+WEATHER_EJ1_EXCHANGE = "weather_ej1_exchange"
+STATIONS_EJ2_EXCHANGE = "stations_ej2_exchange"
+STATIONS_EJ3_EXCHANGE = "stations_ej3_exchange"
+_EOF = "eof"
 
 class Filter:
     def __init__(self, filter_type, filter_number, we1, se2, te2, se3, te3):
@@ -23,6 +28,7 @@ class Filter:
         self._se3 = se3
         self._te3 = te3
 
+        self._cant_ejtsolver = int(os.getenv('EJTCANT', "0"))
         self._middleware: Middleware = None
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -33,18 +39,10 @@ class Filter:
 
     def _initialize_rabbitmq(self):
         logging.info(f'action: initialize_rabbitmq | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try:
-                self._middleware = Middleware()
+        self._middleware = Middleware()
 
-                self._middleware.queue_declare(queue=self._filter_type, durable=True)
-                self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
-            except Exception as e:
-                if self._sigterm: exit(0)
-                pass
+        self._middleware.queue_declare(queue=self._filter_type, durable=True)
+        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
         logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def run(self):
@@ -76,12 +74,16 @@ class Filter:
 
     def _run_we1_filter(self):
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)
+        #self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)
+        self._middleware.exchange_declare(exchange=WEATHER_EJ1_EXCHANGE, exchange_type='fanout')
+        self._create_queues_for_exchange(exchange=WEATHER_EJ1_EXCHANGE, type=self._filter_type, ejtsolvercant=self._cant_ejtsolver)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_we1)
 
     def _run_se2_filter(self):
         logging.info(f'action: _run_se2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
+        # self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
+        self._middleware.exchange_declare(exchange=STATIONS_EJ2_EXCHANGE, exchange_type='fanout')
+        self._create_queues_for_exchange(exchange=STATIONS_EJ2_EXCHANGE, type=self._filter_type, ejtsolvercant=self._cant_ejtsolver)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_se2)
 
     def _run_te2_filter(self):
@@ -91,7 +93,9 @@ class Filter:
 
     def _run_se3_filter(self):
         logging.info(f'action: _run_se3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._middleware.queue_declare(queue=EJ3SOLVER, durable=True)
+        # self._middleware.queue_declare(queue=EJ3SOLVER, durable=True)
+        self._middleware.exchange_declare(exchange=STATIONS_EJ3_EXCHANGE, exchange_type='fanout')
+        self._create_queues_for_exchange(exchange=STATIONS_EJ3_EXCHANGE, type=self._filter_type, ejtsolvercant=self._cant_ejtsolver)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_se3)
 
     def _run_te3_filter(self):
@@ -99,66 +103,86 @@ class Filter:
         self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_te3)
 
+    def _create_queues_for_exchange(self, exchange, type, ejtsolvercant):
+        for i in range(1, ejtsolvercant + 1):
+            queue_name = f'{type}_{i}'
+            self._middleware.queue_declare(queue=queue_name, durable=True)
+            self._middleware.queue_bind(exchange=exchange, queue=queue_name)
 
     def _callback_we1(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ1SOLVER, method)
+        eof = self._check_eof(body, WEATHER_EJ1_EXCHANGE, method)
         if eof: return
         we1 = We1(body)
         if we1.is_valid():
-            self._send_data_to_queue(EJ1SOLVER, we1.get_json())
+            #self._send_data_to_queue(EJ1SOLVER, we1.get_json())
+            self._middleware.send_to_exchange(exchange=WEATHER_EJ1_EXCHANGE, message=we1.get_json())
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_se2(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ2SOLVER, method)
+        eof = self._check_eof(body, STATIONS_EJ2_EXCHANGE, method)
         if eof: return
         se2 = Se2(body)
         if se2.is_valid():
-            self._send_data_to_queue(EJ2SOLVER, se2.get_json())
+            #self._send_data_to_queue(EJ2SOLVER, se2.get_json())
+            self._middleware.send_to_exchange(exchange=STATIONS_EJ2_EXCHANGE, message=se2.get_json())
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_te2(self, ch, method, properties, body):
         body = body.decode("utf-8")
         eof = self._check_eof(body, EOFTLISTENER, method)
         if eof: return
-        te2 = Te2(body)
-        if te2.is_valid():
-            self._send_data_to_queue(EJ2TSOLVER, te2.get_json())
+        trips = body.split('\n')
+        trips_for_ej2tsolver = []
+        for t in trips:
+            te2 = Te2(t)
+            if te2.is_valid():
+                trips_for_ej2tsolver.append(te2.get_json())
+        message = "\n".join(trips_for_ej2tsolver)
+        if message != "":
+            self._send_data_to_queue(EJ2TSOLVER, message)
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_se3(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ3SOLVER, method)
+        eof = self._check_eof(body, STATIONS_EJ3_EXCHANGE, method)
         if eof: return
         se3 = Se3(body)
         if se3.is_valid():
-            self._send_data_to_queue(EJ3SOLVER, se3.get_json())
+            #self._send_data_to_queue(EJ3SOLVER, se3.get_json())
+            self._middleware.send_to_exchange(exchange=STATIONS_EJ3_EXCHANGE, message=se3.get_json())
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_te3(self, ch, method, properties, body):
         body = body.decode("utf-8")
         eof = self._check_eof(body, EOFTLISTENER, method)
         if eof: return
-        te3 = Te3(body)
-        if te3.is_valid():
-            self._send_data_to_queue(EJ3TSOLVER, te3.get_json())
+        trips = body.split('\n')
+        trips_for_ej3tsolver = []
+        for t in trips:
+            te3 = Te3(t)
+            if te3.is_valid():
+                trips_for_ej3tsolver.append(te3.get_json())
+        message = "\n".join(trips_for_ej3tsolver)
+        if message != "": 
+            self._send_data_to_queue(EJ3TSOLVER, message)
         self._middleware.send_ack(method.delivery_tag)
 
     def _check_eof(self, body, queue, method):
-        if (body[:3] == "EOF"):
+        if (body[:3] == _EOF):
             if queue == EOFTLISTENER:
                 self._send_eof_to_eoftlistener()
             else:
-                self._send_eof_to_solver(body, queue)
+                self._send_eof_to_ejtsolver(body, queue)
             self._middleware.send_ack(method.delivery_tag)
             self._exit()
             return True
         return False
 
-    def _send_eof_to_solver(self, body, queue):
+    def _send_eof_to_ejtsolver(self, body, exchange):
         eof = EOF(body.split(",")[1])
-        self._send_data_to_queue(queue, eof.get_json())
+        self._middleware.send_to_exchange(exchange=exchange, message=eof.get_json())
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
 
     def _send_eof_to_eoftlistener(self):

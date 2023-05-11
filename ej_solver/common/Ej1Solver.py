@@ -5,21 +5,18 @@ from common.Middleware import Middleware
 
 WEATHER = "weather"
 TRIPS = "trips"
-EJ1TRIPS = "ej1trips"
-EJ1WEATHER = "ej1weather"
 RESULTS = "results"
+EOF = "eof"
 
 class Ej1Solver:
     def __init__(self, EjSolver, middleware):
         self._EjSolver = EjSolver
         self._middleware: Middleware = middleware
         
-        self._weathers_eof_to_expect = int(os.getenv('WE1FCANT', ""))
+        self._weathers_eof_to_expect = int(os.getenv('EJ1TCANT', ""))
         self._ej1tsolvers_cant = int(os.getenv('EJ1TCANT', ""))
 
         self._days_with_more_than_30mm_prectot = {}
-        self._middleware.queue_declare(queue=EJ1TRIPS, durable=True)
-        self._middleware.queue_declare(queue=EJ1WEATHER, durable=True)
 
     def run(self):
         logging.info(f'action: run_Ej1Solver | result: in_progress')
@@ -27,7 +24,7 @@ class Ej1Solver:
         self._middleware.recv_message(queue=self._EjSolver, callback=self._callback)
         self._middleware.start_consuming()
         self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=EJ1TRIPS, callback=self._callback_trips)
+        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback_trips)
         self._middleware.start_consuming()
 
     def _callback(self, ch, method, properties, body):
@@ -35,8 +32,9 @@ class Ej1Solver:
         body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == WEATHER:
-            self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
-        elif data["type"] == "eof":
+            if str((data["city"], data["date"])) not in self._days_with_more_than_30mm_prectot:
+                self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
+        elif data["type"] == EOF:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
@@ -46,20 +44,14 @@ class Ej1Solver:
     def _process_eof(self,):
         self._weathers_eof_to_expect -= 1
         if self._weathers_eof_to_expect == 0:
-            self._send_weather_to_ejt1solver()
             self._send_eof_confirm()
             return True
         return False
 
-    def _send_weather_to_ejt1solver(self):
-        data = str(list(self._days_with_more_than_30mm_prectot.keys()))
-        for _ in range(0, self._ej1tsolvers_cant):
-            self._middleware.send_message(queue=EJ1WEATHER, data=data)
-
     def _send_eof_confirm(self):
         json_eof = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": WEATHER
+            EOF: WEATHER
         })
         self._send(json_eof)
     
@@ -78,7 +70,7 @@ class Ej1Solver:
     def _send_results(self):
         json_results = json.dumps({
             "EjSolver": self._EjSolver,
-            "eof": TRIPS,
+            EOF: TRIPS,
             "results": str(self._get_results())
         })
         self._send(json_results)

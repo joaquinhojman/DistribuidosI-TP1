@@ -14,6 +14,7 @@ SE2 = "se2"
 TE2 = "te2"
 SE3 = "se3"
 TE3 = "te3"
+EOF = "eof"
 
 class EofListener:
     def __init__(self):
@@ -37,22 +38,14 @@ class EofListener:
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try: 
-                self._middleware = Middleware()
+        self._middleware = Middleware()
 
-                self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
-                self._middleware.queue_declare(queue=WE1, durable=True)
-                self._middleware.queue_declare(queue=SE2, durable=True)
-                self._middleware.queue_declare(queue=TE2, durable=True)
-                self._middleware.queue_declare(queue=SE3, durable=True)
-                self._middleware.queue_declare(queue=TE3, durable=True)
-            except Exception as e:
-                if self._sigterm: exit(0)
-                pass
+        self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
+        self._middleware.queue_declare(queue=WE1, durable=True)
+        self._middleware.queue_declare(queue=SE2, durable=True)
+        self._middleware.queue_declare(queue=TE2, durable=True)
+        self._middleware.queue_declare(queue=SE3, durable=True)
+        self._middleware.queue_declare(queue=TE3, durable=True)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -89,17 +82,17 @@ class EofListener:
     def _send_eofs(self, body):
         if body == WEATHER:
             for _ in range(self._cant_filters[WE1]):
-                self._send(WE1, "EOF,"+body)
+                self._send(WE1, EOF + "," + body)
         elif body == STATIONS:
             for _ in range(self._cant_filters[SE2]):
-                self._send(SE2, "EOF,"+body)
+                self._send(SE2, EOF + "," + body)
             for _ in range(self._cant_filters[SE3]):
-                self._send(SE3, "EOF,"+body)
+                self._send(SE3, EOF + "," + body)
         elif body == TRIPS:
             for _ in range(self._cant_filters[TE2]):
-                self._send(TE2, "EOF,"+body)
+                self._send(TE2, EOF + "," + body)
             for _ in range(self._cant_filters[TE3]):
-                self._send(TE3, "EOF,"+body)
+                self._send(TE3, EOF + "," + body)
             return True
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')

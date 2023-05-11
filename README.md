@@ -15,8 +15,6 @@ De replicar las entidades mencionadas, se debe informar en las variables de ento
 
 No se incluyen los archivos de datos. Debe descargarse el zip y guardar las carpetas montreal, toronto y washington en una carpeta llamada .data en la raiz del proyecto.
 
-Ademas, se aclara que si se quiere correr el sistema se deben modificar dos rows del archivo de stations de toronto. La 691 y la 822 tienen caracteres invalidos que no pueden procesarse correctamente. La 691 debe modificarse el caracter invalido por un "–" y la 822 por un "’".
-
 A continuación se detalla como funciona el sistema a grandes rasgos.
 
 El cliente, llamado FileReader enviara los archivos del dataset por etapas. Primero mandara todos los archivos de weathers, luego todos los archivos de estaciones, y por ultimo los archivos de viajes. Luego de enviar cada seccion de archivos enviara un mensaje de EOF y esperara que el servidor le confirme que han sido recibidos y procesados correctamente. Luego esperara que dicho servidor le envie los resultados para mostrarlos por pantalla. El cliente lee los archivos y manda al servidor en batches de N rows, configurable en archivo config.ini, usando un protocolo.

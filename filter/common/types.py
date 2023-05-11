@@ -3,6 +3,10 @@ import json
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
+_EOF = "eof"
+MONTREAL = "montreal"
+YEAR_2016 = "2016"
+YEAR_2017 = "2017"
 
 class We1:
     def __init__(self, we1):
@@ -30,7 +34,7 @@ class Se2:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.yearid == "2016" or self.yearid == "2017"
+        return self.yearid == YEAR_2016 or self.yearid == YEAR_2017
 
     def get_json(self):
         return json.dumps({
@@ -49,7 +53,7 @@ class Te2:
         self.yearid = data["yearid"]
 
     def is_valid(self):
-        return self.yearid == "2016" or self.yearid == "2017"
+        return self.yearid == YEAR_2016 or self.yearid == YEAR_2017
 
     def get_json(self):
         return json.dumps({
@@ -70,7 +74,7 @@ class Se3:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.city == "montreal"
+        return self.city == MONTREAL
 
     def get_json(self):
         return json.dumps({
@@ -91,7 +95,7 @@ class Te3:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.city == "montreal"
+        return self.city == MONTREAL
 
     def get_json(self):
         return json.dumps({
@@ -107,6 +111,6 @@ class EOF:
     
     def get_json(self):
         return json.dumps({
-            "type": "eof",
+            "type": _EOF,
             "eof": self.topic,
         })

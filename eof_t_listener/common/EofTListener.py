@@ -34,20 +34,12 @@ class EofTListener:
 
     def _create_RabbitMQ_Connection(self):
         logging.info(f'action: create rabbitmq connections | result: in_progress')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._middleware is None:
-            sleep(15)
-            retries -= 1
-            try: 
-                self._middleware = Middleware()
+        self._middleware = Middleware()
 
-                self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
-                self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
-                self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
-                self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
-
-            except Exception as e:
-                pass
+        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):

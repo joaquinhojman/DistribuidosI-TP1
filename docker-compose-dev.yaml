@@ -12,10 +12,10 @@ services:
         - "5672:5672" # puerto de RabbitMQ
         - "15672:15672" # puerto del panel de control de RabbitMQ
       healthcheck:
-          test: ["CMD", "curl", "-f", "http://localhost:15672"]
-          interval: 10s
-          timeout: 5s
-          retries: 10
+        test: ['CMD', 'curl', '-f', 'http://localhost:15672']
+        interval: 10s
+        timeout: 5s
+        retries: 10
 
     entry_point:
       container_name: entry_point
@@ -23,7 +23,7 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        - broker_weather1
       links: 
         - rabbitmq
       environment:
@@ -31,7 +31,6 @@ services:
         - WBRKCANT=2
         - SBRKCANT=2
         - TBRKCANT=2
-        - RMQRETRIES=5
       networks:
         - testing_net
       volumes:
@@ -59,7 +58,7 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        - EofListener
       links: 
         - rabbitmq
       environment:
@@ -72,7 +71,6 @@ services:
       <<: *broker
       container_name: broker_weather2
       environment:
-        - RMQRETRIES=5
         - BROKER_ID=2
         - BROKER_TYPE=weather
     
@@ -80,7 +78,6 @@ services:
       <<: *broker
       container_name: broker_stations1
       environment:
-        - RMQRETRIES=5
         - BROKER_ID=1
         - BROKER_TYPE=stations
 
@@ -88,7 +85,6 @@ services:
       <<: *broker
       container_name: broker_stations2
       environment:
-        - RMQRETRIES=5
         - BROKER_ID=2
         - BROKER_TYPE=stations
 
@@ -96,7 +92,6 @@ services:
       <<: *broker
       container_name: broker_trips1
       environment:
-        - RMQRETRIES=5
         - BROKER_ID=1
         - BROKER_TYPE=trips
 
@@ -104,7 +99,6 @@ services:
       <<: *broker
       container_name: broker_trips2
       environment:
-        - RMQRETRIES=5
         - BROKER_ID=2
         - BROKER_TYPE=trips
     
@@ -114,13 +108,13 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        - EofTListener
       links: 
         - rabbitmq
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=we1
+        - EJTCANT=2
       networks:
         - testing_net
 
@@ -128,47 +122,46 @@ services:
       <<: *filter
       container_name: filter_weather2
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=we1
+        - EJTCANT=2
 
     filter_stations_e2_1:
       <<: *filter
       container_name: filter_stations_e2_1
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=se2
+        - EJTCANT=2
 
     filter_stations_e2_2:
       <<: *filter
       container_name: filter_stations_e2_2
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=se2
+        - EJTCANT=2
 
     filter_stations_e3_1:
       <<: *filter
       container_name: filter_stations_e3_1
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=se3
+        - EJTCANT=2
 
     filter_stations_e3_2:
       <<: *filter
       container_name: filter_stations_e3_2
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=se3
+        - EJTCANT=2
 
     filter_trips_e2_1:
       <<: *filter
       container_name: filter_trips_e2_1
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=te2
 
@@ -176,7 +169,6 @@ services:
       <<: *filter
       container_name: filter_trips_e2_2
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=te2
 
@@ -184,7 +176,6 @@ services:
       <<: *filter
       container_name: filter_trips_e3_1
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=1
         - FILTER_TYPE=te3
 
@@ -192,7 +183,6 @@ services:
       <<: *filter
       container_name: filter_trips_e3_2
       environment:
-        - RMQRETRIES=5
         - FILTER_ID=2
         - FILTER_TYPE=te3
 
@@ -202,13 +192,12 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        rabbitmq:
+          condition: service_healthy
       links: 
         - rabbitmq
       environment:
-        - RMQRETRIES=5
         - EJSOLVER=ej1solver
-        - WE1FCANT=2
         - EJ1TCANT=2
       networks:
         - testing_net
@@ -217,9 +206,7 @@ services:
       <<: *EjSolver
       container_name: Ej2Solver
       environment:
-        - RMQRETRIES=5
         - EJSOLVER=ej2solver
-        - SE2FCANT=2
         - EJ2TCANT=2
 
     Ej3Solver:
@@ -228,7 +215,6 @@ services:
       environment:
         - RMQRETRIES=5
         - EJSOLVER=ej3solver
-        - SE3FCANT=2
         - EJ3TCANT=2
     
     Ej1tSolver_1: &EjTSolver
@@ -237,10 +223,12 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        - Ej1Solver
       links: 
         - rabbitmq
       environment:
+        - EJ1TSOLVER_ID=1
+        - WE1FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej1tsolver
       networks:
@@ -250,6 +238,8 @@ services:
       <<: *EjTSolver
       container_name: Ej1tSolver_2
       environment:
+        - EJ1TSOLVER_ID=2
+        - WE1FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej1tsolver
 
@@ -257,24 +247,32 @@ services:
       <<: *EjTSolver
       container_name: Ej2tSolver_1
       environment:
+        - EJ2TSOLVER_ID=1
+        - SE2FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej2tsolver
     Ej2tSolver_2:
       <<: *EjTSolver
       container_name: Ej2tSolver_2
       environment:
+        - EJ2TSOLVER_ID=2
+        - SE2FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej2tsolver
     Ej3tSolver_1:
       <<: *EjTSolver
       container_name: Ej3tSolver_1
       environment:
+        - EJ3TSOLVER_ID=1
+        - SE3FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej3tsolver
     Ej3tSolver_2:
       <<: *EjTSolver
       container_name: Ej3tSolver_2
       environment:
+        - EJ3TSOLVER_ID=2
+        - SE3FCANT=2
         - RMQRETRIES=5
         - EJTSOLVER=ej3tsolver
 
@@ -284,7 +282,7 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        - filter_weather1
       links: 
         - rabbitmq
       environment:
@@ -306,7 +304,7 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - rabbitmq
+        - Ej1tSolver_1
       links: 
         - rabbitmq
       environment:
