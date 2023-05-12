@@ -6,14 +6,14 @@ from common.Middleware import Middleware
 EJ1SOLVER = "ej1solver"
 WEATHER = "weather"
 TRIPS = "trips"
-WE1FILTER = "we1"
+WEATHEREJ1FILTER = "weatherej1"
 WEATHER_EJ1_EXCHANGE = "weather_ej1_exchange"
 EOF = "eof"
 
-class Ej1tSolver:
-    def __init__(self, ejtsolver, middleware):
-        self._EjtSolver = ejtsolver
-        self._id = os.getenv('EJ1TSOLVER_ID', "")
+class Ej1TripsSolver:
+    def __init__(self, ejtripssolver, middleware):
+        self._EjTripsSolver = ejtripssolver
+        self._id = os.getenv('EJ1TRIPSSOLVER_ID', "")
         self._weathers_eof_to_expect = int(os.getenv('WE1FCANT', ""))
 
         self._middleware: Middleware = middleware
@@ -25,20 +25,20 @@ class Ej1tSolver:
     def _initialize_rabbitmq(self):
         self._middleware.exchange_declare(exchange=WEATHER_EJ1_EXCHANGE, exchange_type='fanout')
 
-        self._wheater_queue = f'{WE1FILTER}_{self._id}'
+        self._wheater_queue = f'{WEATHEREJ1FILTER}_{self._id}'
         self._middleware.queue_declare(queue=self._wheater_queue, durable=True)
         self._middleware.queue_bind(exchange=WEATHER_EJ1_EXCHANGE, queue=self._wheater_queue)
         
         self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)
 
     def run(self):
-        logging.info(f'action: run | result: in_progress | EjtSolver: {self._EjtSolver}')
+        logging.info(f'action: run | result: in_progress | EjTripsSolver: {self._EjTripsSolver}')
         self._middleware.basic_qos(prefetch_count=1)
         self._middleware.recv_message(queue=self._wheater_queue, callback=self._callback_weathers)
         self._middleware.start_consuming()
-        logging.info(f'action: run | result: weathers getted | EjtSolver: {self._EjtSolver}')
+        logging.info(f'action: run | result: weathers getted | EjTripsSolver: {self._EjTripsSolver}')
         self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjtSolver, callback=self._callback_trips)
+        self._middleware.recv_message(queue=self._EjTripsSolver, callback=self._callback_trips)
         self._middleware.start_consuming()
 
     def _callback_weathers(self, ch, method, properties, body):
@@ -78,7 +78,7 @@ class Ej1tSolver:
                 self._middleware.stop_consuming()
                 return
             else:
-                logging.error(f'action: _callback_trips | result: error | EjtSolver: {self._EjtSolver} | error: Invalid type')
+                logging.error(f'action: _callback_trips | result: error | EjTripsSolver: {self._ETtripsSgolver} | error: Invalid type')
         self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej1solver(self):
@@ -86,7 +86,7 @@ class Ej1tSolver:
         for k, v in self._days_with_more_than_30mm_prectot.items():
             data[k] = str(v._n_trips) + "," + str(v._total_duration)
         self._middleware.send_message(queue=EJ1SOLVER, data=str(data))
-        logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjtSolver: {self._EjtSolver}')
+        logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjTripsSolver: {self._EjTripsSolver}')
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):

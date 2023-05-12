@@ -27,18 +27,18 @@ def initialize_config():
 def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
-    we1 = config_params["we1"]
-    se2 = config_params["se2"]
-    te2 = config_params["te2"]
-    se3 = config_params["se3"]
-    te3 = config_params["te3"]
+    weather_ej1 = config_params["we1"]
+    stations_ej2 = config_params["se2"]
+    trips_ej2 = config_params["te2"]
+    stations_ej3 = config_params["se3"]
+    trips_ej3 = config_params["te3"]
     filter = os.getenv('FILTER_TYPE', "")
     filter_number = os.getenv('FILTER_ID', "")
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
 
-    filter = Filter(filter, filter_number, we1, se2, te2, se3, te3)
+    filter = Filter(filter, filter_number, weather_ej1, stations_ej2, trips_ej2, stations_ej3, trips_ej3)
     signal.signal(signal.SIGTERM, filter._sigterm_handler)
     filter.run()
 

@@ -7,15 +7,15 @@ from common.Middleware import Middleware
 from common.types import Station, Trip, Weather
 
 EOFLISTENER = "eoflistener"
-EOFTLISTENER = "eoftlistener"
-EJ1TSOLVER = "ej1tsolver"
+EOFTRIPSLISTENER = "eoftripslistener"
+EJ1TRIPSSOLVER = "ej1tripssolver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
-WE1 = "we1"
-SE2 = "se2"
-TE2 = "te2"
-SE3 = "se3"
-TE3 = "te3"
+WEATHEREJ1FILTER = "weatherej1"
+STATIONSEJ2FILTER = "stationsej2"
+TRIPSEJ2FILTER = "tripsej2"
+STATIONSEJ3FILTER = "stationsej3"
+TRIPSEJ3FILTER = "tripsej3"
 EOF = "eof"
 TRIPS = "trips"
 
@@ -42,7 +42,7 @@ class Broker:
 
         self._middleware.queue_declare(queue=self._broker_type, durable=True)
         self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
-        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EOFTRIPSLISTENER, durable=True)
         logging.info(f'action: initialize_rabbitmq | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
 
     def run(self):
@@ -70,20 +70,20 @@ class Broker:
 
     def _run_weather_broker(self):
         logging.info(f'action: run_weather_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._middleware.queue_declare(queue=WE1, durable=True)
+        self._middleware.queue_declare(queue=WEATHEREJ1FILTER, durable=True)
         self._middleware.recv_message(queue=self._broker_type, callback=self._callback_weather)
 
     def _run_stations_broker(self):
         logging.info(f'action: run_stations_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._middleware.queue_declare(queue=SE2, durable=True)
-        self._middleware.queue_declare(queue=SE3, durable=True)
+        self._middleware.queue_declare(queue=STATIONSEJ2FILTER, durable=True)
+        self._middleware.queue_declare(queue=STATIONSEJ3FILTER, durable=True)
         self._middleware.recv_message(queue=self._broker_type, callback=self._callback_stations)
 
     def _run_trips_broker(self):
         logging.info(f'action: run_trips_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
-        self._middleware.queue_declare(queue=TE2, durable=True)
-        self._middleware.queue_declare(queue=TE3, durable=True)
+        self._middleware.queue_declare(queue=EJ1TRIPSSOLVER, durable=True)
+        self._middleware.queue_declare(queue=TRIPSEJ2FILTER, durable=True)
+        self._middleware.queue_declare(queue=TRIPSEJ3FILTER, durable=True)
         self._middleware.recv_message(queue=self._broker_type, callback=self._callback_trips)
 
     def _callback_weather(self, ch, method, properties, body):
@@ -98,7 +98,7 @@ class Broker:
             except json.decoder.JSONDecodeError as _e:
                 continue
             weather_for_ej1filter = weather.get_weather_for_ej1filter()
-            self._send_data_to_queue(WE1, weather_for_ej1filter)
+            self._send_data_to_queue(WEATHEREJ1FILTER, weather_for_ej1filter)
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_stations(self, ch, method, properties, body):
@@ -113,9 +113,9 @@ class Broker:
             except json.decoder.JSONDecodeError as _e:
                 continue
             station_for_ej2solver = station.get_station_for_ej2filter()
-            self._send_data_to_queue(SE2, station_for_ej2solver)
+            self._send_data_to_queue(STATIONSEJ2FILTER, station_for_ej2solver)
             station_for_ej3filter = station.get_station_for_ej3filter()
-            self._send_data_to_queue(SE3, station_for_ej3filter)
+            self._send_data_to_queue(STATIONSEJ3FILTER, station_for_ej3filter)
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_trips(self, ch, method, properties, body):
@@ -124,7 +124,7 @@ class Broker:
         if eof: return
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         trips = body.split('\n')
-        trips_for_ej1tsolver = []
+        trips_for_ej1tripssolver = []
         trips_for_ej2filter = []
         trips_for_ej3solver = []
         for t in trips:
@@ -132,12 +132,12 @@ class Broker:
                 trip = Trip(t)
             except json.decoder.JSONDecodeError as _e:
                 continue
-            trips_for_ej1tsolver.append(trip.get_trip_for_ej1solver())
+            trips_for_ej1tripssolver.append(trip.get_trip_for_ej1solver())
             trips_for_ej2filter.append(trip.get_trip_for_ej2filter())
             trips_for_ej3solver.append(trip.get_trip_for_ej3filter())
-        self._send_data_to_queue(EJ1TSOLVER, "\n".join(trips_for_ej1tsolver))
-        self._send_data_to_queue(TE2, "\n".join(trips_for_ej2filter))
-        self._send_data_to_queue(TE3, "\n".join(trips_for_ej3solver))
+        self._send_data_to_queue(EJ1TRIPSSOLVER, "\n".join(trips_for_ej1tripssolver))
+        self._send_data_to_queue(TRIPSEJ2FILTER, "\n".join(trips_for_ej2filter))
+        self._send_data_to_queue(TRIPSEJ3FILTER, "\n".join(trips_for_ej3solver))
         self._middleware.send_ack(method.delivery_tag)
 
     def _check_eof(self, body, method):
@@ -154,7 +154,7 @@ class Broker:
         elif self._broker_type == self._stations:
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         elif self._broker_type == self._trips:
-            self._send_data_to_queue(EOFTLISTENER, TRIPS)
+            self._send_data_to_queue(EOFTRIPSLISTENER, TRIPS)
             self._send_data_to_queue(EOFLISTENER, self._broker_type)
         else:
             logging.error(f'action: send_eof | result: error | broker_type: {self._broker_type} | broker_number: {self._broker_number} | error: Invalid broker type')

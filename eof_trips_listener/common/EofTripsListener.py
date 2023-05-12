@@ -6,28 +6,28 @@ import logging
 from time import sleep
 from common.Middleware import Middleware
 
-EOFTLISTENER = "eoftlistener"
+EOFTRIPSLISTENER = "eoftripslistener"
 TRIPS = "trips"
-TE2 = "te2"
-TE3 = "te3"
-EJ1TSOLVER = "ej1tsolver"
-EJ2TSOLVER = "ej2tsolver"
-EJ3TSOLVER = "ej3tsolver"
+TRIPSEJ2 = "tripsej2"
+TRIPSEJ3 = "tripsej3"
+EJ1TRIPSSOLVER = "ej1tripssolver"
+EJ2TRIPSSOLVER = "ej2tripssolver"
+EJ3TRIPSSOLVER = "ej3tripssolver"
 
-class EofTListener:
+class EofTripsListener:
     def __init__(self):
         self._sigterm = False
 
         self._remaining_eof = {
-            TE2: int(os.getenv('TE2FCANT', "")),
-            TE3: int(os.getenv('TE3FCANT', "")),
+            TRIPSEJ2: int(os.getenv('TE2FCANT', "")),
+            TRIPSEJ3: int(os.getenv('TE3FCANT', "")),
             TRIPS: int(os.getenv('TBRKCANT', ""))
         }
 
         self._cant_solvers = {
-            EJ1TSOLVER: int(os.getenv('EJ1TCANT', "")),
-            EJ2TSOLVER: int(os.getenv('EJ2TCANT', "")),
-            EJ3TSOLVER: int(os.getenv('EJ3TCANT', "")),
+            EJ1TRIPSSOLVER: int(os.getenv('EJ1TRIPSCANT', "")),
+            EJ2TRIPSSOLVER: int(os.getenv('EJ2TRIPSCANT', "")),
+            EJ3TRIPSSOLVER: int(os.getenv('EJ3TRIPSCANT', "")),
         }
 
         self._middleware: Middleware = None
@@ -36,10 +36,10 @@ class EofTListener:
         logging.info(f'action: create rabbitmq connections | result: in_progress')
         self._middleware = Middleware()
 
-        self._middleware.queue_declare(queue=EOFTLISTENER, durable=True)
-        self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
-        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
-        self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EOFTRIPSLISTENER, durable=True)
+        self._middleware.queue_declare(queue=EJ1TRIPSSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ2TRIPSSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ3TRIPSSOLVER, durable=True)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -53,7 +53,7 @@ class EofTListener:
             self._create_RabbitMQ_Connection()
             logging.info(f'action: run | result: in_progress')
             self._middleware.basic_qos(prefetch_count=1)
-            self._middleware.recv_message(queue=EOFTLISTENER, callback=self._callback)
+            self._middleware.recv_message(queue=EOFTRIPSLISTENER, callback=self._callback)
             self._middleware.start_consuming()
         except Exception as e:
             logging.error(f'action: run | result: error | error: {e}')
@@ -74,22 +74,22 @@ class EofTListener:
             finished = self._send_eofs(body)
 
     def _send_eofs(self, body):
-        if body == TE2:
-            for _ in range(self._cant_solvers[EJ2TSOLVER]):
-                self._send(EJ2TSOLVER, self._get_eof())
-        elif body == TE3:
-            for _ in range(self._cant_solvers[EJ3TSOLVER]):
-                self._send(EJ3TSOLVER, self._get_eof())
+        if body == TRIPSEJ2:
+            for _ in range(self._cant_solvers[EJ2TRIPSSOLVER]):
+                self._send(EJ2TRIPSSOLVER, self._get_eof())
+        elif body == TRIPSEJ3:
+            for _ in range(self._cant_solvers[EJ3TRIPSSOLVER]):
+                self._send(EJ3TRIPSSOLVER, self._get_eof())
         elif body == TRIPS:
-            for _ in range(self._cant_solvers[EJ1TSOLVER]):
-                self._send(EJ1TSOLVER, self._get_eof())
+            for _ in range(self._cant_solvers[EJ1TRIPSSOLVER]):
+                self._send(EJ1TRIPSSOLVER, self._get_eof())
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
             return
         logging.info(f'action: send eof | result: success | body: {body}')
 
     def _finished(self):
-        return self._remaining_eof[TE2] == 0 and self._remaining_eof[TE3] == 0 and self._remaining_eof[TRIPS] == 0
+        return self._remaining_eof[TRIPSEJ2] == 0 and self._remaining_eof[TRIPSEJ3] == 0 and self._remaining_eof[TRIPS] == 0
 
     def _send(self, queue, data):
         self._middleware.send_message(queue=queue, data=data)

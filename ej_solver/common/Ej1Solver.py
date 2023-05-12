@@ -14,7 +14,7 @@ class Ej1Solver:
         self._middleware: Middleware = middleware
         
         self._weathers_eof_to_expect = int(os.getenv('EJ1TCANT', ""))
-        self._ej1tsolvers_cant = int(os.getenv('EJ1TCANT', ""))
+        self._ej1tripssolvers_cant = int(os.getenv('EJ1TCANT', ""))
 
         self._days_with_more_than_30mm_prectot = {}
 
@@ -57,13 +57,13 @@ class Ej1Solver:
     
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._ej1tsolvers_cant -= 1
+        self._ej1tripssolvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
             self._days_with_more_than_30mm_prectot[k].add_trips(int(values[0]), float(values[1]))
         self._middleware.send_ack(method.delivery_tag)
-        if self._ej1tsolvers_cant == 0:
+        if self._ej1tripssolvers_cant == 0:
             self._send_results()
             self._exit()
 

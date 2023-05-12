@@ -8,7 +8,7 @@ MONTREAL = "montreal"
 YEAR_2016 = "2016"
 YEAR_2017 = "2017"
 
-class We1:
+class WeatherEj1:
     def __init__(self, we1):
         data = json.loads(we1)
         self.city = data["city"]
@@ -25,7 +25,7 @@ class We1:
             "date": self.date,
         })
 
-class Se2:
+class StationsEj2:
     def __init__(self, se2):
         data = json.loads(se2)
         self.city = data["city"]
@@ -45,7 +45,7 @@ class Se2:
             "yearid": self.yearid,
         })
 
-class Te2:
+class TripsEj2:
     def __init__(self, te2):
         data = json.loads(te2)
         self.city = data["city"]
@@ -63,7 +63,7 @@ class Te2:
             "yearid": self.yearid,
         })
 
-class Se3:
+class StationsEj3:
     def __init__(self, se3):
         data = json.loads(se3)
         self.city = data["city"]
@@ -86,7 +86,7 @@ class Se3:
             "yearid": self.yearid,
         })
 
-class Te3:
+class TripsEj3:
     def __init__(self, te3):
         data = json.loads(te3)
         self.city = data["city"]

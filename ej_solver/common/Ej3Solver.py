@@ -14,7 +14,7 @@ class Ej3Solver:
         self._middleware: Middleware = middleware
         
         self._stations_eof_to_expect = int(os.getenv('EJ3TCANT', ""))
-        self._ej3tsolvers_cant = int(os.getenv('EJ3TCANT', ""))
+        self._ej3tripssolvers_cant = int(os.getenv('EJ3TCANT', ""))
 
         self._stations_name = {}
         self._montreal_stations = {}
@@ -59,13 +59,13 @@ class Ej3Solver:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._ej3tsolvers_cant -= 1
+        self._ej3tripssolvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
             self._montreal_stations[k].add_trip(int(values[0]), float(values[1]))
         self._middleware.send_ack(method.delivery_tag)
-        if self._ej3tsolvers_cant == 0:
+        if self._ej3tripssolvers_cant == 0:
             self._send_results()
             self._exit()
 

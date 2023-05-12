@@ -108,13 +108,13 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - EofTListener
+        - EofTripsListener
       links: 
         - rabbitmq
       environment:
         - FILTER_ID=1
-        - FILTER_TYPE=we1
-        - EJTCANT=2
+        - FILTER_TYPE=weatherej1
+        - EJTRIPSCANT=2
       networks:
         - testing_net
 
@@ -123,68 +123,68 @@ services:
       container_name: filter_weather2
       environment:
         - FILTER_ID=2
-        - FILTER_TYPE=we1
-        - EJTCANT=2
+        - FILTER_TYPE=weatherej1
+        - EJTRIPSCANT=2
 
     filter_stations_e2_1:
       <<: *filter
       container_name: filter_stations_e2_1
       environment:
         - FILTER_ID=1
-        - FILTER_TYPE=se2
-        - EJTCANT=2
+        - FILTER_TYPE=stationsej2
+        - EJTRIPSCANT=2
 
     filter_stations_e2_2:
       <<: *filter
       container_name: filter_stations_e2_2
       environment:
         - FILTER_ID=2
-        - FILTER_TYPE=se2
-        - EJTCANT=2
+        - FILTER_TYPE=stationsej2
+        - EJTRIPSCANT=2
 
     filter_stations_e3_1:
       <<: *filter
       container_name: filter_stations_e3_1
       environment:
         - FILTER_ID=1
-        - FILTER_TYPE=se3
-        - EJTCANT=2
+        - FILTER_TYPE=stationsej3
+        - EJTRIPSCANT=2
 
     filter_stations_e3_2:
       <<: *filter
       container_name: filter_stations_e3_2
       environment:
         - FILTER_ID=2
-        - FILTER_TYPE=se3
-        - EJTCANT=2
+        - FILTER_TYPE=stationsej3
+        - EJTRIPSCANT=2
 
     filter_trips_e2_1:
       <<: *filter
       container_name: filter_trips_e2_1
       environment:
         - FILTER_ID=1
-        - FILTER_TYPE=te2
+        - FILTER_TYPE=tripsej2
 
     filter_trips_e2_2:
       <<: *filter
       container_name: filter_trips_e2_2
       environment:
         - FILTER_ID=2
-        - FILTER_TYPE=te2
+        - FILTER_TYPE=tripsej2
 
     filter_trips_e3_1:
       <<: *filter
       container_name: filter_trips_e3_1
       environment:
         - FILTER_ID=1
-        - FILTER_TYPE=te3
+        - FILTER_TYPE=tripsej3
 
     filter_trips_e3_2:
       <<: *filter
       container_name: filter_trips_e3_2
       environment:
         - FILTER_ID=2
-        - FILTER_TYPE=te3
+        - FILTER_TYPE=tripsej3
 
     Ej1Solver: &EjSolver
       container_name: Ej1Solver
@@ -217,9 +217,9 @@ services:
         - EJSOLVER=ej3solver
         - EJ3TCANT=2
     
-    Ej1tSolver_1: &EjTSolver
-      container_name: Ej1tSolver_1
-      image: ejt_solver:latest
+    Ej1_Trips_Solver_1: &EjTripsSolver
+      container_name: Ej1_Trips_Solver_1
+      image: ej_trips_solver:latest
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
@@ -227,54 +227,54 @@ services:
       links: 
         - rabbitmq
       environment:
-        - EJ1TSOLVER_ID=1
+        - EJ1TRIPSSOLVER_ID=1
         - WE1FCANT=2
         - RMQRETRIES=5
-        - EJTSOLVER=ej1tsolver
+        - EJTRIPSSOLVER=ej1tripssolver
       networks:
         - testing_net
   
-    Ej1tSolver_2:
-      <<: *EjTSolver
-      container_name: Ej1tSolver_2
+    Ej1_Trips_Solver_2:
+      <<: *EjTripsSolver
+      container_name: Ej1_Trips_Solver_2
       environment:
-        - EJ1TSOLVER_ID=2
+        - EJ1TRIPSSOLVER_ID=2
         - WE1FCANT=2
         - RMQRETRIES=5
-        - EJTSOLVER=ej1tsolver
+        - EJTRIPSSOLVER=ej1tripssolver
 
-    Ej2tSolver_1:
-      <<: *EjTSolver
-      container_name: Ej2tSolver_1
+    Ej2_Trips_Solver_1:
+      <<: *EjTripsSolver
+      container_name: Ej2_Trips_Solver_1
       environment:
-        - EJ2TSOLVER_ID=1
+        - EJ2TRIPSSOLVER_ID=1
         - SE2FCANT=2
         - RMQRETRIES=5
-        - EJTSOLVER=ej2tsolver
-    Ej2tSolver_2:
-      <<: *EjTSolver
-      container_name: Ej2tSolver_2
+        - EJTRIPSSOLVER=ej2tripssolver
+    Ej2_Trips_Solver_2:
+      <<: *EjTripsSolver
+      container_name: Ej2_Trips_Solver_2
       environment:
-        - EJ2TSOLVER_ID=2
+        - EJ2TRIPSSOLVER_ID=2
         - SE2FCANT=2
         - RMQRETRIES=5
-        - EJTSOLVER=ej2tsolver
-    Ej3tSolver_1:
-      <<: *EjTSolver
-      container_name: Ej3tSolver_1
+        - EJTRIPSSOLVER=ej2tripssolver
+    Ej3_Trips_Solver_1:
+      <<: *EjTripsSolver
+      container_name: Ej3_Trips_Solver_1
       environment:
-        - EJ3TSOLVER_ID=1
+        - EJ3TRIPSSOLVER_ID=1
         - SE3FCANT=2
         - RMQRETRIES=5
-        - EJTSOLVER=ej3tsolver
-    Ej3tSolver_2:
-      <<: *EjTSolver
-      container_name: Ej3tSolver_2
+        - EJTRIPSSOLVER=ej3tripssolver
+    Ej3_Trips_Solver_2:
+      <<: *EjTripsSolver
+      container_name: Ej3_Trips_Solver_2
       environment:
-        - EJ3TSOLVER_ID=2
+        - EJ3TRIPSSOLVER_ID=2
         - SE3FCANT=2
         - RMQRETRIES=5
-        - EJTSOLVER=ej3tsolver
+        - EJTRIPSSOLVER=ej3tripssolver
 
     EofListener:
       container_name: EofListener
@@ -298,13 +298,13 @@ services:
       networks:
         - testing_net
 
-    EofTListener:
-      container_name: EofTListener
-      image: eof_t_listener:latest
+    EofTripsListener:
+      container_name: EofTripsListener
+      image: eof_trips_listener:latest
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - Ej1tSolver_1
+        - Ej1TripsSolver_1
       links: 
         - rabbitmq
       environment:
@@ -312,9 +312,9 @@ services:
         - TE2FCANT=2
         - TE3FCANT=2
         - TBRKCANT=2
-        - EJ1TCANT=2
-        - EJ2TCANT=2
-        - EJ3TCANT=2
+        - EJ1TRIPSCANT=2
+        - EJ2TRIPSCANT=2
+        - EJ3TRIPSCANT=2
       networks:
         - testing_net
 
