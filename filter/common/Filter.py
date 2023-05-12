@@ -9,9 +9,9 @@ EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
 EOFTRIPSLISTENER = "eoftripslistener"
-EJ1TSOLVER = "ej1tsolver"
-EJ2TSOLVER = "ej2tsolver"
-EJ3TSOLVER = "ej3tsolver"
+EJ1TRIPSSOLVER = "ej1tripssolver"
+EJ2TRIPSSOLVER = "ej2tripssolver"
+EJ3TRIPSSOLVER = "ej3tripssolver"
 WEATHER_EJ1_EXCHANGE = "weather_ej1_exchange"
 STATIONS_EJ2_EXCHANGE = "stations_ej2_exchange"
 STATIONS_EJ3_EXCHANGE = "stations_ej3_exchange"
@@ -28,7 +28,7 @@ class Filter:
         self._se3 = se3
         self._te3 = te3
 
-        self._cant_ejtsolver = int(os.getenv('EJTCANT', "0"))
+        self._cant_ejtripstsolver = int(os.getenv('EJTCANT', "0"))
         self._middleware: Middleware = None
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -74,37 +74,34 @@ class Filter:
 
     def _run_we1_filter(self):
         logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        #self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)
         self._middleware.exchange_declare(exchange=WEATHER_EJ1_EXCHANGE, exchange_type='fanout')
-        self._create_queues_for_exchange(exchange=WEATHER_EJ1_EXCHANGE, type=self._filter_type, ejtsolvercant=self._cant_ejtsolver)
+        self._create_queues_for_exchange(exchange=WEATHER_EJ1_EXCHANGE, type=self._filter_type, ejtripstsolvercant=self._cant_ejtripstsolver)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_we1)
 
     def _run_se2_filter(self):
         logging.info(f'action: _run_se2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        # self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
         self._middleware.exchange_declare(exchange=STATIONS_EJ2_EXCHANGE, exchange_type='fanout')
-        self._create_queues_for_exchange(exchange=STATIONS_EJ2_EXCHANGE, type=self._filter_type, ejtsolvercant=self._cant_ejtsolver)
+        self._create_queues_for_exchange(exchange=STATIONS_EJ2_EXCHANGE, type=self._filter_type, ejtripstsolvercant=self._cant_ejtripstsolver)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_se2)
 
     def _run_te2_filter(self):
         logging.info(f'action: _run_te2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ2TRIPSSOLVER, durable=True)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_te2)
 
     def _run_se3_filter(self):
         logging.info(f'action: _run_se3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        # self._middleware.queue_declare(queue=EJ3SOLVER, durable=True)
         self._middleware.exchange_declare(exchange=STATIONS_EJ3_EXCHANGE, exchange_type='fanout')
-        self._create_queues_for_exchange(exchange=STATIONS_EJ3_EXCHANGE, type=self._filter_type, ejtsolvercant=self._cant_ejtsolver)
+        self._create_queues_for_exchange(exchange=STATIONS_EJ3_EXCHANGE, type=self._filter_type, ejtripstsolvercant=self._cant_ejtripstsolver)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_se3)
 
     def _run_te3_filter(self):
         logging.info(f'action: _run_te3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ3TRIPSSOLVER, durable=True)
         self._middleware.recv_message(queue=self._filter_type, callback=self._callback_te3)
 
-    def _create_queues_for_exchange(self, exchange, type, ejtsolvercant):
-        for i in range(1, ejtsolvercant + 1):
+    def _create_queues_for_exchange(self, exchange, type, ejtripstsolvercant):
+        for i in range(1, ejtripstsolvercant + 1):
             queue_name = f'{type}_{i}'
             self._middleware.queue_declare(queue=queue_name, durable=True)
             self._middleware.queue_bind(exchange=exchange, queue=queue_name)
@@ -115,7 +112,6 @@ class Filter:
         if eof: return
         we1 = We1(body)
         if we1.is_valid():
-            #self._send_data_to_queue(EJ1SOLVER, we1.get_json())
             self._middleware.send_to_exchange(exchange=WEATHER_EJ1_EXCHANGE, message=we1.get_json())
         self._middleware.send_ack(method.delivery_tag)
 
@@ -125,7 +121,6 @@ class Filter:
         if eof: return
         se2 = Se2(body)
         if se2.is_valid():
-            #self._send_data_to_queue(EJ2SOLVER, se2.get_json())
             self._middleware.send_to_exchange(exchange=STATIONS_EJ2_EXCHANGE, message=se2.get_json())
         self._middleware.send_ack(method.delivery_tag)
 
@@ -134,14 +129,14 @@ class Filter:
         eof = self._check_eof(body, EOFTRIPSLISTENER, method)
         if eof: return
         trips = body.split('\n')
-        trips_for_ej2tsolver = []
+        trips_for_ej2tripssolver = []
         for t in trips:
             te2 = Te2(t)
             if te2.is_valid():
-                trips_for_ej2tsolver.append(te2.get_json())
-        message = "\n".join(trips_for_ej2tsolver)
+                trips_for_ej2tripssolver.append(te2.get_json())
+        message = "\n".join(trips_for_ej2tripssolver)
         if message != "":
-            self._send_data_to_queue(EJ2TSOLVER, message)
+            self._send_data_to_queue(EJ2TRIPSSOLVER, message)
         self._middleware.send_ack(method.delivery_tag)
 
     def _callback_se3(self, ch, method, properties, body):
@@ -150,7 +145,6 @@ class Filter:
         if eof: return
         se3 = Se3(body)
         if se3.is_valid():
-            #self._send_data_to_queue(EJ3SOLVER, se3.get_json())
             self._middleware.send_to_exchange(exchange=STATIONS_EJ3_EXCHANGE, message=se3.get_json())
         self._middleware.send_ack(method.delivery_tag)
 
@@ -159,14 +153,14 @@ class Filter:
         eof = self._check_eof(body, EOFTRIPSLISTENER, method)
         if eof: return
         trips = body.split('\n')
-        trips_for_ej3tsolver = []
+        trips_for_ej3tripssolver = []
         for t in trips:
             te3 = Te3(t)
             if te3.is_valid():
-                trips_for_ej3tsolver.append(te3.get_json())
-        message = "\n".join(trips_for_ej3tsolver)
+                trips_for_ej3tripssolver.append(te3.get_json())
+        message = "\n".join(trips_for_ej3tripssolver)
         if message != "": 
-            self._send_data_to_queue(EJ3TSOLVER, message)
+            self._send_data_to_queue(EJ3TRIPSSOLVER, message)
         self._middleware.send_ack(method.delivery_tag)
 
     def _check_eof(self, body, queue, method):
@@ -174,13 +168,13 @@ class Filter:
             if queue == EOFTRIPSLISTENER:
                 self._send_eof_to_eoftripslistener()
             else:
-                self._send_eof_to_ejtsolver(body, queue)
+                self._send_eof_to_ejtripstsolver(body, queue)
             self._middleware.send_ack(method.delivery_tag)
             self._exit()
             return True
         return False
 
-    def _send_eof_to_ejtsolver(self, body, exchange):
+    def _send_eof_to_ejtripstsolver(self, body, exchange):
         eof = EOF(body.split(",")[1])
         self._middleware.send_to_exchange(exchange=exchange, message=eof.get_json())
         logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')

@@ -10,9 +10,9 @@ EOFTRIPSLISTENER = "eoftripslistener"
 TRIPS = "trips"
 TE2 = "te2"
 TE3 = "te3"
-EJ1TSOLVER = "ej1tsolver"
-EJ2TSOLVER = "ej2tsolver"
-EJ3TSOLVER = "ej3tsolver"
+EJ1TRIPSSOLVER = "ej1tripssolver"
+EJ2TRIPSSOLVER = "ej2tripssolver"
+EJ3TRIPSSOLVER = "ej3tripssolver"
 
 class EofTripsListener:
     def __init__(self):
@@ -25,9 +25,9 @@ class EofTripsListener:
         }
 
         self._cant_solvers = {
-            EJ1TSOLVER: int(os.getenv('EJ1TCANT', "")),
-            EJ2TSOLVER: int(os.getenv('EJ2TCANT', "")),
-            EJ3TSOLVER: int(os.getenv('EJ3TCANT', "")),
+            EJ1TRIPSSOLVER: int(os.getenv('EJ1TRIPSCANT', "")),
+            EJ2TRIPSSOLVER: int(os.getenv('EJ2TRIPSCANT', "")),
+            EJ3TRIPSSOLVER: int(os.getenv('EJ3TRIPSCANT', "")),
         }
 
         self._middleware: Middleware = None
@@ -37,9 +37,9 @@ class EofTripsListener:
         self._middleware = Middleware()
 
         self._middleware.queue_declare(queue=EOFTRIPSLISTENER, durable=True)
-        self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
-        self._middleware.queue_declare(queue=EJ2TSOLVER, durable=True)
-        self._middleware.queue_declare(queue=EJ3TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ1TRIPSSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ2TRIPSSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ3TRIPSSOLVER, durable=True)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -75,14 +75,14 @@ class EofTripsListener:
 
     def _send_eofs(self, body):
         if body == TE2:
-            for _ in range(self._cant_solvers[EJ2TSOLVER]):
-                self._send(EJ2TSOLVER, self._get_eof())
+            for _ in range(self._cant_solvers[EJ2TRIPSSOLVER]):
+                self._send(EJ2TRIPSSOLVER, self._get_eof())
         elif body == TE3:
-            for _ in range(self._cant_solvers[EJ3TSOLVER]):
-                self._send(EJ3TSOLVER, self._get_eof())
+            for _ in range(self._cant_solvers[EJ3TRIPSSOLVER]):
+                self._send(EJ3TRIPSSOLVER, self._get_eof())
         elif body == TRIPS:
-            for _ in range(self._cant_solvers[EJ1TSOLVER]):
-                self._send(EJ1TSOLVER, self._get_eof())
+            for _ in range(self._cant_solvers[EJ1TRIPSSOLVER]):
+                self._send(EJ1TRIPSSOLVER, self._get_eof())
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
             return

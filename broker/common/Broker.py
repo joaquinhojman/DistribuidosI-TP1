@@ -8,7 +8,7 @@ from common.types import Station, Trip, Weather
 
 EOFLISTENER = "eoflistener"
 EOFTRIPSLISTENER = "eoftripslistener"
-EJ1TSOLVER = "ej1tsolver"
+EJ1TRIPSSOLVER = "ej1tripssolver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
 WE1 = "we1"
@@ -81,7 +81,7 @@ class Broker:
 
     def _run_trips_broker(self):
         logging.info(f'action: run_trips_broker | result: in_progress | broker_type: {self._broker_type} | broker_number: {self._broker_number}')
-        self._middleware.queue_declare(queue=EJ1TSOLVER, durable=True)
+        self._middleware.queue_declare(queue=EJ1TRIPSSOLVER, durable=True)
         self._middleware.queue_declare(queue=TE2, durable=True)
         self._middleware.queue_declare(queue=TE3, durable=True)
         self._middleware.recv_message(queue=self._broker_type, callback=self._callback_trips)
@@ -124,7 +124,7 @@ class Broker:
         if eof: return
         #logging.info(f'action: callback | result: success | broker_type: {self._broker_type} | broker_number: {self._broker_number} | body: {body}')
         trips = body.split('\n')
-        trips_for_ej1tsolver = []
+        trips_for_ej1tripssolver = []
         trips_for_ej2filter = []
         trips_for_ej3solver = []
         for t in trips:
@@ -132,10 +132,10 @@ class Broker:
                 trip = Trip(t)
             except json.decoder.JSONDecodeError as _e:
                 continue
-            trips_for_ej1tsolver.append(trip.get_trip_for_ej1solver())
+            trips_for_ej1tripssolver.append(trip.get_trip_for_ej1solver())
             trips_for_ej2filter.append(trip.get_trip_for_ej2filter())
             trips_for_ej3solver.append(trip.get_trip_for_ej3filter())
-        self._send_data_to_queue(EJ1TSOLVER, "\n".join(trips_for_ej1tsolver))
+        self._send_data_to_queue(EJ1TRIPSSOLVER, "\n".join(trips_for_ej1tripssolver))
         self._send_data_to_queue(TE2, "\n".join(trips_for_ej2filter))
         self._send_data_to_queue(TE3, "\n".join(trips_for_ej3solver))
         self._middleware.send_ack(method.delivery_tag)
