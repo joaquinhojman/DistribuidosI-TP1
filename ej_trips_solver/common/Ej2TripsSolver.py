@@ -6,7 +6,7 @@ from common.Middleware import Middleware
 EJ2SOLVER = "ej2solver"
 STATIONS = "stations"
 TRIPS = "trips"
-SE2FILTER = "se2"
+STATIONSEJ2FILTER = "stationsej2"
 STATIONS_EJ2_EXCHANGE = "stations_ej2_exchange"
 EOF = "eof"
 
@@ -26,7 +26,7 @@ class Ej2TripsSolver:
     def _initialize_rabbitmq(self):
         self._middleware.exchange_declare(exchange=STATIONS_EJ2_EXCHANGE, exchange_type='fanout')
 
-        self._stations_queue = f'{SE2FILTER}_{self._id}'
+        self._stations_queue = f'{STATIONSEJ2FILTER}_{self._id}'
         self._middleware.queue_declare(queue=self._stations_queue, durable=True)
         self._middleware.queue_bind(exchange=STATIONS_EJ2_EXCHANGE, queue=self._stations_queue)
         

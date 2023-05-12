@@ -9,11 +9,11 @@ EOFLISTENER = "eoflistener"
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
-WE1 = "we1"
-SE2 = "se2"
-TE2 = "te2"
-SE3 = "se3"
-TE3 = "te3"
+WEATHEREJ1FILTER = "weatherej1"
+STATIONSEJ2FILTER = "stationsej2"
+TRIPSEJ2FILTER = "tripsej2"
+STATIONSEJ3FILTER = "stationsej3"
+TRIPSEJ3FILTER = "tripsej3"
 EOF = "eof"
 
 class EofListener:
@@ -27,11 +27,11 @@ class EofListener:
         }
 
         self._cant_filters = {
-            WE1: int(os.getenv('WE1FCANT', "")),
-            SE2: int(os.getenv('SE2FCANT', "")),
-            TE2: int(os.getenv('TE2FCANT', "")),
-            SE3: int(os.getenv('SE3FCANT', "")),
-            TE3: int(os.getenv('TE3FCANT', ""))
+            WEATHEREJ1FILTER: int(os.getenv('WE1FCANT', "")),
+            STATIONSEJ2FILTER: int(os.getenv('SE2FCANT', "")),
+            TRIPSEJ2FILTER: int(os.getenv('TE2FCANT', "")),
+            STATIONSEJ3FILTER: int(os.getenv('SE3FCANT', "")),
+            TRIPSEJ3FILTER: int(os.getenv('TE3FCANT', ""))
         }
 
         self._middleware: Middleware = None
@@ -41,11 +41,11 @@ class EofListener:
         self._middleware = Middleware()
 
         self._middleware.queue_declare(queue=EOFLISTENER, durable=True)
-        self._middleware.queue_declare(queue=WE1, durable=True)
-        self._middleware.queue_declare(queue=SE2, durable=True)
-        self._middleware.queue_declare(queue=TE2, durable=True)
-        self._middleware.queue_declare(queue=SE3, durable=True)
-        self._middleware.queue_declare(queue=TE3, durable=True)
+        self._middleware.queue_declare(queue=WEATHEREJ1FILTER, durable=True)
+        self._middleware.queue_declare(queue=STATIONSEJ2FILTER, durable=True)
+        self._middleware.queue_declare(queue=TRIPSEJ2FILTER, durable=True)
+        self._middleware.queue_declare(queue=STATIONSEJ3FILTER, durable=True)
+        self._middleware.queue_declare(queue=TRIPSEJ3FILTER, durable=True)
         logging.info(f'action: create rabbitmq connections | result: success')
 
     def _sigterm_handler(self, _signo, _stack_frame):
@@ -81,18 +81,18 @@ class EofListener:
 
     def _send_eofs(self, body):
         if body == WEATHER:
-            for _ in range(self._cant_filters[WE1]):
-                self._send(WE1, EOF + "," + body)
+            for _ in range(self._cant_filters[WEATHEREJ1FILTER]):
+                self._send(WEATHEREJ1FILTER, EOF + "," + body)
         elif body == STATIONS:
-            for _ in range(self._cant_filters[SE2]):
-                self._send(SE2, EOF + "," + body)
-            for _ in range(self._cant_filters[SE3]):
-                self._send(SE3, EOF + "," + body)
+            for _ in range(self._cant_filters[STATIONSEJ2FILTER]):
+                self._send(STATIONSEJ2FILTER, EOF + "," + body)
+            for _ in range(self._cant_filters[STATIONSEJ3FILTER]):
+                self._send(STATIONSEJ3FILTER, EOF + "," + body)
         elif body == TRIPS:
-            for _ in range(self._cant_filters[TE2]):
-                self._send(TE2, EOF + "," + body)
-            for _ in range(self._cant_filters[TE3]):
-                self._send(TE3, EOF + "," + body)
+            for _ in range(self._cant_filters[TRIPSEJ2FILTER]):
+                self._send(TRIPSEJ2FILTER, EOF + "," + body)
+            for _ in range(self._cant_filters[TRIPSEJ3FILTER]):
+                self._send(TRIPSEJ3FILTER, EOF + "," + body)
             return True
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')

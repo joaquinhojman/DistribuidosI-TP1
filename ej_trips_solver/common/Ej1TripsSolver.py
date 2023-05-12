@@ -6,7 +6,7 @@ from common.Middleware import Middleware
 EJ1SOLVER = "ej1solver"
 WEATHER = "weather"
 TRIPS = "trips"
-WE1FILTER = "we1"
+WEATHEREJ1FILTER = "weatherej1"
 WEATHER_EJ1_EXCHANGE = "weather_ej1_exchange"
 EOF = "eof"
 
@@ -25,7 +25,7 @@ class Ej1TripsSolver:
     def _initialize_rabbitmq(self):
         self._middleware.exchange_declare(exchange=WEATHER_EJ1_EXCHANGE, exchange_type='fanout')
 
-        self._wheater_queue = f'{WE1FILTER}_{self._id}'
+        self._wheater_queue = f'{WEATHEREJ1FILTER}_{self._id}'
         self._middleware.queue_declare(queue=self._wheater_queue, durable=True)
         self._middleware.queue_bind(exchange=WEATHER_EJ1_EXCHANGE, queue=self._wheater_queue)
         

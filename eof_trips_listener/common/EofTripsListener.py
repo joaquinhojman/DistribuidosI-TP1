@@ -8,8 +8,8 @@ from common.Middleware import Middleware
 
 EOFTRIPSLISTENER = "eoftripslistener"
 TRIPS = "trips"
-TE2 = "te2"
-TE3 = "te3"
+TRIPSEJ2 = "tripsej2"
+TRIPSEJ3 = "tripsej3"
 EJ1TRIPSSOLVER = "ej1tripssolver"
 EJ2TRIPSSOLVER = "ej2tripssolver"
 EJ3TRIPSSOLVER = "ej3tripssolver"
@@ -19,8 +19,8 @@ class EofTripsListener:
         self._sigterm = False
 
         self._remaining_eof = {
-            TE2: int(os.getenv('TE2FCANT', "")),
-            TE3: int(os.getenv('TE3FCANT', "")),
+            TRIPSEJ2: int(os.getenv('TE2FCANT', "")),
+            TRIPSEJ3: int(os.getenv('TE3FCANT', "")),
             TRIPS: int(os.getenv('TBRKCANT', ""))
         }
 
@@ -74,10 +74,10 @@ class EofTripsListener:
             finished = self._send_eofs(body)
 
     def _send_eofs(self, body):
-        if body == TE2:
+        if body == TRIPSEJ2:
             for _ in range(self._cant_solvers[EJ2TRIPSSOLVER]):
                 self._send(EJ2TRIPSSOLVER, self._get_eof())
-        elif body == TE3:
+        elif body == TRIPSEJ3:
             for _ in range(self._cant_solvers[EJ3TRIPSSOLVER]):
                 self._send(EJ3TRIPSSOLVER, self._get_eof())
         elif body == TRIPS:
@@ -89,7 +89,7 @@ class EofTripsListener:
         logging.info(f'action: send eof | result: success | body: {body}')
 
     def _finished(self):
-        return self._remaining_eof[TE2] == 0 and self._remaining_eof[TE3] == 0 and self._remaining_eof[TRIPS] == 0
+        return self._remaining_eof[TRIPSEJ2] == 0 and self._remaining_eof[TRIPSEJ3] == 0 and self._remaining_eof[TRIPS] == 0
 
     def _send(self, queue, data):
         self._middleware.send_message(queue=queue, data=data)

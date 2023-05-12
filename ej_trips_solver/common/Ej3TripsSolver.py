@@ -7,7 +7,7 @@ from haversine import haversine
 EJ3SOLVER = "ej3solver"
 STATIONS = "stations"
 TRIPS = "trips"
-SE3FILTER = "se3"
+STATIONSEJ3FILTER = "stationsej3"
 STATIONS_EJ3_EXCHANGE = "stations_ej3_exchange"
 EOF = "eof"
 
@@ -27,7 +27,7 @@ class Ej3TripsSolver:
     def _initialize_rabbitmq(self):
         self._middleware.exchange_declare(exchange=STATIONS_EJ3_EXCHANGE, exchange_type='fanout')
 
-        self._stations_queue = f'{SE3FILTER}_{self._id}'
+        self._stations_queue = f'{STATIONSEJ3FILTER}_{self._id}'
         self._middleware.queue_declare(queue=self._stations_queue, durable=True)
         self._middleware.queue_bind(exchange=STATIONS_EJ3_EXCHANGE, queue=self._stations_queue)
         
