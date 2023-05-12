@@ -12,7 +12,7 @@ EOF = "eof"
 
 class Ej2TripsSolver:
     def __init__(self, ejTripssolver, middleware):
-        self._EjTripsSolver = ejTripssolver
+        self._ej_trips_solver = ejTripssolver
         self._id = os.getenv('EJ2TRIPSSOLVER_ID', "")
         self._stations_eof_to_expect = int(os.getenv('SE2FCANT', ""))
 
@@ -33,13 +33,13 @@ class Ej2TripsSolver:
         self._middleware.queue_declare(queue=EJ2SOLVER, durable=True)
 
     def run(self):
-        logging.info(f'action: run | result: in_progress | EjTripsSolver: {self._EjTripsSolver}')
+        logging.info(f'action: run | result: in_progress | EjTripsSolver: {self._ej_trips_solver}')
         self._middleware.basic_qos(prefetch_count=1)
         self._middleware.recv_message(queue=self._stations_queue, callback=self._callback_stations)
         self._middleware.start_consuming()
-        logging.info(f'action: run | result: stations getted | EjTripsSolver: {self._EjTripsSolver}')
+        logging.info(f'action: run | result: stations getted | EjTripsSolver: {self._ej_trips_solver}')
         self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjTripsSolver, callback=self._callback_trips)
+        self._middleware.recv_message(queue=self._ej_trips_solver, callback=self._callback_trips)
         self._middleware.start_consuming()
 
     def _callback_stations(self, ch, method, properties, body):
@@ -82,7 +82,7 @@ class Ej2TripsSolver:
                 self._middleware.stop_consuming()
                 return
             else:
-                logging.error(f'action: _callback_trips | result: error | EjTripsSolver: {self._EjTripsSolver} | error: Invalid type')
+                logging.error(f'action: _callback_trips | result: error | EjTripsSolver: {self._ej_trips_solver} | error: Invalid type')
         self._middleware.send_ack(method.delivery_tag)
         
     def _send_trips_to_ej2solver(self):
@@ -90,7 +90,7 @@ class Ej2TripsSolver:
         for k, v in self._stations.items():
             data[k] = str(v._trips_on_2016) + "," + str(v._trips_on_2017)
         self._middleware.send_message(queue=EJ2SOLVER, data=str(data))
-        logging.info(f'action: _send_trips_to_ej2solver | result: trips sended | EjTripsSolver: {self._EjTripsSolver}')
+        logging.info(f'action: _send_trips_to_ej2solver | result: trips sended | EjTripsSolver: {self._ej_trips_solver}')
 
 class Station:
     def __init__(self):

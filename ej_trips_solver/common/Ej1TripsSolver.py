@@ -12,7 +12,7 @@ EOF = "eof"
 
 class Ej1TripsSolver:
     def __init__(self, ejtripssolver, middleware):
-        self._EjTripsSolver = ejtripssolver
+        self._ej_trips_solver = ejtripssolver
         self._id = os.getenv('EJ1TRIPSSOLVER_ID', "")
         self._weathers_eof_to_expect = int(os.getenv('WE1FCANT', ""))
 
@@ -32,13 +32,13 @@ class Ej1TripsSolver:
         self._middleware.queue_declare(queue=EJ1SOLVER, durable=True)
 
     def run(self):
-        logging.info(f'action: run | result: in_progress | EjTripsSolver: {self._EjTripsSolver}')
+        logging.info(f'action: run | result: in_progress | EjTripsSolver: {self._ej_trips_solver}')
         self._middleware.basic_qos(prefetch_count=1)
         self._middleware.recv_message(queue=self._wheater_queue, callback=self._callback_weathers)
         self._middleware.start_consuming()
-        logging.info(f'action: run | result: weathers getted | EjTripsSolver: {self._EjTripsSolver}')
+        logging.info(f'action: run | result: weathers getted | EjTripsSolver: {self._ej_trips_solver}')
         self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjTripsSolver, callback=self._callback_trips)
+        self._middleware.recv_message(queue=self._ej_trips_solver, callback=self._callback_trips)
         self._middleware.start_consuming()
 
     def _callback_weathers(self, ch, method, properties, body):
@@ -86,7 +86,7 @@ class Ej1TripsSolver:
         for k, v in self._days_with_more_than_30mm_prectot.items():
             data[k] = str(v._n_trips) + "," + str(v._total_duration)
         self._middleware.send_message(queue=EJ1SOLVER, data=str(data))
-        logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjTripsSolver: {self._EjTripsSolver}')
+        logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjTripsSolver: {self._ej_trips_solver}')
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):

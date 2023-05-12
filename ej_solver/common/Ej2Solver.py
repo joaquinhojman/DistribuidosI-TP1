@@ -14,7 +14,7 @@ class Ej2Solver:
         self._middleware: Middleware = middleware
 
         self._stations_eof_to_expect = int(os.getenv('EJ2TCANT', ""))
-        self._ej2tripssolvers_cant = int(os.getenv('EJ2TCANT', ""))
+        self._ej2_trips_solvers_cant = int(os.getenv('EJ2TCANT', ""))
 
         self._stations_name = {}
         self._stations = {}
@@ -59,14 +59,14 @@ class Ej2Solver:
 
     def _callback_trips(self, ch, method, properties, body):
         body = body.decode("utf-8")
-        self._ej2tripssolvers_cant -= 1
+        self._ej2_trips_solvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
             self._stations[k].add_trip("2016", int(values[0]))
             self._stations[k].add_trip("2017", int(values[1]))
         self._middleware.send_ack(method.delivery_tag)
-        if self._ej2tripssolvers_cant == 0:
+        if self._ej2_trips_solvers_cant == 0:
             self._send_results()
             self._exit()
 
