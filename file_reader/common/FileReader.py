@@ -26,10 +26,6 @@ class FileReader:
             logging.info(f'action: run | result: in_progress')
             self._make_connection()
 
-            #self._send_data("data/test/weather.csv", send_topic=True, send_eof=True)
-            #self._send_data("data/test/stations.csv", send_topic=True, send_eof=True)
-            #self._send_data("data/test/trips.csv", send_topic=True, send_eof=True)
-            
             self._send_data("data/montreal/weather.csv", send_topic=True)
             self._send_data("data/toronto/weather.csv")
             self._send_data("data/washington/weather.csv", send_eof=True)
