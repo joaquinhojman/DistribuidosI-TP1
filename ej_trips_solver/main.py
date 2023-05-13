@@ -3,6 +3,7 @@ from configparser import ConfigParser
 import os
 import signal
 from common.EjTripsSolver import EjTripsSolver
+from common.middleware import EjTripsSolverMiddleware
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -29,12 +30,14 @@ def main():
     ej2tripssolver = config_params["ej2tripssolver"]
     ej3tripssolver = config_params["ej3tripssolver"]
     ejtripssolver = os.getenv('EJTRIPSSOLVER', "")
+    id = os.getenv('EJTRIPSSOLVER_ID', "")
+    middleware = EjTripsSolverMiddleware(ejtripssolver, id)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | ejtripssolver: {ejtripssolver} | logging_level: {logging_level}")
 
 
-    ej_solver = EjTripsSolver(ejtripssolver, ej1tripssolver, ej2tripssolver, ej3tripssolver)
+    ej_solver = EjTripsSolver(ejtripssolver, id, ej1tripssolver, ej2tripssolver, ej3tripssolver, middleware)
     signal.signal(signal.SIGTERM, ej_solver._sigterm_handler)
     ej_solver.run()
 

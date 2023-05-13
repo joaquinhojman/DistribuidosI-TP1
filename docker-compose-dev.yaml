@@ -227,7 +227,7 @@ services:
       links: 
         - rabbitmq
       environment:
-        - EJ1TRIPSSOLVER_ID=1
+        - EJTRIPSSOLVER_ID=1
         - WE1FCANT=2
         - RMQRETRIES=5
         - EJTRIPSSOLVER=ej1tripssolver
@@ -238,7 +238,7 @@ services:
       <<: *EjTripsSolver
       container_name: Ej1_Trips_Solver_2
       environment:
-        - EJ1TRIPSSOLVER_ID=2
+        - EJTRIPSSOLVER_ID=2
         - WE1FCANT=2
         - RMQRETRIES=5
         - EJTRIPSSOLVER=ej1tripssolver
@@ -247,7 +247,7 @@ services:
       <<: *EjTripsSolver
       container_name: Ej2_Trips_Solver_1
       environment:
-        - EJ2TRIPSSOLVER_ID=1
+        - EJTRIPSSOLVER_ID=1
         - SE2FCANT=2
         - RMQRETRIES=5
         - EJTRIPSSOLVER=ej2tripssolver
@@ -255,7 +255,7 @@ services:
       <<: *EjTripsSolver
       container_name: Ej2_Trips_Solver_2
       environment:
-        - EJ2TRIPSSOLVER_ID=2
+        - EJTRIPSSOLVER_ID=2
         - SE2FCANT=2
         - RMQRETRIES=5
         - EJTRIPSSOLVER=ej2tripssolver
@@ -263,7 +263,7 @@ services:
       <<: *EjTripsSolver
       container_name: Ej3_Trips_Solver_1
       environment:
-        - EJ3TRIPSSOLVER_ID=1
+        - EJTRIPSSOLVER_ID=1
         - SE3FCANT=2
         - RMQRETRIES=5
         - EJTRIPSSOLVER=ej3tripssolver
@@ -271,7 +271,7 @@ services:
       <<: *EjTripsSolver
       container_name: Ej3_Trips_Solver_2
       environment:
-        - EJ3TRIPSSOLVER_ID=2
+        - EJTRIPSSOLVER_ID=2
         - SE3FCANT=2
         - RMQRETRIES=5
         - EJTRIPSSOLVER=ej3tripssolver
