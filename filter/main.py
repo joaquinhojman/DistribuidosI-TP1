@@ -3,6 +3,7 @@ from configparser import ConfigParser
 import os
 import signal
 from common.Filter import Filter
+from common.middleware import FilterMiddleware    
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -34,11 +35,12 @@ def main():
     trips_ej3 = config_params["te3"]
     filter = os.getenv('FILTER_TYPE', "")
     filter_number = os.getenv('FILTER_ID', "")
+    middleware = FilterMiddleware(filter)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
 
-    filter = Filter(filter, filter_number, weather_ej1, stations_ej2, trips_ej2, stations_ej3, trips_ej3)
+    filter = Filter(filter, filter_number, weather_ej1, stations_ej2, trips_ej2, stations_ej3, trips_ej3, middleware)
     signal.signal(signal.SIGTERM, filter._sigterm_handler)
     filter.run()
 
