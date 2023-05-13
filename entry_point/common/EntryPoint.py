@@ -2,23 +2,20 @@
 import os
 import socket
 import logging
-from time import sleep
 
 from protocol.protocol import Protocol
-from common.Middleware import Middleware
+from common.middleware import EntryPointMiddleware
 from common.Data import EOF, Data
 
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
-RESULTS = "results"
 EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
-_EOF = "eof"
 
 class EntryPoint:
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, middleware):
         # Initialize entrypoint socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
@@ -45,17 +42,7 @@ class EntryPoint:
         self._sigterm_received = False
         self._client_socket = None
         self._protocol = None
-        self._middleware: Middleware = None
-
-    def _create_RabbitMQ_Connection(self):
-        logging.info(f'action: create rabbitmq connections | result: in_progress')
-        self._middleware = Middleware()
-
-        self._middleware.queue_declare(queue=WEATHER, durable=True)
-        self._middleware.queue_declare(queue=STATIONS, durable=True)
-        self._middleware.queue_declare(queue=TRIPS, durable=True)
-        self._middleware.queue_declare(queue=RESULTS, durable=True)
-        logging.info(f'action: create rabbitmq connections | result: success')
+        self._middleware: EntryPointMiddleware = middleware
 
     def _sigterm_handler(self, _signo, _stack_frame):
         self._sigterm_received = True
@@ -68,7 +55,6 @@ class EntryPoint:
 
     def run(self):
         try:
-            self._create_RabbitMQ_Connection()
             logging.info(f'action: run | result: in_progress')            
             client_socket = self._accept_new_connection(self._server_socket)
             if client_socket is None: return
@@ -116,10 +102,7 @@ class EntryPoint:
                 data = Data(data_recv)
                 if data.topic != topic: return None
                 if data.eof == True: break
-                
-                self._send_data_to_queue(topic, data.data)
-                
-                #self._protocol.send_ack(True)
+                self._middleware.send_data_to_topic(topic, data.data)
 
             self._send_eofs()
             self._expect_solvers_confirmation()
@@ -151,20 +134,15 @@ class EntryPoint:
     def _send_eofs(self):
         logging.info(f'action: receive_data | eof received | topic: {self._actual_topic}')
         for _ in range(self._cant_brokers[self._actual_topic]):
-            self._send_data_to_queue(self._actual_topic, _EOF)
-
-    def _send_data_to_queue(self, queue, data):
-        self._middleware.send_message(queue, data)
+            self._middleware.send_eof_to_topic(self._actual_topic)
 
     def _expect_solvers_confirmation(self):
-        self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue='results', callback=self._callback)
-        self._middleware.start_consuming()
+        self._middleware.recv_solvers_confirmation(self._callback)
 
-    def _callback(self, ch, method, properties, body):
+    def _callback(self, body, method=None):
         logging.info(f'action: _callback | result: in_progress')
         finished = False
-        eof = EOF(body.decode('utf-8'))
+        eof = EOF(body)
         if eof.eof != self._actual_topic:
             logging.error(f'action: _callback | result: fail | error: eof.eof != self._actual_topic')
             return
@@ -173,7 +151,7 @@ class EntryPoint:
         if self._all_solvers_confirmated():
             self._reset_solvers_confirmated_dict()
             finished = True
-        self._middleware.send_ack(method.delivery_tag)
+        self._middleware.finished_message_processing(method)
         if finished: self._middleware.stop_consuming()
 
     def _send_results(self):
