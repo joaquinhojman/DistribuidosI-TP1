@@ -3,6 +3,7 @@ from configparser import ConfigParser
 import os
 import signal
 from common.Broker import Broker
+from common.middleware import BrokerMiddleware
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -30,11 +31,12 @@ def main():
     trips = config_params["trips"]
     broker = os.getenv('BROKER_TYPE', "")
     broker_number = os.getenv('BROKER_ID', "")
+    middleware = BrokerMiddleware(broker)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | broker: {broker} | broker_number: {broker_number} | logging_level: {logging_level}")
 
-    broker = Broker(broker, broker_number, weather, stations, trips)
+    broker = Broker(broker, broker_number, weather, stations, trips, middleware)
     signal.signal(signal.SIGTERM, broker._sigterm_handler)
     broker.run()
 

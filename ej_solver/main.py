@@ -3,6 +3,7 @@ from configparser import ConfigParser
 import os
 import signal
 from common.EjSolver import EjSolver
+from common.middleware import EjSolverMiddleware
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -29,12 +30,13 @@ def main():
     ej2solver = config_params["ej2solver"]
     ej3solver = config_params["ej3solver"]
     ejsolver = os.getenv('EJSOLVER', "")
+    middleware = EjSolverMiddleware(ejsolver)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | ejsolver: {ejsolver} | logging_level: {logging_level}")
 
 
-    ej_solver = EjSolver(ejsolver, ej1solver, ej2solver, ej3solver)
+    ej_solver = EjSolver(ejsolver, ej1solver, ej2solver, ej3solver, middleware)
     signal.signal(signal.SIGTERM, ej_solver._sigterm_handler)
     ej_solver.run()
 
