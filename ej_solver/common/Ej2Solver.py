@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from common.Middleware import Middleware
+from common.middleware import EjSolverMiddleware
 
 STATIONS = "stations"
 TRIPS = "trips"
@@ -11,7 +11,7 @@ EOF = "eof"
 class Ej2Solver:
     def __init__(self, EjSolver, middleware):
         self._EjSolver = EjSolver
-        self._middleware: Middleware = middleware
+        self._middleware: EjSolverMiddleware = middleware
 
         self._stations_eof_to_expect = int(os.getenv('EJ2TCANT', ""))
         self._ej2_trips_solvers_cant = int(os.getenv('EJ2TCANT', ""))
@@ -21,16 +21,11 @@ class Ej2Solver:
 
     def run(self):
         logging.info(f'action: run_Ej2Solver | result: in_progress')
-        self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback)
-        self._middleware.start_consuming()
-        self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback_trips)
-        self._middleware.start_consuming()
+        self._middleware.recv_data(callback=self._callback_stations)
+        self._middleware.recv_data(callback=self._callback_trips)
 
-    def _callback(self, ch, method, properties, body):
+    def _callback_stations(self, body, method=None):
         finished = False
-        body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == STATIONS:
             if str((data["city"], data["code"], data["yearid"])) not in self._stations_name:
@@ -40,7 +35,7 @@ class Ej2Solver:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        self._middleware.send_ack(method.delivery_tag)
+        self._middleware.finished_message_processing(method)
         if finished: self._middleware.stop_consuming()
     
     def _process_eof(self):
@@ -55,17 +50,16 @@ class Ej2Solver:
             "EjSolver": self._EjSolver,
             EOF: STATIONS
         })
-        self._send(json_eof)
+        self._middleware.send_data(data=json_eof)
 
-    def _callback_trips(self, ch, method, properties, body):
-        body = body.decode("utf-8")
+    def _callback_trips(self, body, method=None):
         self._ej2_trips_solvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
             self._stations[k].add_trip("2016", int(values[0]))
             self._stations[k].add_trip("2017", int(values[1]))
-        self._middleware.send_ack(method.delivery_tag)
+        self._middleware.finished_message_processing(method)
         if self._ej2_trips_solvers_cant == 0:
             self._send_results()
             self._exit()
@@ -77,7 +71,8 @@ class Ej2Solver:
             EOF: TRIPS,
             "results": str(results)
         })
-        self._send(json_results)
+        self._middleware.send_data(data=json_results)
+
 
     def _get_results(self):
         results = {}
@@ -86,12 +81,7 @@ class Ej2Solver:
                 results[key] = (value._trips_on_2016, value._trips_on_2017)
         return results
     
-    def _send(self, data):
-        self._middleware.send_message(queue=RESULTS, data=data)
-        logging.info(f'action: _send_results | result: success')
-
     def _exit(self):
-        self._middleware.stop_consuming()
         self._middleware.close()
 
 class Station:

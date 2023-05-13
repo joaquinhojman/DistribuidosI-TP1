@@ -1,17 +1,16 @@
 import json
 import logging
 import os
-from common.Middleware import Middleware
+from common.middleware import EjSolverMiddleware
 
 WEATHER = "weather"
 TRIPS = "trips"
-RESULTS = "results"
 EOF = "eof"
 
 class Ej1Solver:
     def __init__(self, EjSolver, middleware):
         self._EjSolver = EjSolver
-        self._middleware: Middleware = middleware
+        self._middleware: EjSolverMiddleware = middleware
         
         self._weathers_eof_to_expect = int(os.getenv('EJ1TCANT', ""))
         self._ej1_trips_solvers_cant = int(os.getenv('EJ1TCANT', ""))
@@ -20,16 +19,11 @@ class Ej1Solver:
 
     def run(self):
         logging.info(f'action: run_Ej1Solver | result: in_progress')
-        self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback)
-        self._middleware.start_consuming()
-        self._middleware.basic_qos(prefetch_count=1)
-        self._middleware.recv_message(queue=self._EjSolver, callback=self._callback_trips)
-        self._middleware.start_consuming()
+        self._middleware.recv_data(callback=self._callback_weather)
+        self._middleware.recv_data(callback=self._callback_trips)
 
-    def _callback(self, ch, method, properties, body):
+    def _callback_weather(self, body, method=None):
         finished = False
-        body = str(body.decode("utf-8"))
         data = json.loads(body)
         if data["type"] == WEATHER:
             if str((data["city"], data["date"])) not in self._days_with_more_than_30mm_prectot:
@@ -38,7 +32,7 @@ class Ej1Solver:
             finished = self._process_eof()
         else:
             logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
-        self._middleware.send_ack(method.delivery_tag)
+        self._middleware.finished_message_processing(method)
         if finished: self._middleware.stop_consuming()
 
     def _process_eof(self,):
@@ -53,16 +47,16 @@ class Ej1Solver:
             "EjSolver": self._EjSolver,
             EOF: WEATHER
         })
-        self._send(json_eof)
+        self._middleware.send_data(data=json_eof)
+        logging.info(f'action: _send_results | result: success')
     
-    def _callback_trips(self, ch, method, properties, body):
-        body = body.decode("utf-8")
+    def _callback_trips(self, body, method=None):
         self._ej1_trips_solvers_cant -= 1
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
             self._days_with_more_than_30mm_prectot[k].add_trips(int(values[0]), float(values[1]))
-        self._middleware.send_ack(method.delivery_tag)
+        self._middleware.finished_message_processing(method)
         if self._ej1_trips_solvers_cant == 0:
             self._send_results()
             self._exit()
@@ -73,7 +67,8 @@ class Ej1Solver:
             EOF: TRIPS,
             "results": str(self._get_results())
         })
-        self._send(json_results)
+        self._middleware.send_data(data=json_results)
+        logging.info(f'action: _send_results | result: success')
 
     def _get_results(self):
         results = {}
@@ -83,12 +78,7 @@ class Ej1Solver:
                 results[key] = value.get_average_duration()
         return results
     
-    def _send(self, data):
-        self._middleware.send_message(queue=RESULTS, data=data)
-        logging.info(f'action: _send_results | result: success')
-
     def _exit(self):
-        self._middleware.stop_consuming()
         self._middleware.close()
 
 class DayWithMoreThan30mmPrectot:
