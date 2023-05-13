@@ -368,7 +368,7 @@ def generateEOFTripsListener(docker_compose, tbrkcant, te2fcant, te3fcant, ej1tc
     docker_compose.write(f'      entrypoint: python3 /main.py\n')
     docker_compose.write(f'      restart: on-failure\n')
     docker_compose.write(f'      depends_on:\n')
-    docker_compose.write(f'        - Ej1TripsSolver_1\n')
+    docker_compose.write(f'        - Ej1_Trips_Solver_1\n')
     docker_compose.write(f'      links: \n')
     docker_compose.write(f'        - rabbitmq\n')
     docker_compose.write(f'      environment:\n')

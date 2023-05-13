@@ -304,7 +304,7 @@ services:
       entrypoint: python3 /main.py
       restart: on-failure
       depends_on:
-        - Ej1TripsSolver_1
+        - Ej1_Trips_Solver_1
       links: 
         - rabbitmq
       environment:
