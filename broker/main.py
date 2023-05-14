@@ -31,7 +31,11 @@ def main():
     trips = config_params["trips"]
     broker = os.getenv('BROKER_TYPE', "")
     broker_number = os.getenv('BROKER_ID', "")
-    middleware = BrokerMiddleware(broker)
+    try:
+        middleware = BrokerMiddleware(broker)
+    except Exception as e:
+        logging.error(f"action: config | result: error | broker: {broker} | broker_number: {broker_number} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | broker: {broker} | broker_number: {broker_number} | logging_level: {logging_level}")

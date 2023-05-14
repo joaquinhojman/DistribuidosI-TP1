@@ -30,7 +30,11 @@ def main():
     ej2solver = config_params["ej2solver"]
     ej3solver = config_params["ej3solver"]
     ejsolver = os.getenv('EJSOLVER', "")
-    middleware = EjSolverMiddleware(ejsolver)
+    try:
+        middleware = EjSolverMiddleware(ejsolver)
+    except Exception as e:
+        logging.error(f"action: config | result: error | ejsolver: {ejsolver} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | ejsolver: {ejsolver} | logging_level: {logging_level}")

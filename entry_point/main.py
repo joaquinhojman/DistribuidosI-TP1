@@ -27,7 +27,12 @@ def main():
     logging_level = config_params["logging_level"]
     port = config_params["port"]
     listen_backlog = config_params["listen_backlog"]
-    middleware = EntryPointMiddleware()
+    try:
+        middleware = EntryPointMiddleware()
+    except Exception as e:
+        logging.error(f"action: config | result: error | port: {port} | "
+                      f"listen_backlog: {listen_backlog} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.debug(f"action: config | result: success | port: {port} | "

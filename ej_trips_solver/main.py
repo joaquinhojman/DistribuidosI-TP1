@@ -31,7 +31,11 @@ def main():
     ej3tripssolver = config_params["ej3tripssolver"]
     ejtripssolver = os.getenv('EJTRIPSSOLVER', "")
     id = os.getenv('EJTRIPSSOLVER_ID', "")
-    middleware = EjTripsSolverMiddleware(ejtripssolver, id)
+    try:
+        middleware = EjTripsSolverMiddleware(ejtripssolver, id)
+    except Exception as e:
+        logging.error(f"action: config | result: error | ejtripssolver: {ejtripssolver} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | ejtripssolver: {ejtripssolver} | logging_level: {logging_level}")

@@ -23,7 +23,11 @@ def initialize_config():
 def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
-    middleware = EofTripsListenerMiddleware()
+    try:
+        middleware = EofTripsListenerMiddleware()
+    except Exception as e:
+        logging.error(f"action: config | result: error | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.debug(f"action: config | result: success | logging_level: {logging_level}")

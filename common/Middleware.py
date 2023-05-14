@@ -52,4 +52,7 @@ class Middleware:
         self.channel.stop_consuming()
 
     def close(self):
-        self.channel.close()
+        try:
+            self.channel.close()
+        except:
+            pass

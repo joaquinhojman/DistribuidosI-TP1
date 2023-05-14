@@ -35,7 +35,11 @@ def main():
     trips_ej3 = config_params["te3"]
     filter = os.getenv('FILTER_TYPE', "")
     filter_number = os.getenv('FILTER_ID', "")
-    middleware = FilterMiddleware(filter)
+    try:
+        middleware = FilterMiddleware(filter)
+    except Exception as e:
+        logging.error(f"action: config | result: error | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.info(f"action: config | result: success | filter: {filter} | filter_number: {filter_number} | logging_level: {logging_level}")
