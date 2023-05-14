@@ -24,14 +24,14 @@ class Ej1TripsSolver:
 
     def _callback_weathers(self, body, method=None):
         finished = False
-        data = json.loads(body)
-        if data["type"] == WEATHER:
-            self._days_with_more_than_30mm_prectot[str((data["city"], data["date"]))] = DayWithMoreThan30mmPrectot()
-            self._middleware.send_data(body)
-        elif data["type"] == EOF:
+        weather = Weather(body)
+        if weather._eof:
             finished = self._process_eof()
+        elif weather._type == WEATHER:
+            self._days_with_more_than_30mm_prectot[str((weather._city, weather._date))] = DayWithMoreThan30mmPrectot()
+            self._middleware.send_data(body)
         else:
-            logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
+            logging.error(f'action: _callback | result: error | error: Invalid data type | data: {weather}')
         self._middleware.finished_message_processing(method)
         if finished: 
             self._middleware.send_data(body)
@@ -66,6 +66,17 @@ class Ej1TripsSolver:
             data[k] = str(v._n_trips) + "," + str(v._total_duration)
         self._middleware.send_data(str(data))
         logging.info(f'action: _send_trips_to_ej1solver | result: trips sended | EjTripsSolver: {self._ej_trips_solver}')
+
+class Weather:
+    def __init__(self, body):
+        data = json.loads(body)
+        self._type = data["type"]
+        self._eof = True if self._type == EOF else False
+        self._city = None
+        self._date = None
+        if self._eof == False:
+            self._city = data["city"]
+            self._date = data["date"]
 
 class DayWithMoreThan30mmPrectot:
     def __init__(self):

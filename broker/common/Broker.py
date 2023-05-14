@@ -46,27 +46,30 @@ class Broker:
         eof = self._check_eof(body[:3], method)
         if eof: return
         weathers = body.split('\n')
+        weathers_for_ej1_filter = []
         for w in weathers:
             try:
                 weather = Weather(w)
             except json.decoder.JSONDecodeError as _e:
                 continue
-            weather_for_ej1filter = weather.get_weather_for_ej1filter()
-            self._middleware.send_weather(weather_for_ej1filter)
+            weathers_for_ej1_filter.append(weather.get_weather_for_ej1filter())
+        self._middleware.send_weather("\n".join(weathers_for_ej1_filter))
         self._middleware.finished_message_processing(method)
 
     def _callback_stations(self, body, method=None):
         eof = self._check_eof(body[:3], method)
         if eof: return
         stations = body.split('\n')
+        stations_for_ej2filter = []
+        stations_for_ej3filter = []
         for s in stations:
             try:
                 station = Station(s)
             except json.decoder.JSONDecodeError as _e:
                 continue
-            station_for_ej2solver = station.get_station_for_ej2filter()
-            station_for_ej3filter = station.get_station_for_ej3filter()
-            self._middleware.send_station(station_for_ej2solver, station_for_ej3filter)
+            stations_for_ej2filter.append(station.get_station_for_ej2filter())
+            stations_for_ej3filter.append(station.get_station_for_ej3filter())
+        self._middleware.send_station("\n".join(stations_for_ej2filter), "\n".join(stations_for_ej3filter))
         self._middleware.finished_message_processing(method)
 
     def _callback_trips(self, body, method=None):

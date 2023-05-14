@@ -26,15 +26,15 @@ class Ej2TripsSolver:
 
     def _callback_stations(self, body, method=None):
         finished = False
-        data = json.loads(body)
-        if data["type"] == STATIONS:
-            self._stations_name[str((data["city"], data["code"], data["yearid"]))] = data["name"]
-            self._stations[data["name"]] = Station()
-            self._middleware.send_data(body)
-        elif data["type"] == EOF:
+        station = StationData(body)
+        if station._eof:
             finished = self._process_eof()
+        elif station._type == STATIONS:
+            self._stations_name[str((station._city, station._code, station._yearid))] = station._name
+            self._stations[station._name] = Station()
+            self._middleware.send_data(body)
         else:
-            logging.error(f'action: _callback | result: error | error: Invalid data type | data: {data}')
+            logging.error(f'action: _callback | result: error | error: Invalid data type | data: {station}')
         self._middleware.finished_message_processing(method)
         if finished:
             self._middleware.send_data(body)
@@ -71,6 +71,21 @@ class Ej2TripsSolver:
             data[k] = str(v._trips_on_2016) + "," + str(v._trips_on_2017)
         self._middleware.send_data(str(data))
         logging.info(f'action: _send_trips_to_ej2solver | result: trips sended | EjTripsSolver: {self._ej_trips_solver}')
+
+class StationData:
+    def __init__(self, body):
+        data = json.loads(body)
+        self._type = data["type"]
+        self._eof = True if self._type == EOF else False
+        self._city = None
+        self._code = None
+        self._yearid = None
+        self._name = None
+        if self._eof == False:
+            self._city = data["city"]
+            self._code = data["code"]
+            self._yearid = data["yearid"]
+            self._name = data["name"]
 
 class Station:
     def __init__(self):

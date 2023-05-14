@@ -70,17 +70,21 @@ class Filter:
     def _callback_weather_ej1(self, body, method=None):
         eof = self._check_eof(body, method, True)
         if eof: return
-        we1 = WeatherEj1(body)
-        if we1.is_valid():
-            self._middleware.send_weather_ej1(we1.get_json())
+        weathers = body.split('\n')
+        for weather in weathers:
+            we1 = WeatherEj1(weather)
+            if we1.is_valid():
+                self._middleware.send_weather_ej1(we1.get_json())
         self._middleware.finished_message_processing(method)
 
     def _callback_stations_ej2(self, body, method=None):
         eof = self._check_eof(body, method, True)
         if eof: return
-        se2 = StationsEj2(body)
-        if se2.is_valid():
-            self._middleware.send_stations_ej2(se2.get_json())
+        stations = body.split('\n')
+        for station in stations:
+            se2 = StationsEj2(station)
+            if se2.is_valid():
+                self._middleware.send_stations_ej2(se2.get_json())
         self._middleware.finished_message_processing(method)
 
     def _callback_trips_ej2(self, body, method=None):
@@ -100,9 +104,11 @@ class Filter:
     def _callback_stations_ej3(self, body, method=None):
         eof = self._check_eof(body, method, True)
         if eof: return
-        se3 = StationsEj3(body)
-        if se3.is_valid():
-            self._middleware.send_stations_ej3(se3.get_json())
+        stations = body.split('\n')
+        for station in stations:
+            se3 = StationsEj3(station)
+            if se3.is_valid():
+                self._middleware.send_stations_ej3(se3.get_json())
         self._middleware.finished_message_processing(method)
 
     def _callback_trips_ej3(self, body, method=None):
