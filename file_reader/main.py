@@ -26,6 +26,7 @@ def initialize_config():
         config_params["port"] = int(os.getenv('SERVER_PORT', config["DEFAULT"]["SERVER_PORT"]))
         config_params["logging_level"] = os.getenv('LOGGING_LEVEL', config["DEFAULT"]["LOGGING_LEVEL"])
         config_params["rows_per_batch"] = int(os.getenv('ROWS_PER_BATCH', config["DEFAULT"]["ROWS_PER_BATCH"]))
+        config_params["wait_time"] = float(os.getenv('WAIT_TIME', config["DEFAULT"]["WAIT_TIME"]))
     except KeyError as e:
         raise KeyError("Key was not found. Error: {} .Aborting client".format(e))
     except ValueError as e:
@@ -40,6 +41,7 @@ def main():
     port = config_params["port"]
     logging_level = config_params["logging_level"]
     rows_per_batch = config_params["rows_per_batch"]
+    wait_time = config_params["wait_time"]
 
     initialize_log(logging_level)
 
@@ -49,7 +51,7 @@ def main():
     #              f"listen_backlog: {listen_backlog} | logging_level: {logging_level}")
 
     # Initialize client
-    file_reader = FileReader(port, ip, rows_per_batch)
+    file_reader = FileReader(port, ip, rows_per_batch, wait_time)
     signal.signal(signal.SIGTERM, file_reader._sigterm_handler)
     file_reader.run()
 

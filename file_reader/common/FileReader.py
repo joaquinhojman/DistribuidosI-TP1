@@ -6,10 +6,11 @@ from time import sleep
 from protocol.protocol import Protocol
 
 class FileReader:
-    def __init__(self, port, ip, rows_per_batch):
+    def __init__(self, port, ip, rows_per_batch, wait_time):
         self._ip = ip
         self._port = port
         self._rows_per_batch = rows_per_batch
+        self._wait_time = wait_time
     
         self._server = None
         self._protocol = None
@@ -67,7 +68,7 @@ class FileReader:
             while not eof:
                 data, eof = self._get_data(row_header, data_type, city_name)
                 self._send(data)
-                sleep(0.0005) #need cpu time to another tasks (only for local)
+                sleep(self._wait_time) #need cpu time to another tasks (only for local)
             self._f.close()
 
             if (send_eof): self._send_eof(data_type)
