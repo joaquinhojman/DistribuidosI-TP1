@@ -15,6 +15,20 @@ Para poder ejecutar el sistema completo se provee un archivo de Makefile y un ar
 
 ## 4 + 1 Views
 
+### Scope
+
+Se solicita un sistema distribuido que analice los registros de viajes realizados con bicicletas de la red pública provista por grandes ciudades. Los registros cuentan con el tiempo de duración del viaje, estación de inicio y de fin. Se posee también lat., long. y nombre de las estaciones así como la cantidad de precipitaciones del día del viaje. 
+
+Se debe obtener: 
+1) La duración promedio de viajes que iniciaron en días con precipitaciones >30mm.
+2) Los nombres de estaciones que al menos duplicaron la cantidad de viajes iniciados en ellas entre 2016 y el 2017. 
+3) Los nombres de estaciones de Montreal para la que el promedio de los ciclistas recorren más de 6km en llegar a ellas.
+
+Esto queda modelado con el siguiente diagrama de casos de uso:
+
+![Descripción de la imagen](./Diagramas/Diagrama de casos de uso.drawio.png)
+
+
 A continuación se detalla como funciona el sistema a grandes rasgos.
 
 Las entidades replicables son los filtros, los brokers y los EJTsolvers. El resto de las entidades no son replicables y no deben replicarse para evitar un funcionamiento incorrecto del sistema. Las entidades replicables son aquellas que consumiran y procesaran la data. En un entorno productivo podrian replicarse correctamente para escalar el sistema.
