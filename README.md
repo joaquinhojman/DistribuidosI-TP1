@@ -51,7 +51,7 @@ La estructura del sistema se encuentra separada en entidades que se comunican en
 - Filter: tiene un topico y un ejercicio asociado, recibe las rows y dependiendo cual topico y ejercicio tiene asociada filtra los que no sean necesarios. Luego envia las rows filtradas al EjTripsSolver asociado a su ejercicio.
 - EjTripsSolver: tiene un ejercicio asociado, recibe las rows filtradas y las procesa para ir calculando resultados parciales. Cuando se procesaron todos los trips, envia lo resultados parciales al EjSolver asociado.
 - EjSolver: tiene un ejercicio asociado y recibe los resultados parciales de sus EjTripsSolver asociados, una vez que tiene todos los joinea para calcular los resultados finales. Cuando tiene los resultados finales los envia al Entry Point para que se los envie al cliente.
-- EofListener: recibe los EOF de los brokers y cuando tiene todos los EOF de los brokers de un topico, se lo informa a los filters de ese topico para que propaguen el EOF y puedan apagarse.
+- EofListener: cumple la función de una barrera distribuida: recibe los EOF de los brokers y cuando tiene todos los EOF de los brokers de un topico, se lo informa a los filters de ese topico para que propaguen el EOF y puedan apagarse.
 - EofTripsListener: recibe los EOF de los filters de trips y cuando tiene todos se los envia a los EjTripsSolver para que envien sus resultados parciales al EjSolver asociado.
 
 Las entidades replicables son los filtros, los brokers y los EjTripSsolvers. El resto de las entidades no son replicables y no deben replicarse para evitar un funcionamiento incorrecto del sistema. Las entidades replicables son aquellas que consumiran y procesaran la data. En un entorno productivo podrian replicarse correctamente para escalar el sistema.
@@ -100,6 +100,19 @@ Este diagrama muestra como se van resolviendo parcialmente las querys de cada ej
 Cada entidad, a excepcion del file reader, posee un Middleware para comunicarse con el resto de las entidades. El middleware de cada entidad hereda de una clase Middleware global que posee las funciones propias de RabbitMQ. Este Middleware global usa la libreria pika para implementar la comunicación.
 
 ![Diagrama de paquetes](./Diagramas/Diagrama_de_Paquetes.drawio.png)
+
+
+### Physical View
+
+Se expone la arquitectura del sistema mediante los siguientes diagramas de robustez (separado por fases de funcionamiento del sistema para mayor entendimiento).
+
+![Diagrama de robustez](./Diagramas/Diagrama_de_Robustez.drawio.png)
+
+Cada módulo se encuentra desplegado en un contenedor individual de docker permitiendo de esta manera su escalabilidad. El sistema entero se encuentra comunicado a traves de una instancia de Rabbit MQ, conocida por todos. A continuación se presenta el diagrama de despliegue:
+
+![Diagrama de Despliegue](./Diagramas/Diagrama_de_Despliegue.drawio.png)
+
+
 
 A continuación se detalla como funciona el sistema a grandes rasgos.
 
