@@ -113,7 +113,6 @@ Cada módulo se encuentra desplegado en un contenedor individual de docker permi
 ![Diagrama de Despliegue](./Diagramas/Diagrama_de_Despliegue.drawio.png)
 
 
-
 A continuación se detalla como funciona el sistema a grandes rasgos.
 
 
