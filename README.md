@@ -68,6 +68,39 @@ Los siguientes diagramas DAGs explican en cada caso de uso como es el flujo de d
 
 ![Diagrama DAG](./Diagramas/DAG.drawio.png)
 
+### Process View
+
+**Diagramas de actividades**
+
+A continuación se presentan algunos diagramas de actividades que ayudan a entender como interactuan las entidades del sistema, considerando N como cantidad de replicas de los filters y M como la cantidad de replicas de los Brokers.
+
+El siguiente diagrama ilustra como se envia la data desde que se recibe en el entry point hasta el Solver para poder almacenarla o usarla para resolver una query. Se muestra el caso de weather pero todos los casos siguen la misma logica:
+
+![Diagrama de actividades 1](./Diagramas/Diagrama_de_Actividades_1.png)
+
+El siguiente diagrama ilustra como funciona la entidad EOF Listener. El caso mostrado es el envio de stations, pero el funcionamiento para weathers y trips es analogo:
+
+![Diagrama de actividades 2](./Diagramas/Diagrama_de_Actividades_2.png)
+
+Este diagrama muestra como se envia la data desde el cliente hacia el servidor. El caso de ejemplo es con trips pero podria ser igual con estaciones o climas:
+
+![Diagrama de actividades 3](./Diagramas/Diagrama_de_Actividades_3.png)
+
+Este diagrama muestra como se van resolviendo parcialmente las querys de cada ejercicio. Cada uno de esos EjTsolvers esta replicado y le enviaran a su EjSolver asociado la info parcial para que la joinee y calcule los resultados finales:
+
+![Diagrama de actividades 4](./Diagramas/Diagrama_de_Actividades_4.png)
+
+
+**Diagramas de Secuencia**
+
+---
+
+### Development View
+
+Cada entidad, a excepcion del file reader, posee un Middleware para comunicarse con el resto de las entidades. El middleware de cada entidad hereda de una clase Middleware global que posee las funciones propias de RabbitMQ. Este Middleware global usa la libreria pika para implementar la comunicación.
+
+![Diagrama de paquetes](./Diagramas/Diagrama_de_Paquetes.drawio.png)
+
 A continuación se detalla como funciona el sistema a grandes rasgos.
 
 
@@ -88,4 +121,3 @@ Los EjTSolvers, una vez que recibieron la información de su EjSolver asociado, 
 
 Una vez que cada EjSolver recibio de todas las replicas de sus EjtSolver la información de los viajes, procede a hacer el join, calculando resultados finales a partir de los parciales, hasta obtener lo que pedia cada enunciado. Una vez que obtuvieron los resultados finales, se los envian al Entry Point y finalizan.
 
-La posibilidad de aumentar la cantidad de replicas de brokers, filtros y ejtsolvers nos brinda la posibilidad de que las entidades que consumen y procesan el straming de datos puedan escalarse correctamente, de forma tal que si se cuenta con los recursos necesarios se pueda consumir toda la data y devolver los resultados en el tiempo que se desee.
