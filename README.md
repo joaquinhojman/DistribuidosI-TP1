@@ -109,11 +109,11 @@ Se muestran a continuación diagramas de secuencia que ayudan a explicar ciertos
 
 El primer diagrama de secuencia representa el envio de trips desde que llegan al entry point hasta el solver de trips del ej 3, quien los almacena.
 
-![Diagrama de secuencia 1](./Diagramas/Diagrama_de_Secuencia_1.png)
+![Diagrama de secuencia 1](./Diagramas/Diagrama_de_Secuencia_1.drawio.png)
 
 El segundo diagrama muestra cuando a este solver de trips le llega el eof, le envia los resultados que almaceno al Ej3Solver, quien espera a que todas las replicas le hayan enviado sus parciales, los joinea y los devuelve.
 
-![Diagrama de secuencia 2](./Diagramas/Diagrama_de_Secuencia_2.png)
+![Diagrama de secuencia 2](./Diagramas/Diagrama_de_Secuencia_2.drawio.png)
 
 ### Development View
 
