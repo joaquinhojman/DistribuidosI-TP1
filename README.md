@@ -26,7 +26,7 @@ Se debe obtener:
 
 Esto queda modelado con el siguiente diagrama de casos de uso:
 
-![Descripción de la imagen](./Diagramas/Diagrama de casos de uso.drawio.png)
+![Descripción de la imagen](./Diagramas/Diagrama_de_casos_de_uso.drawio.png)
 
 
 A continuación se detalla como funciona el sistema a grandes rasgos.
