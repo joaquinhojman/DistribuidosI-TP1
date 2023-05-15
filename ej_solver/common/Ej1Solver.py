@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from common.middleware import EjSolverMiddleware
+from common.EjSolversData import WeatherForEj1, DayWithMoreThan30mmPrectot
 
 WEATHER = "weather"
 TRIPS = "trips"
@@ -24,7 +25,7 @@ class Ej1Solver:
 
     def _callback_weather(self, body, method=None):
         finished = False
-        weather = Weather(body)
+        weather = WeatherForEj1(body)
         if weather._eof:
             finished = self._process_eof()
         elif weather._type == WEATHER:
@@ -80,29 +81,3 @@ class Ej1Solver:
     
     def _exit(self):
         self._middleware.close()
-
-class Weather:
-    def __init__(self, body):
-        data = json.loads(body)
-        self._type = data["type"]
-        self._eof = True if self._type == EOF else False
-        self._city = None
-        self._date = None
-        if self._eof == False:
-            self._city = data["city"]
-            self._date = data["date"]
-
-class DayWithMoreThan30mmPrectot:
-    def __init__(self):
-        self._n_trips = 0
-        self._total_duration = 0.0
-
-    def add_trips(self, n, duration):
-        self._n_trips += n
-        self._total_duration += duration
-
-    def get_average_duration(self):
-        try:
-            return self._total_duration / self._n_trips
-        except ZeroDivisionError:
-            return 0.0

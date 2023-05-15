@@ -1,8 +1,7 @@
-import json
 import logging
 import os
 from common.middleware import EjTripsSolverMiddleware
-from haversine import haversine
+from common.EjSolversData import MontrealStation, StationsDataForEj3, TripsForEj3
 
 STATIONS = "stations"
 TRIPS = "trips"
@@ -27,7 +26,7 @@ class Ej3TripsSolver:
 
     def _callback_stations(self, body, method=None):
         finished = False
-        station = MontrealStationData(body)
+        station = StationsDataForEj3(body)
         if station._eof:
             finished = self._process_eof()
         elif station._type == STATIONS:
@@ -50,22 +49,21 @@ class Ej3TripsSolver:
     def _callback_trips(self, body, method=None):
         trips = body.split("\n")
         for t in trips:
-            data = json.loads(t)
-            if data["type"] == TRIPS:
-                if (str((data["start_station_code"], data["yearid"])) not in self._stations_name) or (str((data["end_station_code"], data["yearid"])) not in self._stations_name):
-                    continue
-
-                start_station_name = self._stations_name[str((data["start_station_code"], data["yearid"]))]
-                start_sation = self._montreal_stations[start_station_name]
-                origin = (start_sation._latitude, start_sation._longitude)
-
-                end_station_name = self._stations_name[str((data["end_station_code"], data["yearid"]))]
-                self._montreal_stations[end_station_name].add_trip(origin) 
-            elif data["type"] == EOF:
+            trip = TripsForEj3(t)
+            if trip._eof:
                 self._send_trips_to_ej3solver()
                 self._middleware.finished_message_processing(method)
                 self._middleware.stop_consuming()
-                return
+            elif trip._type == TRIPS:
+                if (str((trip._start_station_code, trip._yearid)) not in self._stations_name) or (str((trip._end_station_code, trip._yearid)) not in self._stations_name):
+                    continue
+
+                start_station_name = self._stations_name[str((trip._start_station_code, trip._yearid))]
+                start_sation: MontrealStation = self._montreal_stations[start_station_name]
+                origin = (start_sation._latitude, start_sation._longitude)
+
+                end_station_name = self._stations_name[str((trip._end_station_code, trip._yearid))]
+                self._montreal_stations[end_station_name].add_trip(origin) 
             else:
                 logging.error(f'action: _callback_trips | result: error | EjTripsSolver: {self._ej_trips_solver} | error: Invalid type')
         self._middleware.finished_message_processing(method)
@@ -76,35 +74,3 @@ class Ej3TripsSolver:
             data[k] = str(v._trips) + "," + str(v._total_km_to_come)
         self._middleware.send_data(str(data))
         logging.info(f'action: _send_trips_to_ej3solver | result: trips sended | EjTripsSolver: {self._ej_trips_solver}')
-
-class MontrealStationData:
-    def __init__(self, body):
-        data = json.loads(body)
-        self._type = data["type"]
-        self._eof = True if self._type == EOF else False
-        self._code = None
-        self._yearid = None
-        self._name = None
-        self._latitude = None
-        self._longitude = None
-        if self._eof == False:
-            self._code = data["code"]
-            self._yearid = data["yearid"]
-            self._name = data["name"]
-            self._latitude = data["latitude"]
-            self._longitude = data["longitude"]
-
-class MontrealStation:
-    def __init__(self, latitude, longitude):
-        self._latitude = float(latitude)
-        self._longitude = float(longitude)
-
-        self._trips = 0
-        self._total_km_to_come = 0.0
-
-    def add_trip(self, origin):
-        end = (self._latitude, self._longitude)
-        distance_in_km = haversine(origin, end)
-
-        self._trips += 1
-        self._total_km_to_come += distance_in_km

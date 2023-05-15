@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from common.middleware import EjSolverMiddleware
+from common.EjSolversData import MontrealStation, StationsDataForEj3
 
 STATIONS = "stations"
 TRIPS = "trips"
@@ -26,7 +27,7 @@ class Ej3Solver:
 
     def _callback_stations(self, body, method=None):
         finished = False
-        station = MontrealStationData(body)
+        station = StationsDataForEj3(body)
         if station._eof:
             finished = self._process_eof()
         elif station._type == STATIONS:
@@ -57,7 +58,7 @@ class Ej3Solver:
         trips = eval(body)
         for k, v in trips.items():
             values = v.split(",")
-            self._montreal_stations[k].add_trip(int(values[0]), float(values[1]))
+            self._montreal_stations[k].add_trips(int(values[0]), float(values[1]))
         self._middleware.finished_message_processing(method)
         if self._ej3_trips_solvers_cant == 0:
             self._send_results()
@@ -82,39 +83,3 @@ class Ej3Solver:
 
     def _exit(self):
         self._middleware.close()
-
-
-class MontrealStationData:
-    def __init__(self, body):
-        data = json.loads(body)
-        self._type = data["type"]
-        self._eof = True if self._type == EOF else False
-        self._code = None
-        self._yearid = None
-        self._name = None
-        self._latitude = None
-        self._longitude = None
-        if self._eof == False:
-            self._code = data["code"]
-            self._yearid = data["yearid"]
-            self._name = data["name"]
-            self._latitude = data["latitude"]
-            self._longitude = data["longitude"]
-
-class MontrealStation:
-    def __init__(self, latitude, longitude):
-        self._latitude = float(latitude)
-        self._longitude = float(longitude)
-
-        self._trips = 0
-        self._total_km_to_come = 0.0
-
-    def add_trip(self, n, km):
-        self._trips += n
-        self._total_km_to_come += km
-    
-    def get_average_km(self):
-        try:
-            return self._total_km_to_come / self._trips
-        except ZeroDivisionError:
-            return 0.0
