@@ -109,10 +109,15 @@ Este diagrama muestra como se van resolviendo parcialmente las querys de cada ej
 
 ### Development View
 
-Cada entidad, a excepcion del file reader, posee un Middleware para comunicarse con el resto de las entidades. El middleware de cada entidad hereda de una clase Middleware global que posee las funciones propias de RabbitMQ. Este Middleware global usa la libreria pika para implementar la comunicación.
+Cada entidad, a excepcion del file reader, posee un Middleware para comunicarse con el resto de las entidades. El middleware de cada entidad hereda de una clase Middleware global que posee las funciones propias de RabbitMQ. Este Middleware global usa la libreria pika para implementar la comunicación. Se utiliza la entidad broker como ejemplo pero el resto de las entidades del servidor son analogas.
 
-![Diagrama de paquetes](./Diagramas/Diagrama_de_Paquetes.drawio.png)
+![Diagrama de paquetes 1](./Diagramas/Diagrama_de_Paquetes_1.drawio.png)
 
+La entidad file reader no posee un middleware ya que no usa rabbit, pero si utiliza un protocolo para comunicarse con el servidor.
+
+![Diagrama de paquetes 2](./Diagramas/Diagrama_de_Paquetes_2.drawio.png)
+
+Por su parte, la entidad Entry Point posee tanto un middleware propio como un protocolo para comunicarse con el cliente.
 
 ### Physical View
 
