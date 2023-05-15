@@ -133,6 +133,8 @@ Se expone la arquitectura del sistema mediante los siguientes diagramas de robus
 
 ![Diagrama de robustez](./Diagramas/Diagrama_de_Robustez.drawio.png)
 
+Como comentario acerca del funcionamiento del sistema, cabe destacar lo siguiente: La idea de que los EjTripsSolver esten replicados se hizo con la intencion de que puedan procesar trips y calcular resultados parciales en paralelo (es decir, cada trip le llega a una sola replica), pero para lograr esto cada EjTripsSolver necesitaba tener toda la data estatica. Para implementar esto, los filters depositan la data estatica en exchanges que estan bindeados a una cola para cada replica de cada EjTripsSolver, de esta forma rabbit se encarga de que facilmente los solvers reciban toda la data estatica. Luego el envio de trips se hace directamente a traves de colas de rabbit.
+
 Cada módulo se encuentra desplegado en un contenedor individual de docker permitiendo de esta manera su escalabilidad. El sistema entero se encuentra comunicado a traves de una instancia de Rabbit MQ, conocida por todos. A continuación se presenta el diagrama de despliegue:
 
 ![Diagrama de Despliegue](./Diagramas/Diagrama_de_Despliegue.drawio.png)
