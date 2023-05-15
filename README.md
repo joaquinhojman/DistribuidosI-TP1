@@ -1,21 +1,23 @@
 # DistribuidosI-TP1
 Trabajo practico 1 de 75.74 Sistemas Distribuidos I - FIUBA
 
-Para poder ejecutar el sistema completo se provee un archivo de Makefile y un archivo de docker.compose. Para levantar el sistema se debe ejecutar "make docker-compose-up" y luego "make  docker-compose-logs" para poder ir viendo los logs del sistema. Cada entidad en ejecución loggea cierta data que permite comprender el estado del sistema al momento de loggeear. La entidad FileReader, al obtener los resultados, los loggeara por pantalla. Para poder apagar el sistema se debe ejecutar "make docker-compose-down".
+## Ejecución
 
-Las entidades replicables son los filtros, los brokers y los EJTsolvers. El resto de las entidades no son replicables y no deben replicarse para evitar un funcionamiento incorrecto del sistema. Las entidades replicables son aquellas que consumiran y procesaran la data. En un entorno productivo podrian replicarse correctamente para escalar el sistema.
+### Inicio
 
-De replicar las entidades mencionadas, se debe informar en las variables de entorno de otras entidades esta replicación, como se detalla a continuación:
-
-- De replicar algunos de los brokers: se debe informar la cant de brokers de weather en la entidad entry_point y EofListener, en la env WBRKCANT. Se debe informar la cant de brokers de stations en la entidad Ej2Solver, entry_point y EofListener en la env SBRKCANT. Se debe informar la cant de brokers de trips en la entidad Ej2Solver, EofTListener y EofListener en la env TBRKCANT.
-
-- De replicar algunos de los filters, se debe informar en las variables de entorno de ciertas entidades de la siguiente manera: de replicar el filtro de weathers para el ej1, "we1", informar en la entidad Ej1Solver y EofListener en la env WE1FCANT. De replicar el filtro de estaciones para ej3, "se3", informar en la entidad Ej3Solver y EofListener, en la env SE3FCANT. De replicar filtro de trips para ej2, "te2", informar en la entidad EofTListener y EofListener, en la env TE2FCANT. De replicar filtro de trips para ej3, "te3", informar en la entidad EofTListener y EofListener, en la env TE3FCANT.
-
-- De replicar algunos de los EJTsolver, se debe informar de la siguiente manera: De replicar EJ1Tsolver, se debe informar en Ej1Solver y en EofTListener en la env EJ1TCANT. De replicar EJ2Tsolver, se debe informar en Ej2Solver y en EofTListener en la env EJ2TCANT. De replicar EJ3Tsolver, se debe informar en Ej3Solver y en EofTListener en la env EJ3TCANT. 
+Para generar un archivo de docker compose con replicas se provee un script en la carpeta scripts que puede ejecutarse con "phython3 generate_docker_compose.py". En el archivo config.ini se puede indicar cuantas replicas quieren generarse de cada entidad. Se debe ejecutar el script python desde adentro de la carpeta de scripts.
 
 No se incluyen los archivos de datos. Debe descargarse el zip y guardar las carpetas montreal, toronto y washington en una carpeta llamada .data en la raiz del proyecto.
 
+### Configuración
+
+Para poder ejecutar el sistema completo se provee un archivo de Makefile y un archivo de docker.compose (tambien puede generarse el propio como se indico previamente). Para levantar el sistema se debe ejecutar "make docker-compose-up" y luego "make docker-compose-logs" para poder ir viendo los logs del sistema. Cada entidad en ejecución loggea cierta data que permite comprender el estado del sistema al momento de loggeear. La entidad FileReader, al obtener los resultados, los loggeara por pantalla. Para poder apagar el sistema se debe ejecutar "make docker-compose-down".
+
+## 4 + 1 Views
+
 A continuación se detalla como funciona el sistema a grandes rasgos.
+
+Las entidades replicables son los filtros, los brokers y los EJTsolvers. El resto de las entidades no son replicables y no deben replicarse para evitar un funcionamiento incorrecto del sistema. Las entidades replicables son aquellas que consumiran y procesaran la data. En un entorno productivo podrian replicarse correctamente para escalar el sistema.
 
 El cliente, llamado FileReader enviara los archivos del dataset por etapas. Primero mandara todos los archivos de weathers, luego todos los archivos de estaciones, y por ultimo los archivos de viajes. Luego de enviar cada seccion de archivos enviara un mensaje de EOF y esperara que el servidor le confirme que han sido recibidos y procesados correctamente. Luego esperara que dicho servidor le envie los resultados para mostrarlos por pantalla. El cliente lee los archivos y manda al servidor en batches de N rows, configurable en archivo config.ini, usando un protocolo.
 

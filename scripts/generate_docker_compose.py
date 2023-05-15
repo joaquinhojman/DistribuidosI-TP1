@@ -7,17 +7,17 @@ def initialize_config():
     config.read("config.ini")
     config_params = {}
     try:
-        config_params["WBRKCANT"] = int(os.getenv('WBRKCANT', config["DEFAULT"]["WBRKCANT"]))
-        config_params["SBRKCANT"] = int(os.getenv('SBRKCANT', config["DEFAULT"]["SBRKCANT"]))
-        config_params["TBRKCANT"] = int(os.getenv('TBRKCANT', config["DEFAULT"]["TBRKCANT"]))
-        config_params["WE1FCANT"] = int(os.getenv('WEATHEREJ1FCANT', config["DEFAULT"]["WEATHEREJ1FCANT"]))
-        config_params["TE2FCANT"] = int(os.getenv('STATIONSEJ2FCANT', config["DEFAULT"]["STATIONSEJ2FCANT"]))
-        config_params["SE2FCANT"] = int(os.getenv('TRIPSEJ2FCANT', config["DEFAULT"]["TRIPSEJ2FCANT"]))
-        config_params["SE3FCANT"] = int(os.getenv('STATIONSEJ3FCANT', config["DEFAULT"]["STATIONSEJ3FCANT"]))
-        config_params["TE3FCANT"] = int(os.getenv('TRIPSTEJ3FCANT', config["DEFAULT"]["TRIPSTEJ3FCANT"]))
-        config_params["EJ1TRIPSCANT"] = int(os.getenv('EJ1TRIPSCANT', config["DEFAULT"]["EJ1TRIPSCANT"]))
-        config_params["EJ2TRIPSCANT"] = int(os.getenv('EJ2TRIPSCANT', config["DEFAULT"]["EJ2TRIPSCANT"]))
-        config_params["EJ3TRIPSCANT"] = int(os.getenv('EJ3TRIPSCANT', config["DEFAULT"]["EJ3TRIPSCANT"]))
+        config_params["WBRKCANT"] = int(os.getenv('WEATHER_BROKERS_CANT', config["DEFAULT"]["WEATHER_BROKERS_CANT"]))
+        config_params["SBRKCANT"] = int(os.getenv('STATIONS_BROKERS_CANT', config["DEFAULT"]["STATIONS_BROKERS_CANT"]))
+        config_params["TBRKCANT"] = int(os.getenv('TRIPS_BROKERS_CANT', config["DEFAULT"]["TRIPS_BROKERS_CANT"]))
+        config_params["WE1FCANT"] = int(os.getenv('WEATHER_EJ1_FILTER_CANT', config["DEFAULT"]["WEATHER_EJ1_FILTER_CANT"]))
+        config_params["TE2FCANT"] = int(os.getenv('STATIONS_EJ2_FILTER_CANT', config["DEFAULT"]["STATIONS_EJ2_FILTER_CANT"]))
+        config_params["SE2FCANT"] = int(os.getenv('TRIPS_EJ2_FILTER_CANT', config["DEFAULT"]["TRIPS_EJ2_FILTER_CANT"]))
+        config_params["SE3FCANT"] = int(os.getenv('STATIONS_EJ3_FILTER_CANT', config["DEFAULT"]["STATIONS_EJ3_FILTER_CANT"]))
+        config_params["TE3FCANT"] = int(os.getenv('TRIPS_EJ3_FILTER_CANT', config["DEFAULT"]["TRIPS_EJ3_FILTER_CANT"]))
+        config_params["EJ1TRIPSCANT"] = int(os.getenv('EJ1_TRIPS_SOLVER_CANT', config["DEFAULT"]["EJ1_TRIPS_SOLVER_CANT"]))
+        config_params["EJ2TRIPSCANT"] = int(os.getenv('EJ2_TRIPS_SOLVER_CANT', config["DEFAULT"]["EJ2_TRIPS_SOLVER_CANT"]))
+        config_params["EJ3TRIPSCANT"] = int(os.getenv('EJ3_TRIPS_SOLVER_CANT', config["DEFAULT"]["EJ3_TRIPS_SOLVER_CANT"]))
     except KeyError as e:
         raise KeyError("Key was not found. Error: {} .Aborting client".format(e))
     except ValueError as e:
@@ -338,7 +338,7 @@ def generateEjTripsSolvers(docker_compose, ej1tcant, ej2tcant, ej3tcant, we1fcan
         docker_compose.write(f'        - testing_net\n')
         docker_compose.write(f"\n")
 
-def generateEOFListener(docker_compose, wbrkcant, sbrkcant, tbrkcant, we1fcant, se2fcant, te2fcant, se3fcant, te3fcant, rmqretries):
+def generateEOFListener(docker_compose, wbrkcant, sbrkcant, tbrkcant, we1fcant, se2fcant, te2fcant, se3fcant, te3fcant):
     docker_compose.write(f'    EofListener:\n')
     docker_compose.write(f'      container_name: EofListener\n')
     docker_compose.write(f'      image: eof_listener:latest\n')
@@ -361,7 +361,7 @@ def generateEOFListener(docker_compose, wbrkcant, sbrkcant, tbrkcant, we1fcant, 
     docker_compose.write(f'        - testing_net\n')
     docker_compose.write(f"\n")
 
-def generateEOFTripsListener(docker_compose, tbrkcant, te2fcant, te3fcant, ej1tcant, ej2tcant, ej3tcant, rmqretries):
+def generateEOFTripsListener(docker_compose, tbrkcant, te2fcant, te3fcant, ej1tcant, ej2tcant, ej3tcant):
     docker_compose.write(f'    EofTripsListener:\n')
     docker_compose.write(f'      container_name: EofTripsListener\n')
     docker_compose.write(f'      image: eof_trips_listener:latest\n')
@@ -388,7 +388,7 @@ def generateServices(docker_compose, config_params):
     generateEntryPoint(docker_compose,config_params["WBRKCANT"],config_params["SBRKCANT"],config_params["TBRKCANT"])
     generateFileReader(docker_compose)
     generateBrokers(docker_compose, config_params["WBRKCANT"],config_params["SBRKCANT"],config_params["TBRKCANT"])
-    generateFilters(docker_compose, config_params["WE1FCANT"], config_params["SE2FCANT"], config_params["TE2FCANT"], config_params["SE3FCANT"], config_params["TE3FCANT"],config_params["RMQRETRIES"], config_params["EJ1TCANT"], config_params["EJ2TCANT"], config_params["EJ3TCANT"])
+    generateFilters(docker_compose, config_params["WE1FCANT"], config_params["SE2FCANT"], config_params["TE2FCANT"], config_params["SE3FCANT"], config_params["TE3FCANT"], config_params["EJ1TRIPSCANT"], config_params["EJ2TRIPSCANT"], config_params["EJ3TRIPSCANT"])
     generateEj1Solver(docker_compose, config_params["EJ1TRIPSCANT"])
     generateEj2Solver(docker_compose, config_params["EJ2TRIPSCANT"])
     generateEj3Solver(docker_compose, config_params["EJ3TRIPSCANT"])
