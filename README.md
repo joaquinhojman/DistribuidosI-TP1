@@ -26,7 +26,7 @@ Se debe obtener:
 
 Esto queda modelado con el siguiente diagrama de casos de uso:
 
-![Descripción de la imagen](./Diagramas/Diagrama_de_casos_de_uso.drawio.png)
+![Diagrama de casos de uso](./Diagramas/Diagrama_de_casos_de_uso.drawio.png)
 
 **Supuestos**
 
@@ -66,7 +66,7 @@ Las entidades replicables son los filtros, los brokers y los EjTripSsolvers. El 
 
 Los siguientes diagramas DAGs explican en cada caso de uso como es el flujo de datos.
 
-![Descripción de la imagen](./Diagramas/Dag.drawio.png)
+![Diagrama DAG](./Diagramas/DAG.drawio.png)
 
 A continuación se detalla como funciona el sistema a grandes rasgos.
 
