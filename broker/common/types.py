@@ -49,7 +49,7 @@ class Station:
         self.longitude = data["longitude"]
         self.yearid = data["yearid"]
 
-    def get_station_for_ej2solver(self):
+    def get_station_for_ej2filter(self):
         return json.dumps({
             "type": STATIONS,
             "city": self.city,
@@ -102,14 +102,4 @@ class Trip:
             "start_station_code": self.start_station_code,
             "end_station_code": self.end_station_code,
             "yearid": self.yearid,
-        })
-
-class EOF:
-    def __init__(self, topic):
-        self.topic = topic
-    
-    def get_json(self):
-        return json.dumps({
-            "type": "eof",
-            "eof": self.topic,
         })

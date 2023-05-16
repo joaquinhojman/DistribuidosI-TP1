@@ -1,163 +1,143 @@
 import logging
 import os
-from time import sleep
-import pika
+from common.middleware import FilterMiddleware
+from common.types import EOF, StationsEj3, TripsEj2, TripsEj3, WeatherEj1, StationsEj2
 
-from common.types import EOF, Se3, Te2, Te3, We1
-
-EJ1SOLVER = "ej1solver"
-EJ2SOLVER = "ej2solver"
-EJ3SOLVER = "ej3solver"
-EOFTLISTENER = "eoftlistener"
-EJ2TSOLVER = "ej2tsolver"
-EJ3TSOLVER = "ej3tsolver"
+_EOF = "eof"
 
 class Filter:
-    def __init__(self, filter_type, filter_number, we1, te2, se3, te3):
+    def __init__(self, filter_type, filter_number, weather_ej1, stations_ej2, trips_ej2, stations_ej3, trips_ej3, middleware):
+        self._sigterm = False
         self._filter_type = filter_type
         self._filter_number = filter_number
-        self._we1 = we1
-        self._te2 = te2
-        self._se3 = se3
-        self._te3 = te3
+        self._weather_ej1 = weather_ej1
+        self._stations_ej2 = stations_ej2
+        self._trips_ej2 = trips_ej2
+        self._stations_ej3 = stations_ej3
+        self._trips_ej3 = trips_ej3
 
-        self._channel = None
-        self._initialize_rabbitmq()
+        self._cant_ej_trips_solver = int(os.getenv('EJTRIPSCANT', "0"))
+        self._middleware: FilterMiddleware = middleware
 
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        if self._channel is not None:
-            self._channel.close()
-        logging.info(f'action: Handle SIGTERM | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-
-    def _initialize_rabbitmq(self):
-        logging.info(f'action: initialize_rabbitmq | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
-            sleep(15)
-            retries -= 1
-            try:
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
-
-                channel.queue_declare(queue=self._filter_type, durable=True)
-                channel.queue_declare(queue=EOFTLISTENER, durable=True)
-                self._channel = channel
-            except Exception as e:
-                pass
-        logging.info(f'action: initialize_rabbitmq | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._sigterm = True
+        if self._middleware is not None:
+            self._middleware.close()
+        exit(0)
 
     def run(self):
         try:
             logging.info(f'action: run | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-            self._channel.basic_qos(prefetch_count=1)
-            
-            if self._filter_type == self._we1:
-                self._run_we1_filter()
-            elif self._filter_type == self._te2:
-                self._run_te2_filter()
-            elif self._filter_type == self._se3:
-                self._run_se3_filter()
-            elif self._filter_type == self._te3:
-                self._run_te3_filter()
+            if self._filter_type == self._weather_ej1:
+                self._run_weather_ej1_filter()
+            elif self._filter_type == self._stations_ej2:
+                self._run_stations_ej2_filter()
+            elif self._filter_type == self._trips_ej2:
+                self._run_trips_ej2_filter()
+            elif self._filter_type == self._stations_ej3:
+                self._run_stations_ej3_filter()
+            elif self._filter_type == self._trips_ej3:
+                self._run_trips_ej3_filter()
             else:
                 logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: Invalid filter type')
                 raise Exception("Invalid filter type")
-            
-            self._channel.start_consuming()
         except Exception as e:
             logging.error(f'action: run | result: error | filter_type: {self._filter_type} | filter_number: {self._filter_number} | error: {e}')
-            if self._channel is not None:
-                self._channel.close()
+            if self._middleware is not None:
+                self._middleware.close()
+            exit(0)
 
-    def _run_we1_filter(self):
-        logging.info(f'action: _run_we1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ1SOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_we1)
+    def _run_weather_ej1_filter(self):
+        logging.info(f'action: _run_weather_ej1_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._middleware.recv_weathers_for_ej1(self._callback_weather_ej1, self._cant_ej_trips_solver)
+        
+    def _run_stations_ej2_filter(self):
+        logging.info(f'action: _run_stations_ej2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._middleware.recv_stations_for_ej2(self._callback_stations_ej2, self._cant_ej_trips_solver)
+ 
+    def _run_trips_ej2_filter(self):
+        logging.info(f'action: _run_trips_ej2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._middleware.recv_trips_for_ej2(self._callback_trips_ej2)
 
-    def _run_te2_filter(self):
-        logging.info(f'action: _run_te2_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ2TSOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te2)
+    def _run_stations_ej3_filter(self):
+        logging.info(f'action: _run_stations_ej3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._middleware.recv_stations_for_ej3(self._callback_stations_ej3, self._cant_ej_trips_solver)
 
-    def _run_se3_filter(self):
-        logging.info(f'action: _run_se3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ3SOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_se3)
+    def _run_trips_ej3_filter(self):
+        logging.info(f'action: _run_trips_ej3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+        self._middleware.recv_trips_for_ej3(self._callback_trips_ej3)
 
-    def _run_te3_filter(self):
-        logging.info(f'action: _run_te3_filter | result: in_progress | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-        self._channel.queue_declare(queue=EJ3TSOLVER, durable=True)
-        self._channel.basic_consume(queue=self._filter_type, on_message_callback=self._callback_te3)
-
-
-    def _callback_we1(self, ch, method, properties, body):
-        body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ1SOLVER, ch, method)
+    def _callback_weather_ej1(self, body, method=None):
+        eof = self._check_eof(body, method, True)
         if eof: return
-        we1 = We1(body)
-        if we1.is_valid():
-            self._send_data_to_queue(EJ1SOLVER, we1.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        weathers = body.split('\n')
+        for weather in weathers:
+            we1 = WeatherEj1(weather)
+            if we1.is_valid():
+                self._middleware.send_weather_ej1(we1.get_json())
+        self._middleware.finished_message_processing(method)
 
-    def _callback_te2(self, ch, method, properties, body):
-        body = body.decode("utf-8")
-        eof = self._check_eof(body, EOFTLISTENER, ch, method)
+    def _callback_stations_ej2(self, body, method=None):
+        eof = self._check_eof(body, method, True)
         if eof: return
-        te2 = Te2(body)
-        if te2.is_valid():
-            self._send_data_to_queue(EJ2TSOLVER, te2.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        stations = body.split('\n')
+        for station in stations:
+            se2 = StationsEj2(station)
+            if se2.is_valid():
+                self._middleware.send_stations_ej2(se2.get_json())
+        self._middleware.finished_message_processing(method)
 
-    def _callback_se3(self, ch, method, properties, body):
-        body = body.decode("utf-8")
-        eof = self._check_eof(body, EJ3SOLVER, ch, method)
+    def _callback_trips_ej2(self, body, method=None):
+        eof = self._check_eof(body, method, False)
         if eof: return
-        se3 = Se3(body)
-        if se3.is_valid():
-            self._send_data_to_queue(EJ3SOLVER, se3.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        trips = body.split('\n')
+        trips_for_ej2tripssolver = []
+        for t in trips:
+            te2 = TripsEj2(t)
+            if te2.is_valid():
+                trips_for_ej2tripssolver.append(te2.get_json())
+        message = "\n".join(trips_for_ej2tripssolver)
+        if message != "":
+            self._middleware.send_trips_ej2(message)
+        self._middleware.finished_message_processing(method)
 
-    def _callback_te3(self, ch, method, properties, body):
-        body = body.decode("utf-8")
-        eof = self._check_eof(body, EOFTLISTENER, ch, method)
+    def _callback_stations_ej3(self, body, method=None):
+        eof = self._check_eof(body, method, True)
         if eof: return
-        te3 = Te3(body)
-        if te3.is_valid():
-            self._send_data_to_queue(EJ3TSOLVER, te3.get_json())
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        stations = body.split('\n')
+        for station in stations:
+            se3 = StationsEj3(station)
+            if se3.is_valid():
+                self._middleware.send_stations_ej3(se3.get_json())
+        self._middleware.finished_message_processing(method)
 
-    def _check_eof(self, body, queue, ch, method):
-        if (body[:3] == "EOF"):
-            if queue == EOFTLISTENER:
-                self._send_eof_to_eoftlistener()
+    def _callback_trips_ej3(self, body, method=None):
+        eof = self._check_eof(body, method, False)
+        if eof: return
+        trips = body.split('\n')
+        trips_for_ej3tripssolver = []
+        for t in trips:
+            te3 = TripsEj3(t)
+            if te3.is_valid():
+                trips_for_ej3tripssolver.append(te3.get_json())
+        message = "\n".join(trips_for_ej3tripssolver)
+        if message != "": 
+            self._middleware.send_trips_ej3(message)
+        self._middleware.finished_message_processing(method)
+
+    def _check_eof(self, body, method, static_data):
+        if (body[:3] == _EOF):
+            if static_data == True:
+                eof = EOF(body.split(",")[1])
+                self._middleware.send_eof_static_data(eof.get_json())
             else:
-                self._send_eof_to_solver(body, queue)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+                eof = self._filter_type
+                self._middleware.send_eof_to_trips_listener(eof)
+            logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
+            self._middleware.finished_message_processing(method)
             self._exit()
             return True
         return False
 
-    def _send_eof_to_solver(self, body, queue):
-        eof = EOF(body.split(",")[1])
-        self._send_data_to_queue(queue, eof.get_json())
-        logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-
-    def _send_eof_to_eoftlistener(self):
-        eof = self._filter_type
-        self._send_data_to_queue(EOFTLISTENER, eof)
-        logging.info(f'action: _check_eof | result: success | filter_type: {self._filter_type} | filter_number: {self._filter_number}')
-
-    def _send_data_to_queue(self, queue, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=queue,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
-
     def _exit(self):
-        self._channel.stop_consuming()
-        self._channel.close()
+        self._middleware.close()

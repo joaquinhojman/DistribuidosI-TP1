@@ -6,31 +6,27 @@ from time import sleep
 from protocol.protocol import Protocol
 
 class FileReader:
-    def __init__(self, port, ip, rows_per_batch):
+    def __init__(self, port, ip, rows_per_batch, wait_time):
         self._ip = ip
         self._port = port
         self._rows_per_batch = rows_per_batch
+        self._wait_time = wait_time
     
         self._server = None
         self._protocol = None
         self._f = None
     
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress')
         self._close_connection()
         if self._f is not None:
             self._f.close()
-        logging.info(f'action: Handle SIGTERM | result: success')
+        exit(0)
 
     def run(self):
         try:
             logging.info(f'action: run | result: in_progress')
             self._make_connection()
 
-            #self._send_data("data/test/weather.csv", send_topic=True, send_eof=True)
-            #self._send_data("data/test/stations.csv", send_topic=True, send_eof=True)
-            #self._send_data("data/test/trips.csv", send_topic=True, send_eof=True)
-            
             self._send_data("data/montreal/weather.csv", send_topic=True)
             self._send_data("data/toronto/weather.csv")
             self._send_data("data/washington/weather.csv", send_eof=True)
@@ -47,8 +43,10 @@ class FileReader:
             logging.info(f'action: run | result: success')
         except Exception as e:
             logging.error(f'action: run | result: fail | error: {e}')
-            self._sigterm_handler()
-            return
+            self._close_connection()
+            if self._f is not None:
+                self._f.close()
+            exit(0)
 
     def _make_connection(self):
         logging.info(f'action: make_connection | result: in_progress | ip: {self._ip} | port: {self._port}')
@@ -70,7 +68,7 @@ class FileReader:
             while not eof:
                 data, eof = self._get_data(row_header, data_type, city_name)
                 self._send(data)
-                sleep(0.0005) #need cpu time to another tasks (only for local)
+                sleep(self._wait_time) #need cpu time to another tasks (only for local)
             self._f.close()
 
             if (send_eof): self._send_eof(data_type)

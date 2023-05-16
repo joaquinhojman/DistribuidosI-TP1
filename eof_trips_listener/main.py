@@ -2,7 +2,8 @@ import logging
 from configparser import ConfigParser
 import os
 import signal
-from common.EofTListener import EofTListener
+from common.EofTripsListener import EofTripsListener
+from common.middleware import EofTripsListenerMiddleware
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -22,11 +23,16 @@ def initialize_config():
 def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
+    try:
+        middleware = EofTripsListenerMiddleware()
+    except Exception as e:
+        logging.error(f"action: config | result: error | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.debug(f"action: config | result: success | logging_level: {logging_level}")
 
-    eof_listener = EofTListener()
+    eof_listener = EofTripsListener(middleware)
     signal.signal(signal.SIGTERM, eof_listener._sigterm_handler)
     eof_listener.run()
 

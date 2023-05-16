@@ -2,7 +2,8 @@ import logging
 from configparser import ConfigParser
 import os
 import signal
-from common.EjtSolver import EjtSolver
+from common.EjTripsSolver import EjTripsSolver
+from common.middleware import EjTripsSolverMiddleware
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -12,9 +13,9 @@ def initialize_config():
     config_params = {}
     try:
         config_params["logging_level"] = os.getenv('LOGGING_LEVEL', config["DEFAULT"]["LOGGING_LEVEL"])
-        config_params["ej1tsolver"] = os.getenv('EJ1TSOLVER', config["DEFAULT"]["EJ1TSOLVER"])
-        config_params["ej2tsolver"] = os.getenv('EJ2TSOLVER', config["DEFAULT"]["EJ2TSOLVER"])
-        config_params["ej3tsolver"] = os.getenv('EJ3TSOLVER', config["DEFAULT"]["EJ3TSOLVER"])
+        config_params["ej1tripssolver"] = os.getenv('EJ1TRIPSSOLVER', config["DEFAULT"]["EJ1TRIPSSOLVER"])
+        config_params["ej2tripssolver"] = os.getenv('EJ2TRIPSSOLVER', config["DEFAULT"]["EJ2TRIPSSOLVER"])
+        config_params["ej3tripssolver"] = os.getenv('EJ3TRIPSSOLVER', config["DEFAULT"]["EJ3TRIPSSOLVER"])
     except KeyError as e:
         raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
     except ValueError as e:
@@ -25,16 +26,22 @@ def initialize_config():
 def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
-    ej1tsolver = config_params["ej1tsolver"]
-    ej2tsolver = config_params["ej2tsolver"]
-    ej3tsolver = config_params["ej3tsolver"]
-    ejtsolver = os.getenv('EJTSOLVER', "")
+    ej1tripssolver = config_params["ej1tripssolver"]
+    ej2tripssolver = config_params["ej2tripssolver"]
+    ej3tripssolver = config_params["ej3tripssolver"]
+    ejtripssolver = os.getenv('EJTRIPSSOLVER', "")
+    id = os.getenv('EJTRIPSSOLVER_ID', "")
+    try:
+        middleware = EjTripsSolverMiddleware(ejtripssolver, id)
+    except Exception as e:
+        logging.error(f"action: config | result: error | ejtripssolver: {ejtripssolver} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
-    logging.info(f"action: config | result: success | ejtsolver: {ejtsolver} | logging_level: {logging_level}")
+    logging.info(f"action: config | result: success | ejtripssolver: {ejtripssolver} | logging_level: {logging_level}")
 
 
-    ej_solver = EjtSolver(ejtsolver, ej1tsolver, ej2tsolver, ej3tsolver)
+    ej_solver = EjTripsSolver(ejtripssolver, id, ej1tripssolver, ej2tripssolver, ej3tripssolver, middleware)
     signal.signal(signal.SIGTERM, ej_solver._sigterm_handler)
     ej_solver.run()
 

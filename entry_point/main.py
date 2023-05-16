@@ -3,6 +3,7 @@ from configparser import ConfigParser
 import os
 import signal
 from common.EntryPoint import EntryPoint
+from common.middleware import EntryPointMiddleware
 
 def initialize_config():
     config = ConfigParser(os.environ)
@@ -26,12 +27,18 @@ def main():
     logging_level = config_params["logging_level"]
     port = config_params["port"]
     listen_backlog = config_params["listen_backlog"]
+    try:
+        middleware = EntryPointMiddleware()
+    except Exception as e:
+        logging.error(f"action: config | result: error | port: {port} | "
+                      f"listen_backlog: {listen_backlog} | logging_level: {logging_level} | error: {e}")
+        exit(0)
 
     initialize_log(logging_level)
     logging.debug(f"action: config | result: success | port: {port} | "
                   f"listen_backlog: {listen_backlog} | logging_level: {logging_level}")
 
-    entry_point = EntryPoint(port, listen_backlog)
+    entry_point = EntryPoint(port, listen_backlog, middleware)
     signal.signal(signal.SIGTERM, entry_point._sigterm_handler)
     entry_point.run()
 

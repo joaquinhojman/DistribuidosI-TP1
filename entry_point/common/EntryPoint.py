@@ -2,22 +2,20 @@
 import os
 import socket
 import logging
-from time import sleep
-import pika
 
 from protocol.protocol import Protocol
+from common.middleware import EntryPointMiddleware
 from common.Data import EOF, Data
 
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
-RESULTS = "results"
 EJ1SOLVER = "ej1solver"
 EJ2SOLVER = "ej2solver"
 EJ3SOLVER = "ej3solver"
 
 class EntryPoint:
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, middleware):
         # Initialize entrypoint socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
@@ -44,41 +42,16 @@ class EntryPoint:
         self._sigterm_received = False
         self._client_socket = None
         self._protocol = None
-        self._channel = None
-
-        self._create_RabbitMQ_Connection()
-
-    def _create_RabbitMQ_Connection(self):
-        logging.info(f'action: create rabbitmq connections | result: in_progress')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
-            sleep(15)
-            retries -= 1
-            try: 
-                # Create RabbitMQ communication channel
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
-
-                channel.queue_declare(queue=WEATHER, durable=True)
-                channel.queue_declare(queue=STATIONS, durable=True)
-                channel.queue_declare(queue=TRIPS, durable=True)
-                channel.queue_declare(queue=RESULTS, durable=True)
-
-                self._channel = channel
-            except Exception as e:
-                pass
-        logging.info(f'action: create rabbitmq connections | result: success')
+        self._middleware: EntryPointMiddleware = middleware
 
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress')
         self._sigterm_received = True
         try:
             self._server_socket.close()
-            self._channel.close()
+            self._middleware.close()
         except:
             pass
-        logging.info(f'action: Handle SIGTERM | result: success')
+        exit(0)
 
     def run(self):
         try:
@@ -91,7 +64,7 @@ class EntryPoint:
         except Exception as e:
             logging.error(f'action: run | result: fail | error: {e}')
             self._sigterm_handler()
-            return
+            exit(0)
 
     def _accept_new_connection(self, server_socket: socket):
         logging.info(f'action: accept_connections | result: in_progress')
@@ -129,10 +102,7 @@ class EntryPoint:
                 data = Data(data_recv)
                 if data.topic != topic: return None
                 if data.eof == True: break
-                
-                self._send_data_to_queue(topic, data.data)
-                
-                #self._protocol.send_ack(True)
+                self._middleware.send_data_to_topic(topic, data.data)
 
             self._send_eofs()
             self._expect_solvers_confirmation()
@@ -164,26 +134,15 @@ class EntryPoint:
     def _send_eofs(self):
         logging.info(f'action: receive_data | eof received | topic: {self._actual_topic}')
         for _ in range(self._cant_brokers[self._actual_topic]):
-            self._send_data_to_queue(self._actual_topic, "EOF")
-
-    def _send_data_to_queue(self, queue, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=queue,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
+            self._middleware.send_eof_to_topic(self._actual_topic)
 
     def _expect_solvers_confirmation(self):
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue='results', on_message_callback=self._callback)
-        self._channel.start_consuming()
+        self._middleware.recv_solvers_confirmation(self._callback)
 
-    def _callback(self, ch, method, properties, body):
+    def _callback(self, body, method=None):
         logging.info(f'action: _callback | result: in_progress')
         finished = False
-        eof = EOF(body.decode('utf-8'))
+        eof = EOF(body)
         if eof.eof != self._actual_topic:
             logging.error(f'action: _callback | result: fail | error: eof.eof != self._actual_topic')
             return
@@ -192,8 +151,8 @@ class EntryPoint:
         if self._all_solvers_confirmated():
             self._reset_solvers_confirmated_dict()
             finished = True
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        if finished: self._channel.stop_consuming()
+        self._middleware.finished_message_processing(method)
+        if finished: self._middleware.stop_consuming()
 
     def _send_results(self):
         self._protocol.send(str(self._results))
@@ -219,5 +178,5 @@ class EntryPoint:
             self._client_socket.close()
         if self._server_socket is not None:
             self._server_socket.close()
-        if self._channel is not None:
-            self._channel.close()
+        if self._middleware is not None:
+            self._middleware.close()

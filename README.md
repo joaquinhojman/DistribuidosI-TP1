@@ -1,39 +1,141 @@
 # DistribuidosI-TP1
 Trabajo practico 1 de 75.74 Sistemas Distribuidos I - FIUBA
 
-Para poder ejecutar el sistema completo se provee un archivo de Makefile y un archivo de docker.compose. Para levantar el sistema se debe ejecutar "make docker-compose-up" y luego "make  docker-compose-logs" para poder ir viendo los logs del sistema. Cada entidad en ejecución loggea cierta data que permite comprender el estado del sistema al momento de loggeear. La entidad FileReader, al obtener los resultados, los loggeara por pantalla. Para poder apagar el sistema se debe ejecutar "make docker-compose-down".
+## Ejecución
 
-Las entidades replicables son los filtros, los brokers y los EJTsolvers. El resto de las entidades no son replicables y no deben replicarse para evitar un funcionamiento incorrecto del sistema. Las entidades replicables son aquellas que consumiran y procesaran la data. En un entorno productivo podrian replicarse correctamente para escalar el sistema.
+### Configuración
 
-De replicar las entidades mencionadas, se debe informar en las variables de entorno de otras entidades esta replicación, como se detalla a continuación:
-
-- De replicar algunos de los brokers: se debe informar la cant de brokers de weather en la entidad entry_point y EofListener, en la env WBRKCANT. Se debe informar la cant de brokers de stations en la entidad Ej2Solver, entry_point y EofListener en la env SBRKCANT. Se debe informar la cant de brokers de trips en la entidad Ej2Solver, EofTListener y EofListener en la env TBRKCANT.
-
-- De replicar algunos de los filters, se debe informar en las variables de entorno de ciertas entidades de la siguiente manera: de replicar el filtro de weathers para el ej1, "we1", informar en la entidad Ej1Solver y EofListener en la env WE1FCANT. De replicar el filtro de estaciones para ej3, "se3", informar en la entidad Ej3Solver y EofListener, en la env SE3FCANT. De replicar filtro de trips para ej2, "te2", informar en la entidad EofTListener y EofListener, en la env TE2FCANT. De replicar filtro de trips para ej3, "te3", informar en la entidad EofTListener y EofListener, en la env TE3FCANT.
-
-- De replicar algunos de los EJTsolver, se debe informar de la siguiente manera: De replicar EJ1Tsolver, se debe informar en Ej1Solver y en EofTListener en la env EJ1TCANT. De replicar EJ2Tsolver, se debe informar en Ej2Solver y en EofTListener en la env EJ2TCANT. De replicar EJ3Tsolver, se debe informar en Ej3Solver y en EofTListener en la env EJ3TCANT. 
+Para generar un archivo de docker compose con replicas se provee un script en la carpeta scripts que puede ejecutarse con "phython3 generate_docker_compose.py". En el archivo config.ini se puede indicar cuantas replicas quieren generarse de cada entidad. Se debe ejecutar el script python desde adentro de la carpeta de scripts.
 
 No se incluyen los archivos de datos. Debe descargarse el zip y guardar las carpetas montreal, toronto y washington en una carpeta llamada .data en la raiz del proyecto.
 
-Ademas, se aclara que si se quiere correr el sistema se deben modificar dos rows del archivo de stations de toronto. La 691 y la 822 tienen caracteres invalidos que no pueden procesarse correctamente. La 691 debe modificarse el caracter invalido por un "–" y la 822 por un "’".
+El cliente envia la data en batches de N rows. Este valor es configurable desde el archivo file_reader/config.ini. 
 
-A continuación se detalla como funciona el sistema a grandes rasgos.
+### Inicio
 
-El cliente, llamado FileReader enviara los archivos del dataset por etapas. Primero mandara todos los archivos de weathers, luego todos los archivos de estaciones, y por ultimo los archivos de viajes. Luego de enviar cada seccion de archivos enviara un mensaje de EOF y esperara que el servidor le confirme que han sido recibidos y procesados correctamente. Luego esperara que dicho servidor le envie los resultados para mostrarlos por pantalla. El cliente lee los archivos y manda al servidor en batches de N rows, configurable en archivo config.ini, usando un protocolo.
+Para poder ejecutar el sistema completo se provee un archivo de Makefile y un archivo de docker.compose (tambien puede generarse el propio como se indico previamente). Para levantar el sistema se debe ejecutar "make docker-compose-up" y luego "make docker-compose-logs" para poder ir viendo los logs del sistema. Cada entidad en ejecución loggea cierta data que permite comprender el estado del sistema al momento de loggeear. La entidad FileReader, al obtener los resultados, los loggeara por pantalla. Para poder apagar el sistema se debe ejecutar "make docker-compose-down".
 
-El servidor por su parte escucha mensajes via socket en una entidad llamda Entry Point. Una vez que recibe un batch de rows, revisa que topico es y luego se las envia a un broker correspondiente. A partir de aqui todas las comunicaciones entre entidades del servidor seran a partir de RabbitMQ. Una vez que el cliente informo que finalizo de enviar un topico con un EOF, el servidor propagara el EOF a los brokers y esperara la confirmación de que todas las entidades ya procesaron dicho topico, y cuando el topico sea viajes, esperara los resultados. Una vez que reciba los resultados se los enviara al cliente y finalizara la conexión y ejecución.
+## 4 + 1 Views
 
-Hay tres tipos de brokers: weather, stations y trips, cada uno procesara el topico que se llame como el. Cada broker recibira el batch de rows y debera recorrerlo para poder enviarle a los filtes cada row individualmente de la manera que se detallara. Si el broker es de wheater, se le mandara cada row al filtro de wheaters para el Ej1, ya que es el unico que usa wheaters. El broker station le enviara las estaciones al filtro de estaciones para el Ej3, y tambien le enviara las estaciones al Ej2Solver, que necesita todas las estaciones para operar. Por ultimo el broker de trips le enviara cada trip al filtro de trips para ejercicio 2, al filtro de trips para ejercicio 3, y luego al Ej1Solver, que necesita todos los trips. Si un broker recibe un EOF, se lo reenvia a la entidad EOFListener con su nombre y se apaga. Cabe destacar que cuando los brokers le envian informacion a los filters o a los solvers, solo le envian las columnas de la row que estos vayan a necesitar, no le envian la row completa.
+### Scope
 
-Hay 4 tipos de filters, filtro de wheaters para el Ej1, filtro de estaciones para el Ej3, filtro de trips para ejercicio 2 y filtro de trips para ejercicio 3 (WE1, SE3, TE2, TE3, respectivamente). WE1 recibe weathers y se lo envia al Ej1Solver si la precipitacion es mayor a 30mm. SE3 recibe estaciones y se las envia a Ej3Solver si la estacion es de Montreal. TE2 recibe info de trips y se los envia a Ejt2Solver si el viaje fue realizado en 2016 o 2017. TE3 recibe info de trips y se la envia a Ej3tSolver si el viaje fue en Montreal. Cuando un filtro WE1 o SE3 recibe un EOF, lo reenvia a su solver correspondiente. Cuando TE2 o TE3 recibe un EOF, lo envia a EOFTLISTENER. Luego se apagan.
+Se solicita un sistema distribuido que analice los registros de viajes realizados con bicicletas de la red pública provista por grandes ciudades. Los registros cuentan con el tiempo de duración del viaje, estación de inicio y de fin. Se posee también lat., long. y nombre de las estaciones así como la cantidad de precipitaciones del día del viaje. 
 
-El EOFListener cumple la función de una barrera distribuida: sabe cuantos brokers de cada tipo hay (replicas), y cuando todas le mandaron un EOF, propaga los EOFS para los filters correspondientes, asegurandose asi de que ningun EOF vaya a colarse antes que un paquete con información. Por ejemplo, si hay 50 replicas de Wheater Broker, espera 50 EOFs de wheater, y recien ahi le envia un EOF a cada replica del WE1 Filter (pone 50 en la cola, cada replica toma un eof y al leerlo se apaga), de esta forma se garantiza el orden de los EOFS.
-El EOFTListener cumple la misma funcion pero entre los Filters y los EJTsolvers.
+Se debe obtener: 
+1) La duración promedio de viajes que iniciaron en días con precipitaciones >30mm.
+2) Los nombres de estaciones que al menos duplicaron la cantidad de viajes iniciados en ellas entre 2016 y el 2017. 
+3) Los nombres de estaciones de Montreal para la que el promedio de los ciclistas recorren más de 6km en llegar a ellas.
 
-EjSolver espera a recibir todos los Weathers (sabe cuando recibio todos ya que cuenta los EOFS que le mandan los filters) y Ej2Solver y Ej3Solver esperan a recibir todos los Stations. Luego, antes de mandarle la confirmación al Entry Point, para que este a su vez le informe al cliente, le envian a sus EjTSolver asociados (a cada replica) la información que almacenaron. 
+Esto queda modelado con el siguiente diagrama de casos de uso:
 
-Los EjTSolvers, una vez que recibieron la información de su EjSolver asociado, escuchan la info de trips que les envian los filters. Una vez que reciben un trip, van calculando resultados parciales que van a servir para resolver las queries del enunciado. De esta forma pueden tomarse resultados parciales de forma distribuida. Al recibir un EOF, antes de finalizar le envian a su EjSolver asociado la data de resultados parciales que recibieron y acumularon.
+![Diagrama de casos de uso](./Diagramas/Diagrama_de_casos_de_uso.drawio.png)
 
-Una vez que cada EjSolver recibio de todas las replicas de sus EjtSolver la información de los viajes, procede a hacer el join, calculando resultados finales a partir de los parciales, hasta obtener lo que pedia cada enunciado. Una vez que obtuvieron los resultados finales, se los envian al Entry Point y finalizan.
+**Supuestos**
 
-La posibilidad de aumentar la cantidad de replicas de brokers, filtros y ejtsolvers nos brinda la posibilidad de que las entidades que consumen y procesan el straming de datos puedan escalarse correctamente, de forma tal que si se cuenta con los recursos necesarios se pueda consumir toda la data y devolver los resultados en el tiempo que se desee.
+Se toma la suposición de que el cliente enviara primero weathers, luego stations y finalmente trips. No enviara datos de diferentes topicos mezclados, es decir mandara todo de un mismo tipo antes de pasar al siguiente. El sistema soporta una unica ejecución, y luego finaliza. No se puede ejecutar mas de una vez sin reiniciar el sistema.
+
+**Desarrollo**
+
+Para el presente trabajo se usaron las siguientes tecnologias:
+
+- Python3
+- Docker
+- RabbitMQ (lib pika)
+- lib Haversine
+
+### Software Architecture
+
+La estructura del sistema se encuentra separada en entidades que se comunican entre si cuando es necesario. Hay entidades replicables y entidades no replicables. Las entidades son las siguientes:
+
+- File Reader: es el cliente del sistema, enviara los archivos del dataset por etapas. Luego esperara que el servidor le envie los resultados para mostrarlos por pantalla.
+- Entry point: recibe los envios del cliente y dependiendo el topico se lo envia a cada broker correspondiente. Luego espera que el cliente le informe que finalizo de enviar un topico con un EOF, y cuando el topico sea viajes, esperara los resultados. Una vez que reciba los resultados se los enviara al cliente y finalizara la conexión y ejecución. Cuando reciba un EOF, se lo propagara a los brokers correspondientes. 
+- Broker: tiene un topico asociado, recibe los batches de rows de ese topico y se los envia a los filters correspondientes, solamente las columnas que necesita cada filter. Si recibe un EOF, se lo reenvia a la entidad EOFListener con su nombre y se apaga.
+- Filter: tiene un topico y un ejercicio asociado, recibe las rows y dependiendo cual topico y ejercicio tiene asociada filtra los que no sean necesarios. Luego envia las rows filtradas al EjTripsSolver asociado a su ejercicio.
+- EjTripsSolver: tiene un ejercicio asociado, recibe las rows filtradas y las procesa para ir calculando resultados parciales de cada query. Cuando se procesaron todos los trips, envia lo resultados parciales al EjSolver asociado. Al ser replicables se pueden calcular resultados parciales de forma distribuida.
+- EjSolver: tiene un ejercicio asociado y recibe los resultados parciales de sus EjTripsSolver asociados, una vez que tiene todos los joinea para calcular los resultados finales de su query. Cuando tiene los resultados finales los envia al Entry Point para que se los envie al cliente.
+- EofListener: cumple la función de una barrera distribuida: recibe los EOF de los brokers y cuando tiene todos los EOF de los brokers de un topico, se lo informa a los filters de ese topico para que propaguen el EOF y puedan apagarse, asegurandose asi de que ningun EOF vaya a colarse antes que un paquete con información. .
+- EofTripsListener: recibe los EOF de los filters de trips y cuando tiene todos se los envia a los EjTripsSolver para que envien sus resultados parciales al EjSolver asociado.
+
+Las entidades replicables son los filtros, los brokers y los EjTripSsolvers. El resto de las entidades no son replicables y no deben replicarse para evitar un funcionamiento incorrecto del sistema. Las entidades replicables son aquellas que consumiran y procesaran la data. En un entorno productivo podrian replicarse correctamente para escalar el sistema.
+
+**Protocolo de comunicación cliente/servidor**
+
+Breve explicación del protocolo: primero se envian 4 bytes (siempre esa cantidad) con la cantidad de bytes que ocupara el mensaje que se enviara a continuación, y luego se envia dicho mensaje en paquetes de bytes de hasta 8kb. El protocolo contempla posibles short read y short write. Los mensajes estan compuestos por batches de rows de data y el formato es el siguiente: topic;eof(1/0);rows. Las rows estan separadas por un caracter de nueva linea. Las rows estan compuestas por columnas separadas por un caracter de coma.
+
+El servidor, para agilizar la comunicación y simular un proceso de streaming, unicamente contestara un ack cuando reciba un mensaje de EOF, no con cada recepcion de batches de data. El cliente, por su parte, enviara unicamente un ack cuando reciba los resultados finales.
+
+**Tipos de filters**
+
+Hay 4 tipos de filters, filtro de wheaters para el Ej1 (WeatherEj1), filtro de estaciones para el Ej2 (StationsEj2), filtro de estaciones para el Ej3 (StationsEj3), filtro de trips para ejercicio 2 (TripsEj2) y filtro de trips para ejercicio 3 (TripsEj3). WeatherEj1 recibe weathers y se lo envia al Ej1TripsSolver si la precipitacion es mayor a 30mm. StationsEj2 recibe estaciones y se las envia a Ej2TripsSolver si el year id es 2016 o 2017. StationsEj3 recibe estaciones y se las envia a Ej3TripsSolver si la estacion es de Montreal. TripsEj2 recibe info de trips y se los envia a Ejt2Solver si el viaje fue realizado en 2016 o 2017. TripsEj3 recibe info de trips y se la envia a Ej3tSolver si el viaje fue en Montreal.
+
+### Architectural Goals & Constraints
+
+- Distribuir el procesamiento, envio y recepción de mensajes en unidades pequeñas y escalables.
+- Utilizar un sistema de mensajeria, RabbitMQ, para comunicar las distintas entidades de forma prolija y eficiente.
+- Encapsular la comunicación en un middleware como capa de abstracción que oculte la complejidad y asi lograr separar la logica del negocio de la comunicación.
+
+### Logical View
+
+Los siguientes diagramas DAGs explican en cada caso de uso como es el flujo de datos.
+
+![Diagrama DAG](./Diagramas/DAG.drawio.png)
+
+### Process View
+
+**Diagramas de actividades**
+
+A continuación se presentan algunos diagramas de actividades que ayudan a entender como interactuan las entidades del sistema, considerando N como cantidad de replicas de los filters y M como la cantidad de replicas de los Brokers.
+
+El siguiente diagrama ilustra como se envia la data desde que se recibe en el entry point hasta el Solver para poder almacenarla o usarla para resolver una query. Se muestra el caso de weather pero todos los casos siguen la misma logica:
+
+![Diagrama de actividades 1](./Diagramas/Diagrama_de_Actividades_1.png)
+
+El siguiente diagrama ilustra como funciona la entidad EOF Listener. El caso mostrado es el envio de stations, pero el funcionamiento para weathers y trips es analogo:
+
+![Diagrama de actividades 2](./Diagramas/Diagrama_de_Actividades_2.png)
+
+Este diagrama muestra como se envia la data desde el cliente hacia el servidor. El caso de ejemplo es con trips pero podria ser igual con estaciones o climas:
+
+![Diagrama de actividades 3](./Diagramas/Diagrama_de_Actividades_3.png)
+
+Este diagrama muestra como se van resolviendo parcialmente las querys de cada ejercicio. Cada uno de esos EjTsolvers esta replicado y le enviaran a su EjSolver asociado la info parcial para que la joinee y calcule los resultados finales:
+
+![Diagrama de actividades 4](./Diagramas/Diagrama_de_Actividades_4.png)
+
+
+**Diagramas de Secuencia**
+
+Se muestran a continuación diagramas de secuencia que ayudan a explicar ciertos casos de uso del sistema.
+
+El primer diagrama de secuencia representa el envio de trips desde que llegan al entry point hasta el solver de trips del ej 3, quien los almacena.
+
+![Diagrama de secuencia 1](./Diagramas/Diagrama_de_Secuencia_1.drawio.png)
+
+El segundo diagrama muestra cuando a este solver de trips le llega el eof, le envia los resultados que almaceno al Ej3Solver, quien espera a que todas las replicas le hayan enviado sus parciales, los joinea y los devuelve.
+
+![Diagrama de secuencia 2](./Diagramas/Diagrama_de_Secuencia_2.drawio.png)
+
+### Development View
+
+Cada entidad, a excepcion del file reader, posee un Middleware para comunicarse con el resto de las entidades. El middleware de cada entidad hereda de una clase Middleware global que posee las funciones propias de RabbitMQ. Este Middleware global usa la libreria pika para implementar la comunicación. Se utiliza la entidad broker como ejemplo pero el resto de las entidades del servidor son analogas.
+
+![Diagrama de paquetes 1](./Diagramas/Diagrama_de_Paquetes_1.drawio.png)
+
+La entidad file reader no posee un middleware ya que no usa rabbit, pero si utiliza un protocolo para comunicarse con el servidor.
+
+![Diagrama de paquetes 2](./Diagramas/Diagrama_de_Paquetes_2.drawio.png)
+
+Por su parte, la entidad Entry Point posee tanto un middleware propio como un protocolo para comunicarse con el cliente.
+
+### Physical View
+
+Se expone la arquitectura del sistema mediante los siguientes diagramas de robustez (separado por fases de funcionamiento del sistema para mayor entendimiento).
+
+![Diagrama de robustez](./Diagramas/Diagrama_de_Robustez.drawio.png)
+
+Como comentario acerca del funcionamiento del sistema, cabe destacar lo siguiente: La idea de que los EjTripsSolver esten replicados se hizo con la intencion de que puedan procesar trips y calcular resultados parciales en paralelo (es decir, cada trip le llega a una sola replica), pero para lograr esto cada EjTripsSolver necesitaba tener toda la data estatica. Para implementar esto, los filters depositan la data estatica en exchanges que estan bindeados a una cola para cada replica de cada EjTripsSolver, de esta forma rabbit se encarga de que facilmente los solvers reciban toda la data estatica. Luego el envio de trips se hace directamente a traves de colas de rabbit.
+
+Cada módulo se encuentra desplegado en un contenedor individual de docker permitiendo de esta manera su escalabilidad. El sistema entero se encuentra comunicado a traves de una instancia de Rabbit MQ, conocida por todos. A continuación se presenta el diagrama de despliegue:
+
+![Diagrama de Despliegue](./Diagramas/Diagrama_de_Despliegue.drawio.png)
+

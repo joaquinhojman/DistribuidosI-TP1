@@ -1,21 +1,23 @@
 
 import os
-import socket
 import logging
-from time import sleep
-import pika
+from common.middleware import EofListenerMiddleware
 
-EOFLISTENER = "eoflistener"
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
-WE1 = "we1"
-TE2 = "te2"
-SE3 = "se3"
-TE3 = "te3"
+WEATHEREJ1FILTER = "weatherej1"
+STATIONSEJ2FILTER = "stationsej2"
+TRIPSEJ2FILTER = "tripsej2"
+STATIONSEJ3FILTER = "stationsej3"
+TRIPSEJ3FILTER = "tripsej3"
+EOF = "eof"
 
 class EofListener:
-    def __init__(self):
+    def __init__(self, middleware):
+        self._sigterm = False
+        self._middleware: EofListenerMiddleware = middleware
+
         self._remaining_brokers_eof = {
             WEATHER: int(os.getenv('WBRKCANT', "")),
             STATIONS: int(os.getenv('SBRKCANT', "")),
@@ -23,58 +25,32 @@ class EofListener:
         }
 
         self._cant_filters = {
-            WE1: int(os.getenv('WE1FCANT', "")),
-            TE2: int(os.getenv('TE2FCANT', "")),
-            SE3: int(os.getenv('SE3FCANT', "")),
-            TE3: int(os.getenv('TE3FCANT', ""))
+            WEATHEREJ1FILTER: int(os.getenv('WE1FCANT', "")),
+            STATIONSEJ2FILTER: int(os.getenv('SE2FCANT', "")),
+            TRIPSEJ2FILTER: int(os.getenv('TE2FCANT', "")),
+            STATIONSEJ3FILTER: int(os.getenv('SE3FCANT', "")),
+            TRIPSEJ3FILTER: int(os.getenv('TE3FCANT', ""))
         }
 
-        self._channel = None
-        self._create_RabbitMQ_Connection()
-
-    def _create_RabbitMQ_Connection(self):
-        logging.info(f'action: create rabbitmq connections | result: in_progress')
-        retries =  int(os.getenv('RMQRETRIES', "5"))
-        while retries > 0 and self._channel is None:
-            sleep(15)
-            retries -= 1
-            try: 
-                # Create RabbitMQ communication channel
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(host='rabbitmq'))
-                channel = connection.channel()
-
-                channel.queue_declare(queue=EOFLISTENER, durable=True)
-                channel.queue_declare(queue=WE1, durable=True)
-                channel.queue_declare(queue=TE2, durable=True)
-                channel.queue_declare(queue=SE3, durable=True)
-                channel.queue_declare(queue=TE3, durable=True)
-
-                self._channel = channel
-            except Exception as e:
-                pass
-        logging.info(f'action: create rabbitmq connections | result: success')
-
     def _sigterm_handler(self, _signo, _stack_frame):
-        logging.info(f'action: Handle SIGTERM | result: in_progress')
-        if self._channel is not None:
-            self._channel.close()
-        logging.info(f'action: Handle SIGTERM | result: success')
+        self._sigterm = True
+        if self._middleware is not None:
+            self._middleware.close()
+        exit(0)
 
     def run(self):
         try:
             logging.info(f'action: run | result: in_progress')
-            self._channel.basic_qos(prefetch_count=1)
-            self._channel.basic_consume(queue=EOFLISTENER, on_message_callback=self._callback)
-            self._channel.start_consuming()
+            self._middleware.recv_eofs(self._callback)
         except Exception as e:
             logging.error(f'action: run | result: error | error: {e}')        
-            if self._channel is not None:
-                self._channel.close()
+            if self._middleware is not None:
+                self._middleware.close()
+            exit(0)
 
-    def _callback(self, ch, method, properties, body):
-        finished = self._proccess_eof(body.decode("utf-8"))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+    def _callback(self, body, method=None):
+        finished = self._proccess_eof(body)
+        self._middleware.finished_message_processing(method)
         if finished: self._exit()
 
     def _proccess_eof(self, body):
@@ -86,16 +62,18 @@ class EofListener:
 
     def _send_eofs(self, body):
         if body == WEATHER:
-            for _ in range(self._cant_filters[WE1]):
-                self._send(WE1, "EOF,"+body)
+            for _ in range(self._cant_filters[WEATHEREJ1FILTER]):
+                self._middleware.send_eof_to_filter(WEATHEREJ1FILTER, EOF + "," + body)
         elif body == STATIONS:
-            for _ in range(self._cant_filters[SE3]):
-                self._send(SE3, "EOF,"+body)
+            for _ in range(self._cant_filters[STATIONSEJ2FILTER]):
+                self._middleware.send_eof_to_filter(STATIONSEJ2FILTER, EOF + "," + body)
+            for _ in range(self._cant_filters[STATIONSEJ3FILTER]):
+                self._middleware.send_eof_to_filter(STATIONSEJ3FILTER, EOF + "," + body)
         elif body == TRIPS:
-            for _ in range(self._cant_filters[TE2]):
-                self._send(TE2, "EOF,"+body)
-            for _ in range(self._cant_filters[TE3]):
-                self._send(TE3, "EOF,"+body)
+            for _ in range(self._cant_filters[TRIPSEJ2FILTER]):
+                self._middleware.send_eof_to_filter(TRIPSEJ2FILTER, EOF + "," + body)
+            for _ in range(self._cant_filters[TRIPSEJ3FILTER]):
+                self._middleware.send_eof_to_filter(TRIPSEJ3FILTER, EOF + "," + body)
             return True
         else:
             logging.error(f'action: send eof | result: error | error: invalid body')
@@ -103,15 +81,5 @@ class EofListener:
         logging.info(f'action: send eof | result: success | body: {body}')
         return False
 
-    def _send(self, queue, data):
-        self._channel.basic_publish(
-            exchange='',
-            routing_key=queue,
-            body=data,
-            properties=pika.BasicProperties(
-            delivery_mode = 2, # make message persistent
-        ))
-
     def _exit(self):
-        self._channel.stop_consuming()
-        self._channel.close()
+        self._middleware.close()

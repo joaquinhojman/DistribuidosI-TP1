@@ -3,8 +3,12 @@ import json
 WEATHER = "weather"
 STATIONS = "stations"
 TRIPS = "trips"
+_EOF = "eof"
+MONTREAL = "montreal"
+YEAR_2016 = "2016"
+YEAR_2017 = "2017"
 
-class We1:
+class WeatherEj1:
     def __init__(self, we1):
         data = json.loads(we1)
         self.city = data["city"]
@@ -21,7 +25,27 @@ class We1:
             "date": self.date,
         })
 
-class Te2:
+class StationsEj2:
+    def __init__(self, se2):
+        data = json.loads(se2)
+        self.city = data["city"]
+        self.code = data["code"]
+        self.name = data["name"]
+        self.yearid = data["yearid"]
+    
+    def is_valid(self):
+        return self.yearid == YEAR_2016 or self.yearid == YEAR_2017
+
+    def get_json(self):
+        return json.dumps({
+            "type": STATIONS,
+            "city": self.city,
+            "code": self.code,
+            "name": self.name,
+            "yearid": self.yearid,
+        })
+
+class TripsEj2:
     def __init__(self, te2):
         data = json.loads(te2)
         self.city = data["city"]
@@ -29,7 +53,7 @@ class Te2:
         self.yearid = data["yearid"]
 
     def is_valid(self):
-        return self.yearid == "2016" or self.yearid == "2017"
+        return self.yearid == YEAR_2016 or self.yearid == YEAR_2017
 
     def get_json(self):
         return json.dumps({
@@ -39,7 +63,7 @@ class Te2:
             "yearid": self.yearid,
         })
 
-class Se3:
+class StationsEj3:
     def __init__(self, se3):
         data = json.loads(se3)
         self.city = data["city"]
@@ -50,7 +74,7 @@ class Se3:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.city == "montreal"
+        return self.city == MONTREAL
 
     def get_json(self):
         return json.dumps({
@@ -62,7 +86,7 @@ class Se3:
             "yearid": self.yearid,
         })
 
-class Te3:
+class TripsEj3:
     def __init__(self, te3):
         data = json.loads(te3)
         self.city = data["city"]
@@ -71,7 +95,7 @@ class Te3:
         self.yearid = data["yearid"]
     
     def is_valid(self):
-        return self.city == "montreal"
+        return self.city == MONTREAL
 
     def get_json(self):
         return json.dumps({
@@ -87,6 +111,6 @@ class EOF:
     
     def get_json(self):
         return json.dumps({
-            "type": "eof",
+            "type": _EOF,
             "eof": self.topic,
         })
