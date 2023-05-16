@@ -11,8 +11,8 @@ def initialize_config():
         config_params["SBRKCANT"] = int(os.getenv('STATIONS_BROKERS_CANT', config["DEFAULT"]["STATIONS_BROKERS_CANT"]))
         config_params["TBRKCANT"] = int(os.getenv('TRIPS_BROKERS_CANT', config["DEFAULT"]["TRIPS_BROKERS_CANT"]))
         config_params["WE1FCANT"] = int(os.getenv('WEATHER_EJ1_FILTER_CANT', config["DEFAULT"]["WEATHER_EJ1_FILTER_CANT"]))
-        config_params["TE2FCANT"] = int(os.getenv('STATIONS_EJ2_FILTER_CANT', config["DEFAULT"]["STATIONS_EJ2_FILTER_CANT"]))
-        config_params["SE2FCANT"] = int(os.getenv('TRIPS_EJ2_FILTER_CANT', config["DEFAULT"]["TRIPS_EJ2_FILTER_CANT"]))
+        config_params["SE2FCANT"] = int(os.getenv('STATIONS_EJ2_FILTER_CANT', config["DEFAULT"]["STATIONS_EJ2_FILTER_CANT"]))
+        config_params["TE2FCANT"] = int(os.getenv('TRIPS_EJ2_FILTER_CANT', config["DEFAULT"]["TRIPS_EJ2_FILTER_CANT"]))
         config_params["SE3FCANT"] = int(os.getenv('STATIONS_EJ3_FILTER_CANT', config["DEFAULT"]["STATIONS_EJ3_FILTER_CANT"]))
         config_params["TE3FCANT"] = int(os.getenv('TRIPS_EJ3_FILTER_CANT', config["DEFAULT"]["TRIPS_EJ3_FILTER_CANT"]))
         config_params["EJ1TRIPSCANT"] = int(os.getenv('EJ1_TRIPS_SOLVER_CANT', config["DEFAULT"]["EJ1_TRIPS_SOLVER_CANT"]))
@@ -27,7 +27,7 @@ def initialize_config():
 
 def generateHeader(docker_compose):
     docker_compose.write(f"version: '3.9'\n")
-    docker_compose.write(f"name: tp0'\n")
+    docker_compose.write(f"name: 'tp0'\n")
     docker_compose.write(f"\n")
 
 def generateNetwork(docker_compose):
@@ -149,7 +149,7 @@ def generateBrokers(docker_compose, wbrkcant, sbrkcant, tbrkcant):
 def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3fcant, ej1tcant, ej2tcant, ej3tcant):
     for i in range(1, we1fcant + 1):
         docker_compose.write(f'    filter_weather{i}:\n')
-        docker_compose.write(f'      container_name: filter_weather{i}\n')
+        docker_compose.write(f'      container_name: filter_weather_{i}\n')
         docker_compose.write(f'      image: filter:latest\n')
         docker_compose.write(f'      entrypoint: python3 /main.py\n')
         docker_compose.write(f'      restart: on-failure\n')
@@ -166,7 +166,7 @@ def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3f
         docker_compose.write(f"\n")
     for i in range(1, se2fcant + 1):
         docker_compose.write(f'    filter_stations_e2{i}:\n')
-        docker_compose.write(f'      container_name: filter_stations_e2{i}\n')
+        docker_compose.write(f'      container_name: filter_stations_e2_{i}\n')
         docker_compose.write(f'      image: filter:latest\n')
         docker_compose.write(f'      entrypoint: python3 /main.py\n')
         docker_compose.write(f'      restart: on-failure\n')
@@ -183,7 +183,7 @@ def generateFilters(docker_compose, we1fcant, se2fcant, te2fcant, se3fcant, te3f
         docker_compose.write(f"\n")
     for i in range(1, se3fcant + 1):
         docker_compose.write(f'    filter_stations_e3{i}:\n')
-        docker_compose.write(f'      container_name: filter_stations_e3{i}\n')
+        docker_compose.write(f'      container_name: filter_stations_e3_{i}\n')
         docker_compose.write(f'      image: filter:latest\n')
         docker_compose.write(f'      entrypoint: python3 /main.py\n')
         docker_compose.write(f'      restart: on-failure\n')
